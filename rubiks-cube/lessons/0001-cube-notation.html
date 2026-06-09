@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1 — Cube Notation</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #6c8cff;
+    --white: #ffffff;
+    --U: #ffffff;
+    --D: #f5d600;
+    --R: #e84040;
+    --L: #f57c00;
+    --F: #3ab54a;
+    --B: #2979ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .lesson-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--white); }
+  h2 { font-size: 1.2rem; font-weight: 600; color: var(--white); margin: 2rem 0 1rem; }
+  p { margin-bottom: 1rem; color: var(--text); }
+  .win-box {
+    background: linear-gradient(135deg, #1a2744 0%, #1a1d27 100%);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .win-box strong { color: var(--accent); }
+
+  /* Face grid */
+  .faces-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .face-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .face-swatch {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    margin: 0 auto 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: rgba(0,0,0,0.5);
+  }
+  .face-label { font-size: 0.85rem; color: var(--muted); }
+  .face-name { font-weight: 600; color: var(--white); font-size: 0.95rem; }
+
+  /* Move table */
+  .move-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+  .move-table th {
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .move-table td {
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .move-table tr:last-child td { border-bottom: none; }
+  .move-table tr:hover td { background: var(--surface); }
+  .move-badge {
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--white);
+  }
+  .move-badge.prime { color: #f06292; }
+
+  /* Quiz */
+  .quiz {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+  .quiz h2 { margin-top: 0; }
+  .quiz-q { margin-bottom: 1.2rem; }
+  .quiz-q p { margin-bottom: 0.6rem; font-weight: 500; }
+  .options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .opt {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt.correct { background: #1a3a1a; border-color: #3ab54a; color: #3ab54a; }
+  .opt.wrong { background: #3a1a1a; border-color: #e84040; color: #e84040; }
+  .feedback { margin-top: 0.6rem; font-size: 0.85rem; min-height: 1.2rem; }
+  .feedback.ok { color: #3ab54a; }
+  .feedback.err { color: #e84040; }
+
+  /* Score */
+  #score-box {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+  #score-text { font-size: 1.5rem; font-weight: 700; color: var(--white); }
+  #score-msg { color: var(--muted); margin-top: 0.4rem; }
+
+  .cite { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; }
+  .cite a { color: var(--accent); text-decoration: none; }
+  .cite a:hover { text-decoration: underline; }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="lesson-meta">Rubik's Cube · Lesson 1 of ?</div>
+  <h1>Cube Notation</h1>
+  <p style="margin-top:0.6rem; color:var(--muted);">The alphabet of every algorithm. You can't read a solution until you know this.</p>
+</header>
+
+<div class="win-box">
+  <strong>Win for this lesson:</strong> By the end you can read any standard Rubik's Cube move notation — U, R, F, L, D, B and their primes — without looking it up.
+</div>
+
+<h2>The Six Faces</h2>
+<p>Every layer of every algorithm refers to one of six faces. Hold the cube in front of you — the names never change relative to your grip.</p>
+
+<div class="faces-grid">
+  <div class="face-card">
+    <div class="face-swatch" style="background:var(--U)">U</div>
+    <div class="face-name">Up</div>
+    <div class="face-label">Top face</div>
+  </div>
+  <div class="face-card">
+    <div class="face-swatch" style="background:var(--D)">D</div>
+    <div class="face-name">Down</div>
+    <div class="face-label">Bottom face</div>
+  </div>
+  <div class="face-card">
+    <div class="face-swatch" style="background:var(--R)">R</div>
+    <div class="face-name">Right</div>
+    <div class="face-label">Right face</div>
+  </div>
+  <div class="face-card">
+    <div class="face-swatch" style="background:var(--L)">L</div>
+    <div class="face-name">Left</div>
+    <div class="face-label">Left face</div>
+  </div>
+  <div class="face-card">
+    <div class="face-swatch" style="background:var(--F)">F</div>
+    <div class="face-name">Front</div>
+    <div class="face-label">Facing you</div>
+  </div>
+  <div class="face-card">
+    <div class="face-swatch" style="background:var(--B); color:white">B</div>
+    <div class="face-name">Back</div>
+    <div class="face-label">Away from you</div>
+  </div>
+</div>
+
+<h2>Move Notation</h2>
+<p>A letter alone means <strong>90° clockwise</strong> (when looking directly at that face). A letter followed by <strong>ʼ</strong> (prime) means <strong>90° counter-clockwise</strong>. A letter followed by <strong>2</strong> means <strong>180°</strong> — direction doesn't matter.</p>
+
+<table class="move-table">
+  <thead>
+    <tr>
+      <th>Notation</th>
+      <th>Meaning</th>
+      <th>How to remember</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="move-badge">U</span></td>
+      <td>Turn the top layer clockwise (looking down)</td>
+      <td>Screw lid tightening</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge prime">Uʼ</span></td>
+      <td>Turn the top layer counter-clockwise</td>
+      <td>Screw lid loosening</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge">U2</span></td>
+      <td>Turn top layer 180°</td>
+      <td>Either direction, ends the same</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge">R</span></td>
+      <td>Turn the right layer clockwise (looking from right)</td>
+      <td>Right hand pulls away from you at the top</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge prime">Rʼ</span></td>
+      <td>Turn the right layer counter-clockwise</td>
+      <td>Right hand pulls toward you at the top</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge">F</span></td>
+      <td>Turn the front layer clockwise (looking at you)</td>
+      <td>Right side goes down</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge prime">Fʼ</span></td>
+      <td>Turn the front layer counter-clockwise</td>
+      <td>Left side goes down</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge">L</span></td>
+      <td>Turn the left layer clockwise (looking from left)</td>
+      <td>Left hand pulls away from you at the top</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge">D</span></td>
+      <td>Turn the bottom layer clockwise (looking up from below)</td>
+      <td>Opposite of U</td>
+    </tr>
+    <tr>
+      <td><span class="move-badge">B</span></td>
+      <td>Turn the back layer clockwise (looking from behind)</td>
+      <td>Least used — appears mainly in OLL/PLL later</td>
+    </tr>
+  </tbody>
+</table>
+<p class="cite">Source: <a href="https://ruwix.com/the-rubiks-cube/notation/" target="_blank">Ruwix — Standard Cube Notation</a></p>
+
+<h2>Reading an Algorithm</h2>
+<p>Algorithms are just sequences of these moves. Example — the <strong>Sexy Move</strong>, the most common pattern in beginner solving:</p>
+<p style="font-family:monospace; font-size:1.2rem; background:var(--surface); padding:0.8rem 1rem; border-radius:6px; letter-spacing:0.1em;">R  Uʼ  Rʼ  U</p>
+<p>Say it out loud as you read: <em>"Right, Up-prime, Right-prime, Up."</em> That's it. Every algorithm in the beginner method is just 4–8 moves like this.</p>
+
+<div class="quiz">
+  <h2>Quick Check</h2>
+  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.2rem;">Tap the correct answer for each question.</p>
+
+  <div class="quiz-q" id="q1">
+    <p>What does <code>Rʼ</code> mean?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q1',false)">Right face, 90° clockwise</div>
+      <div class="opt" onclick="answer(this,'q1',true)">Right face, 90° counter-clockwise</div>
+      <div class="opt" onclick="answer(this,'q1',false)">Right face, 180°</div>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <div class="quiz-q" id="q2">
+    <p>You're looking directly at the front of the cube. <code>F</code> means the front layer turns…?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q2',true)">Clockwise</div>
+      <div class="opt" onclick="answer(this,'q2',false)">Counter-clockwise</div>
+      <div class="opt" onclick="answer(this,'q2',false)">180°</div>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <div class="quiz-q" id="q3">
+    <p>Which face is <strong>never</strong> one of the 6 standard face letters?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q3',false)">B</div>
+      <div class="opt" onclick="answer(this,'q3',true)">M</div>
+      <div class="opt" onclick="answer(this,'q3',false)">D</div>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <div class="quiz-q" id="q4">
+    <p>An algorithm starts with <code>U2</code>. How many degrees does the top layer turn?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q4',false)">90°</div>
+      <div class="opt" onclick="answer(this,'q4',true)">180°</div>
+      <div class="opt" onclick="answer(this,'q4',false)">270°</div>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <div id="score-box">
+    <div id="score-text"></div>
+    <div id="score-msg"></div>
+  </div>
+</div>
+
+<h2>Next Lesson Preview</h2>
+<p>Lesson 2 will cover the <strong>White Cross</strong> — the first real step in solving. You'll see your first real algorithms written in notation. If anything above feels shaky, re-read the move table or ask a follow-up question below.</p>
+
+<footer>
+  Ask follow-up questions to your agent — it's your teacher and can clarify anything. &nbsp;·&nbsp;
+  <a href="https://ruwix.com/the-rubiks-cube/notation/" target="_blank">Notation reference</a> &nbsp;·&nbsp;
+  <a href="../MISSION.md">Mission</a>
+</footer>
+
+<script>
+  const state = { q1: false, q2: false, q3: false, q4: false };
+
+  function answer(el, qid, correct) {
+    const opts = el.parentElement.querySelectorAll('.opt');
+    opts.forEach(o => { o.onclick = null; });
+    el.classList.add(correct ? 'correct' : 'wrong');
+    const fb = document.getElementById(qid + '-fb');
+    if (correct) {
+      fb.textContent = 'Correct.';
+      fb.className = 'feedback ok';
+      state[qid] = true;
+    } else {
+      fb.textContent = 'Not quite — tap the right one.';
+      fb.className = 'feedback err';
+      // re-enable remaining options
+      opts.forEach(o => {
+        if (o !== el) o.onclick = o.getAttribute('onclick') ? null : null;
+      });
+    }
+    checkScore();
+  }
+
+  function checkScore() {
+    const answered = Object.values(state).filter(Boolean).length;
+    if (answered === 4) {
+      const box = document.getElementById('score-box');
+      box.style.display = 'block';
+      document.getElementById('score-text').textContent = '4 / 4';
+      document.getElementById('score-msg').textContent = 'Notation locked in. You\'re ready for Lesson 2.';
+    }
+  }
+</script>
+
+</body>
+</html>
