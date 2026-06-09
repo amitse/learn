@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go Lesson 1 — Go for TypeScript Devs</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --white: #ffffff;
+    --go: #00adb5;
+    --ts: #3178c6;
+    --green: #3ab54a;
+    --red: #e84040;
+    --yellow: #f5d600;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+  .lesson-meta { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--white); }
+  h2 { font-size: 1.15rem; font-weight: 600; color: var(--white); margin: 2.2rem 0 0.8rem; }
+  p { margin-bottom: 1rem; }
+
+  .win-box {
+    background: linear-gradient(135deg, #0d2a2c 0%, #1a1d27 100%);
+    border: 1px solid var(--go);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .win-box strong { color: var(--go); }
+
+  /* Side-by-side comparison */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 1.2rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+  .compare-pane { padding: 0; }
+  .compare-header {
+    padding: 0.45rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .compare-header.ts { background: #1a2744; color: var(--ts); border-bottom: 1px solid var(--border); }
+  .compare-header.go { background: #0d2a2c; color: var(--go); border-bottom: 1px solid var(--border); }
+  .compare pre {
+    margin: 0;
+    padding: 1rem;
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    background: var(--surface);
+    color: var(--text);
+    overflow-x: auto;
+    height: 100%;
+  }
+  .compare-pane:first-child pre { border-right: 1px solid var(--border); }
+
+  /* Single code block */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1.2rem 0;
+  }
+  .code-block-header {
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--go);
+    background: #0d2a2c;
+    border-bottom: 1px solid var(--border);
+  }
+  .code-block pre {
+    margin: 0;
+    padding: 1rem;
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.87rem;
+    line-height: 1.65;
+    overflow-x: auto;
+    color: var(--text);
+  }
+
+  /* Callout */
+  .callout {
+    border-left: 3px solid var(--go);
+    background: #0d2a2c22;
+    padding: 0.8rem 1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+  .callout.warn { border-left-color: var(--yellow); background: #2a2200; }
+
+  /* Quiz */
+  .quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 2rem 0; }
+  .quiz h2 { margin-top: 0; }
+  .quiz-q { margin-bottom: 1.4rem; }
+  .quiz-q p { margin-bottom: 0.6rem; font-weight: 500; }
+  .options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .opt {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: border-color 0.15s;
+    user-select: none;
+    font-family: 'Cascadia Code','Fira Code','Courier New',monospace;
+  }
+  .opt:hover { border-color: var(--go); }
+  .opt.correct { background: #1a3a1a; border-color: var(--green); color: var(--green); }
+  .opt.wrong { background: #3a1a1a; border-color: var(--red); color: var(--red); }
+  .feedback { margin-top: 0.5rem; font-size: 0.84rem; min-height: 1.1rem; }
+  .feedback.ok { color: var(--green); }
+  .feedback.err { color: var(--red); }
+
+  #score-box { display:none; background:var(--bg); border:1px solid var(--go); border-radius:8px; padding:1.2rem; margin-top:1rem; text-align:center; }
+  #score-text { font-size:1.4rem; font-weight:700; color:var(--white); }
+  #score-msg { color:var(--muted); margin-top:0.3rem; font-size:0.9rem; }
+
+  .cite { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+  .cite a { color: var(--accent); text-decoration: none; }
+  .cite a:hover { text-decoration: underline; }
+
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* syntax highlight helpers */
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; }
+  .tp { color: #ffcb6b; }
+  .num { color: #f78c6c; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="lesson-meta">Go · Lesson 1 of ? &nbsp;·&nbsp; For TypeScript Developers</div>
+  <h1>Go for TypeScript Devs</h1>
+  <p style="color:var(--muted);margin-top:0.5rem;">The 20% of Go syntax that covers 80% of what you'll write — mapped directly to TypeScript.</p>
+</header>
+
+<div class="win-box">
+  <strong>Win for this lesson:</strong> You can read and write basic Go — variables, functions, types, and structs — without your TypeScript brain fighting you.
+</div>
+
+<h2>The Mental Shift</h2>
+<p>TypeScript compiles to JavaScript and runs in a runtime. Go compiles to a native binary and runs directly on the OS. There's no <code>node_modules</code>, no <code>package.json</code>, no runtime dependency. You <code>go build</code> and get an executable.</p>
+<p>The other big shift: Go is <strong>statically typed with no implicit conversions</strong> — stricter than TS in some ways, simpler in others. And there's <strong>no <code>null</code></strong>. Zero values everywhere.</p>
+
+<h2>Variables</h2>
+<div class="compare">
+  <div class="compare-pane">
+    <div class="compare-header ts">TypeScript</div>
+    <pre><span class="kw">const</span> name: <span class="tp">string</span> = <span class="str">"Amit"</span>
+<span class="kw">let</span> age: <span class="tp">number</span> = <span class="num">30</span>
+<span class="kw">let</span> active: <span class="tp">boolean</span> = <span class="kw">true</span>
+
+<span class="cm">// type inferred</span>
+<span class="kw">const</span> score = <span class="num">100</span></pre>
+  </div>
+  <div class="compare-pane">
+    <div class="compare-header go">Go</div>
+    <pre><span class="kw">var</span> name <span class="tp">string</span> = <span class="str">"Amit"</span>
+<span class="kw">var</span> age <span class="tp">int</span> = <span class="num">30</span>
+<span class="kw">var</span> active <span class="tp">bool</span> = <span class="kw">true</span>
+
+<span class="cm">// shorthand (inferred) — use this always</span>
+score := <span class="num">100</span></pre>
+  </div>
+</div>
+<div class="callout">
+  <strong>:= is your new const.</strong> Inside functions, always use <code>:=</code> for new variables. <code>var</code> is mostly for package-level declarations.
+</div>
+
+<h2>Functions</h2>
+<div class="compare">
+  <div class="compare-pane">
+    <div class="compare-header ts">TypeScript</div>
+    <pre><span class="kw">function</span> <span class="fn">add</span>(a: <span class="tp">number</span>, b: <span class="tp">number</span>): <span class="tp">number</span> {
+  <span class="kw">return</span> a + b
+}
+
+<span class="cm">// multiple return values? Use an object</span>
+<span class="kw">function</span> <span class="fn">divide</span>(a: <span class="tp">number</span>, b: <span class="tp">number</span>)
+  : { result: <span class="tp">number</span>; err: <span class="tp">string</span> | <span class="kw">null</span> } {
+  <span class="kw">if</span> (b === <span class="num">0</span>) <span class="kw">return</span> { result: <span class="num">0</span>, err: <span class="str">"div by zero"</span> }
+  <span class="kw">return</span> { result: a / b, err: <span class="kw">null</span> }
+}</pre>
+  </div>
+  <div class="compare-pane">
+    <div class="compare-header go">Go</div>
+    <pre><span class="kw">func</span> <span class="fn">add</span>(a <span class="tp">int</span>, b <span class="tp">int</span>) <span class="tp">int</span> {
+  <span class="kw">return</span> a + b
+}
+
+<span class="cm">// Go has native multiple return values</span>
+<span class="kw">func</span> <span class="fn">divide</span>(a, b <span class="tp">float64</span>) (<span class="tp">float64</span>, <span class="tp">error</span>) {
+  <span class="kw">if</span> b == <span class="num">0</span> {
+    <span class="kw">return</span> <span class="num">0</span>, fmt.<span class="fn">Errorf</span>(<span class="str">"div by zero"</span>)
+  }
+  <span class="kw">return</span> a / b, <span class="kw">nil</span>
+}</pre>
+  </div>
+</div>
+<div class="callout">
+  Multiple return values are <strong>native in Go</strong> — no wrapper object needed. This is how Go handles errors: always return <code>(value, error)</code> and check the error immediately.
+</div>
+
+<h2>Error Handling — The Big One</h2>
+<p>In TypeScript you <code>throw</code> and <code>try/catch</code>. Go doesn't do that. Functions return an error as a second value, and <strong>you check it every time.</strong></p>
+<div class="compare">
+  <div class="compare-pane">
+    <div class="compare-header ts">TypeScript</div>
+    <pre><span class="kw">try</span> {
+  <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchUser</span>(id)
+  console.<span class="fn">log</span>(data)
+} <span class="kw">catch</span> (err) {
+  console.<span class="fn">error</span>(err)
+}</pre>
+  </div>
+  <div class="compare-pane">
+    <div class="compare-header go">Go</div>
+    <pre>data, err := <span class="fn">fetchUser</span>(id)
+<span class="kw">if</span> err != <span class="kw">nil</span> {
+  fmt.<span class="fn">Println</span>(err)
+  <span class="kw">return</span>
+}
+fmt.<span class="fn">Println</span>(data)</pre>
+  </div>
+</div>
+<div class="callout warn">
+  You <strong>will</strong> forget to check errors at first. The Go compiler won't catch it. Make it a habit: every <code>:=</code> that could return an error gets an <code>if err != nil</code> block right after.
+</div>
+
+<h2>Structs (Go's version of interfaces/types)</h2>
+<div class="compare">
+  <div class="compare-pane">
+    <div class="compare-header ts">TypeScript</div>
+    <pre><span class="kw">interface</span> <span class="tp">User</span> {
+  name: <span class="tp">string</span>
+  age:  <span class="tp">number</span>
+}
+
+<span class="kw">const</span> u: <span class="tp">User</span> = { name: <span class="str">"Amit"</span>, age: <span class="num">30</span> }
+console.<span class="fn">log</span>(u.name)</pre>
+  </div>
+  <div class="compare-pane">
+    <div class="compare-header go">Go</div>
+    <pre><span class="kw">type</span> <span class="tp">User</span> <span class="kw">struct</span> {
+  Name <span class="tp">string</span>
+  Age  <span class="tp">int</span>
+}
+
+u := <span class="tp">User</span>{Name: <span class="str">"Amit"</span>, Age: <span class="num">30</span>}
+fmt.<span class="fn">Println</span>(u.Name)</pre>
+  </div>
+</div>
+<div class="callout">
+  <strong>Capital letters = exported (public). Lowercase = unexported (private).</strong> This applies to struct fields, functions, variables — everything. No <code>export</code> keyword, just capitalisation.
+</div>
+
+<h2>Your First Go Program</h2>
+<p>Every Go program starts with a <code>main</code> package and a <code>main()</code> function. It's the entry point — same idea as <code>index.ts</code>.</p>
+<div class="code-block">
+  <div class="code-block-header">Go — main.go</div>
+  <pre><span class="kw">package</span> main
+
+<span class="kw">import</span> <span class="str">"fmt"</span>
+
+<span class="kw">type</span> <span class="tp">User</span> <span class="kw">struct</span> {
+  Name <span class="tp">string</span>
+  Age  <span class="tp">int</span>
+}
+
+<span class="kw">func</span> <span class="fn">greet</span>(u <span class="tp">User</span>) <span class="tp">string</span> {
+  <span class="kw">return</span> fmt.<span class="fn">Sprintf</span>(<span class="str">"Hello, %s! You are %d years old."</span>, u.Name, u.Age)
+}
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+  u := <span class="tp">User</span>{Name: <span class="str">"Amit"</span>, Age: <span class="num">30</span>}
+  msg := <span class="fn">greet</span>(u)
+  fmt.<span class="fn">Println</span>(msg)
+}</pre>
+</div>
+<p class="cite">Try it live: <a href="https://go.dev/play/" target="_blank">go.dev/play</a> — paste this in and click Run.</p>
+
+<div class="quiz">
+  <h2>Quick Check</h2>
+  <p style="color:var(--muted);font-size:0.88rem;margin-bottom:1.2rem;">Tap the correct answer.</p>
+
+  <div class="quiz-q" id="q1">
+    <p>Inside a function, what's the idiomatic way to declare a new variable in Go?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q1',false)">var x string = "hello"</div>
+      <div class="opt" onclick="answer(this,'q1',true)">x := "hello"</div>
+      <div class="opt" onclick="answer(this,'q1',false)">const x = "hello"</div>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <div class="quiz-q" id="q2">
+    <p>A Go struct field named <code>name</code> (lowercase) is…?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q2',false)">public — accessible from other packages</div>
+      <div class="opt" onclick="answer(this,'q2',true)">unexported — only accessible within the same package</div>
+      <div class="opt" onclick="answer(this,'q2',false)">readonly</div>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <div class="quiz-q" id="q3">
+    <p>A function returns <code>(string, error)</code>. You call it. What do you do next?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q3',false)">Wrap the call in try/catch</div>
+      <div class="opt" onclick="answer(this,'q3',false)">Ignore the second return value with _</div>
+      <div class="opt" onclick="answer(this,'q3',true)">Check if err != nil immediately after the call</div>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <div class="quiz-q" id="q4">
+    <p>What's the Go equivalent of a TypeScript <code>interface</code> for defining a data shape?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q4',false)">type Foo interface{}</div>
+      <div class="opt" onclick="answer(this,'q4',true)">type Foo struct{}</div>
+      <div class="opt" onclick="answer(this,'q4',false)">class Foo{}</div>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <div class="quiz-q" id="q5">
+    <p>In Go, <code>nil</code> is used in place of…?</p>
+    <div class="options">
+      <div class="opt" onclick="answer(this,'q5',false)">undefined</div>
+      <div class="opt" onclick="answer(this,'q5',true)">null — the absence of a value (for pointers, slices, maps, errors, interfaces)</div>
+      <div class="opt" onclick="answer(this,'q5',false)">NaN</div>
+    </div>
+    <div class="feedback" id="q5-fb"></div>
+  </div>
+
+  <div id="score-box">
+    <div id="score-text"></div>
+    <div id="score-msg"></div>
+  </div>
+</div>
+
+<h2>Next Lesson Preview</h2>
+<p>Lesson 2 covers <strong>Go Modules + Project Structure</strong> — <code>go mod init</code>, file layout, and how imports work. Then Lesson 3 is where you write your first HTTP handler. You're two lessons from a working server.</p>
+
+<footer>
+  Ask your agent follow-up questions — it's your teacher. &nbsp;·&nbsp;
+  <a href="https://go.dev/tour/" target="_blank">A Tour of Go</a> &nbsp;·&nbsp;
+  <a href="https://gobyexample.com/" target="_blank">Go by Example</a> &nbsp;·&nbsp;
+  <a href="../MISSION.md">Mission</a>
+</footer>
+
+<script>
+  const total = 5;
+  const state = {};
+
+  function answer(el, qid, correct) {
+    if (state[qid]) return;
+    const opts = el.parentElement.querySelectorAll('.opt');
+    opts.forEach(o => o.style.pointerEvents = 'none');
+    el.classList.add(correct ? 'correct' : 'wrong');
+    const fb = document.getElementById(qid + '-fb');
+    if (correct) {
+      fb.textContent = 'Correct.';
+      fb.className = 'feedback ok';
+      state[qid] = true;
+    } else {
+      fb.textContent = 'Not quite.';
+      fb.className = 'feedback err';
+      opts.forEach(o => { if (o !== el) o.style.pointerEvents = 'auto'; });
+    }
+    if (Object.keys(state).length === total) {
+      const box = document.getElementById('score-box');
+      box.style.display = 'block';
+      document.getElementById('score-text').textContent = total + ' / ' + total;
+      document.getElementById('score-msg').textContent = 'Go syntax mapped. On to modules and your first HTTP server.';
+    }
+  }
+</script>
+</body>
+</html>

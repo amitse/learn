@@ -5,30 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily Learning — Amit</title>
 <style>
-  :root { --bg:#0f1117; --surface:#1a1d27; --border:#2a2d3a; --text:#e8eaf0; --muted:#7a7f99; --accent:#6c8cff; }
+  :root { --bg:#0f1117; --surface:#1a1d27; --border:#2a2d3a; --text:#e8eaf0; --muted:#7a7f99; --accent-go:#00adb5; --accent-cube:#f57c00; }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; max-width:680px; margin:0 auto; padding:3rem 1.5rem; }
-  h1 { font-size:1.8rem; color:#fff; margin-bottom:0.4rem; }
-  .sub { color:var(--muted); margin-bottom:2.5rem; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; max-width:720px; margin:0 auto; padding:3rem 1.5rem; }
+  h1 { font-size:1.9rem; color:#fff; margin-bottom:0.3rem; }
+  .sub { color:var(--muted); margin-bottom:2.5rem; font-size:0.95rem; }
   .topic { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.5rem; margin-bottom:1.5rem; }
-  .topic h2 { font-size:1.1rem; color:#fff; margin-bottom:0.3rem; }
-  .topic p { color:var(--muted); font-size:0.9rem; margin-bottom:1rem; }
+  .topic-header { display:flex; align-items:center; gap:0.7rem; margin-bottom:0.4rem; }
+  .topic h2 { font-size:1.05rem; color:#fff; }
+  .topic p { color:var(--muted); font-size:0.88rem; margin-bottom:1rem; }
   .lessons { list-style:none; }
   .lessons li { margin-bottom:0.5rem; }
-  .lessons a { color:var(--accent); text-decoration:none; font-size:0.9rem; }
+  .lessons a { text-decoration:none; font-size:0.9rem; }
   .lessons a:hover { text-decoration:underline; }
-  .badge { display:inline-block; font-size:0.72rem; padding:0.1rem 0.4rem; border-radius:3px; background:#1a3a1a; color:#3ab54a; margin-left:0.4rem; vertical-align:middle; }
+  .badge { display:inline-block; font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:3px; margin-left:0.4rem; vertical-align:middle; font-weight:600; }
+  .badge-new { background:#1a3a1a; color:#3ab54a; }
+  .link-go { color:var(--accent-go); }
+  .link-cube { color:var(--accent-cube); }
+  .dot-go { width:10px; height:10px; background:var(--accent-go); border-radius:50%; display:inline-block; }
+  .dot-cube { width:10px; height:10px; background:var(--accent-cube); border-radius:50%; display:inline-block; }
 </style>
 </head>
 <body>
   <h1>Daily Learning</h1>
-  <p class="sub">One lesson per day. Stateful. AI-powered.</p>
+  <p class="sub">One lesson per day, per topic. Stateful. AI-powered.</p>
 
   <div class="topic">
-    <h2>🟧 Solving a Rubik's Cube</h2>
+    <div class="topic-header">
+      <span class="dot-go"></span>
+      <h2>Go (Golang)</h2>
+    </div>
+    <p>For TypeScript devs. Goal: write and ship an HTTP server in Go.</p>
+    <ul class="lessons">
+      <li><a href="go/lessons/0001-go-for-ts-devs.html" class="link-go">Lesson 1 — Go for TypeScript Devs</a> <span class="badge badge-new">new</span></li>
+    </ul>
+  </div>
+
+  <div class="topic">
+    <div class="topic-header">
+      <span class="dot-cube"></span>
+      <h2>Solving a Rubik's Cube</h2>
+    </div>
     <p>Layer-by-layer beginner method. Goal: first unaided solve.</p>
     <ul class="lessons">
-      <li><a href="rubiks-cube/lessons/0001-cube-notation.html">Lesson 1 — Cube Notation</a> <span class="badge">new</span></li>
+      <li><a href="rubiks-cube/lessons/0001-cube-notation.html" class="link-cube">Lesson 1 — Cube Notation</a></li>
     </ul>
   </div>
 </body>
