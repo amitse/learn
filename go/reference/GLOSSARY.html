@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go Glossary — Quick Reference</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --white: #ffffff;
+    --green: #3ab54a;
+    --yellow: #f5d600;
+    --ts: #3178c6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  h1 { font-size: 1.7rem; color: var(--white); margin-bottom: 0.25rem; }
+  .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  h2 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin: 2rem 0 0.6rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 0.78rem; padding: 0.35rem 0.7rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--accent); font-family: 'Cascadia Code', monospace; white-space: nowrap; width: 30%; }
+  td:nth-child(2) { color: var(--muted); font-size: 0.82rem; width: 25%; }
+  code { font-family: 'Cascadia Code', monospace; background: #22263a; border-radius: 3px; padding: 0.1em 0.35em; font-size: 0.85em; }
+  .new-badge { display: inline-block; font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px; background: #0d2b12; color: var(--green); font-weight: 700; vertical-align: middle; margin-left: 0.3rem; }
+</style>
+</head>
+<body>
+<h1>Go Glossary</h1>
+<p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
+
+<h2>Modules &amp; Build (Lesson 2)</h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>module <span class="new-badge">new</span></td>
+    <td>npm package / repo</td>
+    <td>A collection of related Go packages declared by a single <code>go.mod</code> file. The module path (e.g. <code>github.com/user/repo</code>) is its globally unique name.</td>
+  </tr>
+  <tr>
+    <td>go.mod <span class="new-badge">new</span></td>
+    <td>package.json</td>
+    <td>The module manifest. Declares module path, minimum Go version, and required dependencies.</td>
+  </tr>
+  <tr>
+    <td>go.sum <span class="new-badge">new</span></td>
+    <td>package-lock.json</td>
+    <td>Cryptographic checksums for all dependencies. Auto-managed — commit it, never edit by hand.</td>
+  </tr>
+  <tr>
+    <td>package <span class="new-badge">new</span></td>
+    <td>directory of files (roughly)</td>
+    <td>The unit of code organization in Go. One directory = one package. Declared with <code>package &lt;name&gt;</code> at the top of every <code>.go</code> file.</td>
+  </tr>
+  <tr>
+    <td>go run . <span class="new-badge">new</span></td>
+    <td>ts-node src/index.ts</td>
+    <td>Compiles and runs the current package immediately. Good for development.</td>
+  </tr>
+  <tr>
+    <td>go build . <span class="new-badge">new</span></td>
+    <td>tsc + node dist/index.js</td>
+    <td>Compiles to a static native binary. No runtime required to execute it.</td>
+  </tr>
+  <tr>
+    <td>go get &lt;path&gt; <span class="new-badge">new</span></td>
+    <td>npm install &lt;pkg&gt;</td>
+    <td>Fetches a dependency and adds it to <code>go.mod</code> / <code>go.sum</code>.</td>
+  </tr>
+  <tr>
+    <td>exported identifier <span class="new-badge">new</span></td>
+    <td>export keyword</td>
+    <td>Any identifier starting with a capital letter is exported (public). Lowercase = package-private. No keyword needed.</td>
+  </tr>
+</table>
+
+<h2>Core Language (Lesson 1)</h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>struct</td>
+    <td>interface / type</td>
+    <td>A named collection of fields. Go's primary way to model data shapes.</td>
+  </tr>
+  <tr>
+    <td>:=</td>
+    <td>const / let + inference</td>
+    <td>Short variable declaration — declares and assigns with type inferred. Only usable inside functions.</td>
+  </tr>
+  <tr>
+    <td>error</td>
+    <td>Error / throw</td>
+    <td>Go's built-in interface for errors. Functions return <code>(value, error)</code>; callers check <code>if err != nil</code>.</td>
+  </tr>
+  <tr>
+    <td>nil</td>
+    <td>null / undefined</td>
+    <td>The zero value for pointers, slices, maps, channels, functions, and interfaces.</td>
+  </tr>
+  <tr>
+    <td>defer</td>
+    <td>finally / cleanup</td>
+    <td>Schedules a function call to run when the surrounding function returns. Common for closing files, unlocking mutexes.</td>
+  </tr>
+</table>
+
+</body>
+</html>

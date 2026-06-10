@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go Lesson 2 — Modules &amp; Project Structure</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --white: #ffffff;
+    --go: #00adb5;
+    --ts: #3178c6;
+    --green: #3ab54a;
+    --green-bg: #0d2b12;
+    --red: #e84040;
+    --red-bg: #2b0d0d;
+    --yellow: #f5d600;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+  /* ── HEADER ── */
+  .lesson-meta { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  h1 { font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+  .intro { color: var(--muted); font-size: 1rem; margin-bottom: 2.5rem; }
+  /* ── SECTION ── */
+  h2 { font-size: 1.2rem; color: var(--accent); margin: 2.2rem 0 0.7rem; }
+  h3 { font-size: 1rem; color: var(--white); margin: 1.4rem 0 0.4rem; }
+  p { margin-bottom: 0.9rem; }
+  /* ── COMPARE TABLE ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.88rem;
+  }
+  .compare-header {
+    display: contents;
+  }
+  .compare-header > div {
+    padding: 0.45rem 1rem;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .col-ts { background: #1b2a3d; color: var(--ts); border-bottom: 1px solid var(--border); }
+  .col-go { background: #0d2426; color: var(--go); border-bottom: 1px solid var(--border); }
+  .compare-row { display: contents; }
+  .compare-row > div {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .compare-row:last-child > div { border-bottom: none; }
+  .compare-row > div:first-child { border-right: 1px solid var(--border); }
+  /* ── CODE BLOCKS ── */
+  pre, code {
+    font-family: 'Cascadia Code', 'Fira Mono', 'Consolas', monospace;
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.87rem;
+    line-height: 1.55;
+    margin: 0.6rem 0 1.2rem;
+  }
+  code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-size: 0.87em;
+  }
+  pre code { background: none; border: none; padding: 0; font-size: inherit; }
+  /* ── CALLOUT ── */
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 0.8rem 1.1rem;
+    margin: 1rem 0 1.4rem;
+    font-size: 0.93rem;
+  }
+  .callout.warn { border-left-color: var(--yellow); }
+  /* ── QUIZ ── */
+  .quiz-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.6rem;
+    margin-top: 2.5rem;
+  }
+  .quiz-section h2 { margin-top: 0; }
+  .question { margin-bottom: 1.6rem; }
+  .question p { font-weight: 600; margin-bottom: 0.7rem; color: var(--white); }
+  .options { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+  .options li button {
+    width: 100%;
+    text-align: left;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.55rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.91rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .options li button:hover { border-color: var(--accent); }
+  .options li button.correct { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .options li button.wrong { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+  .options li button:disabled { cursor: default; }
+  .feedback { font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
+  .feedback.ok { color: var(--green); }
+  .feedback.no { color: var(--red); }
+  /* ── SCORE BAR ── */
+  #score-area { display: none; text-align: center; padding-top: 1rem; }
+  #score-area .score-num { font-size: 2.4rem; font-weight: 800; color: var(--accent); }
+  #score-area p { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+  /* ── FILE TREE ── */
+  .tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-family: 'Cascadia Code', 'Fira Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.8;
+    margin: 0.8rem 0 1.4rem;
+  }
+  .tree .dir { color: var(--accent); }
+  .tree .file { color: var(--text); }
+  .tree .comment { color: var(--muted); }
+  /* ── STEP ── */
+  .step {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 1.8rem;
+    height: 1.8rem;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.15rem;
+  }
+  .step-body { flex: 1; }
+  /* ── CITATION ── */
+  .cite { font-size: 0.78rem; color: var(--muted); }
+  .cite a { color: var(--muted); }
+  .cite a:hover { color: var(--accent); }
+  /* ── FOOTER ── */
+  .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+  .footer strong { color: var(--accent); }
+  /* ── SYNTAX HIGHLIGHT SHIMS ── */
+  .k { color: #c792ea; }   /* keyword */
+  .s { color: #c3e88d; }   /* string */
+  .c { color: #546e7a; }   /* comment */
+  .f { color: #82aaff; }   /* function/identifier */
+  .t { color: #ffcb6b; }   /* type */
+  .n { color: #f78c6c; }   /* number/literal */
+</style>
+</head>
+<body>
+
+<p class="lesson-meta">Go — Lesson 2</p>
+<h1>Modules &amp; Project Structure</h1>
+<p class="intro">
+  Your TS mental model: <code>package.json</code> + <code>tsconfig.json</code> + <code>src/</code>.
+  Today you'll map that to Go's equivalent — <code>go.mod</code>, packages, and the directory layout you'll use for your HTTP server.
+</p>
+
+<!-- ── SECTION 1 ── -->
+<h2>1. The TS→Go mental-model map</h2>
+<p>
+  Go has its own module system, but the concepts are familiar. Here's a direct translation of what you already know:
+</p>
+<div class="compare">
+  <div class="compare-header">
+    <div class="col-ts">TypeScript</div>
+    <div class="col-go">Go</div>
+  </div>
+  <div class="compare-row">
+    <div><code>package.json</code> — project manifest, records module name + deps</div>
+    <div><code>go.mod</code> — same idea; records module path + Go version + deps</div>
+  </div>
+  <div class="compare-row">
+    <div><code>npm install some-lib</code></div>
+    <div><code>go get github.com/some/lib</code></div>
+  </div>
+  <div class="compare-row">
+    <div><code>node_modules/</code></div>
+    <div><code>$GOPATH/pkg/mod/</code> (shared module cache, not per-project)</div>
+  </div>
+  <div class="compare-row">
+    <div><code>package-lock.json</code> / <code>yarn.lock</code></div>
+    <div><code>go.sum</code> — auto-managed; commit it, don't edit it</div>
+  </div>
+  <div class="compare-row">
+    <div>A file exports symbols via <code>export</code></div>
+    <div>A <em>directory</em> is a package; exported symbols start with a capital letter</div>
+  </div>
+  <div class="compare-row">
+    <div><code>import { foo } from './bar'</code></div>
+    <div><code>import "mymodule/bar"</code> (by module path, not relative)</div>
+  </div>
+  <div class="compare-row">
+    <div><code>ts-node src/index.ts</code></div>
+    <div><code>go run ./main.go</code> or <code>go run .</code></div>
+  </div>
+  <div class="compare-row">
+    <div><code>tsc &amp;&amp; node dist/index.js</code></div>
+    <div><code>go build .</code> → produces a single binary, run it directly</div>
+  </div>
+</div>
+<p class="cite">
+  <a href="https://go.dev/doc/code" target="_blank">↗ go.dev/doc/code — How to Write Go Code</a>
+</p>
+
+<!-- ── SECTION 2 ── -->
+<h2>2. Initializing a module</h2>
+<p>
+  Every Go project starts with one command. The <em>module path</em> is the canonical import path for your code — by convention it's a GitHub URL (even if the repo doesn't exist yet).
+</p>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    Create a directory and <code>cd</code> into it:
+    <pre>mkdir my-server && cd my-server</pre>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    Initialize the module:
+    <pre>go mod init github.com/yourname/my-server</pre>
+    This creates <code>go.mod</code>.
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    Inspect what was created:
+    <pre><span class="c">// go.mod</span>
+<span class="k">module</span> github.com/yourname/my-server
+
+<span class="k">go</span> <span class="n">1.22</span></pre>
+    That's literally all it contains — two lines. Dependencies get added automatically when you <code>go get</code> them.
+  </div>
+</div>
+
+<div class="callout">
+  <strong>No npm install needed for stdlib.</strong> Go's standard library (<code>net/http</code>, <code>encoding/json</code>, etc.) is bundled with the Go toolchain. You only need <code>go get</code> for third-party packages.
+</div>
+
+<!-- ── SECTION 3 ── -->
+<h2>3. Packages: directories, not files</h2>
+<p>
+  This is the biggest mental-model shift from TS. In TypeScript, each file is a module. In Go, <strong>each directory is a package</strong>. All <code>.go</code> files in the same directory share the same package name (declared at the top of each file) and can see each other's unexported identifiers.
+</p>
+
+<div class="compare">
+  <div class="compare-header">
+    <div class="col-ts">TypeScript</div>
+    <div class="col-go">Go</div>
+  </div>
+  <div class="compare-row">
+    <div>
+<pre><span class="c">// src/greet.ts</span>
+<span class="k">export function</span> <span class="f">greet</span>(name: <span class="t">string</span>) {
+  <span class="k">return</span> <span class="s">`Hello, ${name}`</span>;
+}</span>
+
+<span class="c">// src/main.ts</span>
+<span class="k">import</span> { <span class="f">greet</span> } <span class="k">from</span> <span class="s">'./greet'</span>;
+console.<span class="f">log</span>(<span class="f">greet</span>(<span class="s">"Amit"</span>));</pre>
+    </div>
+    <div>
+<pre><span class="c">// greet.go  (same dir as main.go)</span>
+<span class="k">package</span> main
+
+<span class="k">func</span> <span class="f">Greet</span>(name <span class="t">string</span>) <span class="t">string</span> {
+  <span class="k">return</span> <span class="s">"Hello, "</span> + name
+}
+
+<span class="c">// main.go</span>
+<span class="k">package</span> main
+
+<span class="k">import</span> <span class="s">"fmt"</span>
+
+<span class="k">func</span> <span class="f">main</span>() {
+  fmt.<span class="f">Println</span>(<span class="f">Greet</span>(<span class="s">"Amit"</span>))
+}</pre>
+    </div>
+  </div>
+</div>
+
+<p>
+  <strong>Exported = capitalized.</strong> <code>Greet</code> is exported (accessible from other packages).
+  <code>greet</code> would be package-private. No <code>export</code> keyword needed — the capital letter <em>is</em> the signal.
+</p>
+<p class="cite">
+  <a href="https://go.dev/tour/basics/3" target="_blank">↗ A Tour of Go — Exported names</a>
+</p>
+
+<!-- ── SECTION 4 ── -->
+<h2>4. Project structure for your HTTP server</h2>
+<p>
+  Here's the layout you'll build toward over the next few lessons. You don't need to create it all now — just recognize the pattern:
+</p>
+
+<div class="tree">
+<span class="dir">my-server/</span>
+├── <span class="file">go.mod</span>              <span class="comment"># module declaration (= package.json)</span>
+├── <span class="file">go.sum</span>              <span class="comment"># dependency checksums (= package-lock.json)</span>
+├── <span class="file">main.go</span>             <span class="comment"># package main — entry point, starts the server</span>
+└── <span class="dir">handlers/</span>
+    └── <span class="file">hello.go</span>        <span class="comment"># package handlers — HTTP handler functions</span>
+</div>
+
+<p>
+  When <code>handlers/hello.go</code> declares <code>package handlers</code>, you import it in <code>main.go</code> as:
+</p>
+<pre><span class="k">import</span> <span class="s">"github.com/yourname/my-server/handlers"</span></pre>
+
+<p>
+  Note the full module path, <em>not</em> a relative path. Go always imports by full path. This feels weird at first if you're used to <code>./handlers</code>, but it means imports are globally unambiguous.
+</p>
+
+<!-- ── SECTION 5 ── -->
+<h2>5. Running &amp; building</h2>
+<div class="compare">
+  <div class="compare-header">
+    <div class="col-ts">TypeScript</div>
+    <div class="col-go">Go</div>
+  </div>
+  <div class="compare-row">
+    <div><code>ts-node src/index.ts</code> — compile + run in one step</div>
+    <div><code>go run .</code> — compile + run in one step (same idea)</div>
+  </div>
+  <div class="compare-row">
+    <div><code>tsc</code> → <code>node dist/index.js</code></div>
+    <div><code>go build .</code> → <code>./my-server</code> (single static binary, no runtime needed)</div>
+  </div>
+  <div class="compare-row">
+    <div><code>tsc --watch</code></div>
+    <div>No built-in watch; use <code>air</code> or <code>watchexec</code> for dev</div>
+  </div>
+</div>
+
+<div class="callout warn">
+  <strong>One binary, zero dependencies.</strong> <code>go build</code> produces a fully self-contained binary. No Node.js, no npm packages to ship — just the file. This is one of Go's biggest production advantages.
+</div>
+
+<!-- ── QUIZ ── -->
+<div class="quiz-section">
+  <h2>Quick check ✦</h2>
+  <p style="color:var(--muted);font-size:0.88rem;margin-bottom:1.4rem;">4 questions — instant feedback on each answer.</p>
+
+  <!-- Q1 -->
+  <div class="question" id="q1">
+    <p>1. What command initializes a new Go module?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q1',false)">go init myproject</button></li>
+      <li><button onclick="answer(this,'q1',true)">go mod init github.com/yourname/myproject</button></li>
+      <li><button onclick="answer(this,'q1',false)">go new myproject</button></li>
+      <li><button onclick="answer(this,'q1',false)">npm init (Go uses npm too)</button></li>
+    </ul>
+    <p class="feedback" id="q1-fb"></p>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question" id="q2">
+    <p>2. In Go, how do you make a function accessible from <em>outside</em> its package?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q2',false)">Add the <code>export</code> keyword before it</button></li>
+      <li><button onclick="answer(this,'q2',false)">Put it in a file named <code>exports.go</code></button></li>
+      <li><button onclick="answer(this,'q2',true)">Start its name with a capital letter</button></li>
+      <li><button onclick="answer(this,'q2',false)">Use <code>pub func</code> instead of <code>func</code></button></li>
+    </ul>
+    <p class="feedback" id="q2-fb"></p>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question" id="q3">
+    <p>3. You have a directory <code>handlers/</code> inside module <code>github.com/amit/api</code>. What is the correct import path?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q3',false)"><code>import "./handlers"</code></button></li>
+      <li><button onclick="answer(this,'q3',false)"><code>import "handlers"</code></button></li>
+      <li><button onclick="answer(this,'q3',true)"><code>import "github.com/amit/api/handlers"</code></button></li>
+      <li><button onclick="answer(this,'q3',false)"><code>require("./handlers")</code></button></li>
+    </ul>
+    <p class="feedback" id="q3-fb"></p>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question" id="q4">
+    <p>4. What does <code>go build .</code> produce?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q4',false)">A <code>dist/</code> folder with transpiled JS</button></li>
+      <li><button onclick="answer(this,'q4',false)">A <code>.wasm</code> file that needs a runtime</button></li>
+      <li><button onclick="answer(this,'q4',true)">A single self-contained native binary</button></li>
+      <li><button onclick="answer(this,'q4',false)">A Docker image</button></li>
+    </ul>
+    <p class="feedback" id="q4-fb"></p>
+  </div>
+
+  <div id="score-area">
+    <div class="score-num" id="score-num"></div>
+    <p id="score-msg"></p>
+  </div>
+</div>
+
+<!-- ── NEXT ── -->
+<h2>What's next</h2>
+<p>
+  Next lesson: <strong>Your First HTTP Handler</strong> — you'll use <code>net/http</code> to write a handler function, register it, and run a real server. The module structure you learned today is the foundation.
+</p>
+
+<!-- ── FOOTER ── -->
+<div class="footer">
+  <p>
+    <strong>Questions?</strong> Ask your agent — "explain why Go imports use full module paths" or "what's the difference between go run and go build" are good starting points.
+  </p>
+  <p style="margin-top:0.5rem;">
+    References:
+    <a href="https://go.dev/doc/code" target="_blank">How to Write Go Code</a> ·
+    <a href="https://go.dev/ref/mod" target="_blank">Go Modules Reference</a> ·
+    <a href="https://go.dev/tour/basics/1" target="_blank">A Tour of Go</a>
+  </p>
+</div>
+
+<script>
+  const EXPLANATIONS = {
+    q1: { ok: "Correct! <code>go mod init &lt;module-path&gt;</code> creates go.mod and declares your module.",
+          no: "Not quite. The command is <code>go mod init &lt;module-path&gt;</code>. The module path is usually a GitHub URL." },
+    q2: { ok: "Exactly right. Capital first letter = exported in Go. No keyword needed.",
+          no: "In Go there's no export keyword. Just start the name with a capital letter — <code>Greet</code> is exported, <code>greet</code> is not." },
+    q3: { ok: "Correct! Go always imports by full module path, never by relative path.",
+          no: "Go doesn't use relative imports. The full import path is <code>module-name/subdir</code>, so <code>github.com/amit/api/handlers</code>." },
+    q4: { ok: "Yes! A single native binary with everything statically linked — no runtime required.",
+          no: "Go compiles to a single self-contained native binary. No Node.js, no separate files to ship." },
+  };
+
+  let answered = {};
+  let correct = 0;
+  const total = 4;
+
+  function answer(btn, qid, isCorrect) {
+    if (answered[qid]) return;
+    answered[qid] = true;
+    correct += isCorrect ? 1 : 0;
+
+    // disable all buttons in this question
+    btn.closest('.question').querySelectorAll('button').forEach(b => b.disabled = true);
+
+    btn.classList.add(isCorrect ? 'correct' : 'wrong');
+
+    const fb = document.getElementById(qid + '-fb');
+    fb.innerHTML = isCorrect ? EXPLANATIONS[qid].ok : EXPLANATIONS[qid].no;
+    fb.className = 'feedback ' + (isCorrect ? 'ok' : 'no');
+
+    if (Object.keys(answered).length === total) showScore();
+  }
+
+  function showScore() {
+    const area = document.getElementById('score-area');
+    area.style.display = 'block';
+    document.getElementById('score-num').textContent = correct + ' / ' + total;
+    const msgs = ['Keep going — re-read the sections above and try again!',
+                  'Getting there — a couple of things to revisit.',
+                  'Solid! Small gaps to close.',
+                  'Nearly perfect — great work.',
+                  'Perfect score! You\'re ready for Lesson 3.'];
+    document.getElementById('score-msg').textContent = msgs[correct] || msgs[4];
+  }
+</script>
+</body>
+</html>
