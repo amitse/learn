@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rubik's Cube — Glossary</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #21253a;
+    --border: #2a2d3a; --text: #e8eaf0; --muted: #7a7f99;
+    --accent: #f57c00; --white: #ffffff;
+    --U: #ffffff; --D: #f5d600; --R: #e84040; --L: #f57c00; --F: #3ab54a; --B: #2979ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px; line-height: 1.7;
+    max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 4rem;
+  }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; }
+  h1 { font-size: 1.6rem; font-weight: 700; color: var(--white); }
+  .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+  h2 { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 2rem 0 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.5rem; }
+  dt {
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 0.9rem; color: #ffcc80;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.15em 0.5em;
+    white-space: nowrap; align-self: start;
+    height: fit-content; margin-top: 2px;
+  }
+  dd { color: var(--text); font-size: 0.9rem; padding-top: 2px; }
+  .face-dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; vertical-align: middle; margin-right: 3px;
+  }
+  .updated { color: var(--muted); font-size: 0.78rem; margin-top: 2rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Rubik's Cube — Glossary</h1>
+  <p class="sub">All terms introduced across lessons, in order of appearance.</p>
+</header>
+
+<h2>Pieces</h2>
+<dl>
+  <dt>Centre</dt><dd>The fixed middle piece of each face. There are 6 — one per face. They <strong>never move relative to each other</strong>. The colour of a centre defines that face's colour.</dd>
+  <dt>Edge</dt><dd>A piece with 2 coloured stickers, located between two centres. There are 12 edges. Edges form the cross and second-layer slots.</dd>
+  <dt>Corner</dt><dd>A piece with 3 coloured stickers, located at the intersection of 3 faces. There are 8 corners.</dd>
+</dl>
+
+<h2>Faces &amp; Moves</h2>
+<dl>
+  <dt>U</dt><dd><span class="face-dot" style="background:var(--U); border:1px solid #aaa;"></span>Up face (white). <code>U</code> = clockwise 90° turn; <code>U'</code> = counter-clockwise; <code>U2</code> = 180°.</dd>
+  <dt>D</dt><dd><span class="face-dot" style="background:var(--D);"></span>Down face (yellow).</dd>
+  <dt>F</dt><dd><span class="face-dot" style="background:var(--F);"></span>Front face (green by default). <code>F</code> = clockwise when looking at it.</dd>
+  <dt>B</dt><dd><span class="face-dot" style="background:var(--B);"></span>Back face (blue).</dd>
+  <dt>R</dt><dd><span class="face-dot" style="background:var(--R);"></span>Right face (red). <code>R</code> = clockwise from the right side.</dd>
+  <dt>L</dt><dd><span class="face-dot" style="background:var(--L);"></span>Left face (orange). <code>L</code> = clockwise from the left side.</dd>
+  <dt>'&nbsp;(prime)</dt><dd>Counter-clockwise turn of that face. E.g. <code>R'</code> = Right face counter-clockwise.</dd>
+  <dt>2</dt><dd>180° turn (double). <code>F2</code> = Front face rotated 180°.</dd>
+</dl>
+
+<h2>Solve Stages</h2>
+<dl>
+  <dt>White Cross</dt><dd>Step 1. Place the 4 white edge pieces on the white face (D, held down), each matching the adjacent side centre. Built via the Daisy Method.</dd>
+  <dt>Daisy</dt><dd>Intermediate state: 4 white edges on the U face (yellow up) with white stickers facing up, surrounding the yellow centre — like a flower. Used as a building step for the white cross.</dd>
+  <dt>Layer 1</dt><dd>The white face + the ring of 4 white corners. Complete after the White Cross (lesson 2) and White Corners (lesson 3).</dd>
+  <dt>F2L</dt><dd>"First Two Layers" — shorthand for completing layers 1 and 2 together (advanced). In this beginner method, the two layers are solved separately.</dd>
+  <dt>OLL</dt><dd>"Orientation of the Last Layer" — orienting all top-layer stickers yellow-up. Taught in lessons 5–6.</dd>
+  <dt>PLL</dt><dd>"Permutation of the Last Layer" — moving pieces into their final correct positions. Taught in lessons 7–8.</dd>
+</dl>
+
+<h2>Key Algorithms</h2>
+<dl>
+  <dt>F2</dt><dd>Lock a daisy petal into the white cross: <em>align petal above matching centre with U turns, then F2</em>.</dd>
+  <dt>F U R U'</dt><dd>Lift a white edge from the bottom layer (white sticker sideways) into the daisy.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 2 — The White Cross (2026-06-11)</p>
+</body>
+</html>

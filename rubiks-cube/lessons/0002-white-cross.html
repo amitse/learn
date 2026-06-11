@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 2 — The White Cross</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #21253a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #f57c00;
+    --green: #3ab54a;
+    --red: #e84040;
+    --white: #ffffff;
+    /* face colors */
+    --U: #ffffff;
+    --D: #f5d600;
+    --R: #e84040;
+    --L: #f57c00;
+    --F: #3ab54a;
+    --B: #2979ff;
+    --X: #333649; /* empty/unknown */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .lesson-meta {
+    font-size: 0.76rem;
+    color: var(--muted);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--white); }
+  h2 { font-size: 1.15rem; font-weight: 600; color: var(--white); margin: 2.2rem 0 0.8rem; }
+  h3 { font-size: 1rem; font-weight: 600; color: var(--accent); margin: 1.5rem 0 0.6rem; }
+  p { margin-bottom: 1rem; color: var(--text); }
+  a { color: var(--accent); }
+  code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 0.92em;
+    color: #ffcc80;
+  }
+
+  /* Win box */
+  .win-box {
+    background: linear-gradient(135deg, #1a3a20 0%, #1a1d27 100%);
+    border: 1px solid #2d5a35;
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .win-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .win-box p { margin: 0; color: #b8f4c0; font-size: 0.95rem; }
+
+  /* Step cards */
+  .steps { display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0; }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 1.2rem 1.5rem;
+    position: relative;
+    margin-bottom: 0;
+  }
+  .step:first-child { border-radius: 10px 10px 0 0; }
+  .step:last-child { border-radius: 0 0 10px 10px; }
+  .step:not(:last-child) { border-bottom: none; }
+  .step-num {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1d27;
+    font-weight: 700;
+    font-size: 0.75rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 1.6rem;
+    margin-right: 0.6rem;
+    flex-shrink: 0;
+  }
+  .step-header { display: flex; align-items: center; margin-bottom: 0.5rem; }
+  .step-header strong { color: var(--white); font-size: 1rem; }
+  .step p { margin: 0; font-size: 0.93rem; color: var(--muted); }
+
+  /* Face grid */
+  .face-row { display: flex; align-items: flex-start; gap: 2rem; margin: 1.5rem 0; flex-wrap: wrap; }
+  .face-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .face-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+  .face {
+    display: grid;
+    grid-template-columns: repeat(3, 36px);
+    grid-template-rows: repeat(3, 36px);
+    gap: 2px;
+    background: #222538;
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .cell {
+    border-radius: 3px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(0,0,0,0.3);
+  }
+  .c-W { background: var(--U); }
+  .c-Y { background: var(--D); }
+  .c-R { background: var(--R); }
+  .c-O { background: var(--L); }
+  .c-G { background: var(--F); }
+  .c-B { background: var(--B); }
+  .c-X { background: var(--X); }
+  .c-star {
+    background: var(--X);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  /* arrow */
+  .arrow-right {
+    font-size: 2rem;
+    color: var(--muted);
+    align-self: center;
+  }
+
+  /* Algorithm callout */
+  .algo-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.9rem 1.2rem;
+    margin: 1rem 0;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 1.1rem;
+    color: #ffcc80;
+    letter-spacing: 0.12em;
+  }
+  .algo-note { font-size: 0.82rem; color: var(--muted); font-family: 'Segoe UI', system-ui, sans-serif; margin-top: 0.4rem; letter-spacing: 0; }
+
+  /* Tip box */
+  .tip {
+    background: #1a1f2e;
+    border: 1px solid #2a3a5a;
+    border-radius: 8px;
+    padding: 0.9rem 1.2rem;
+    margin: 1rem 0;
+    font-size: 0.93rem;
+    color: #9ab4e8;
+  }
+  .tip strong { color: #b8d0ff; }
+
+  /* Quiz */
+  .quiz-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 3rem;
+  }
+  .quiz-section h2 { margin-top: 0; }
+  .q-block { margin-bottom: 2rem; }
+  .q-block:last-child { margin-bottom: 0; }
+  .q-text { font-weight: 600; color: var(--white); margin-bottom: 0.8rem; font-size: 0.97rem; }
+  .q-options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .q-opt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-size: 0.92rem;
+    transition: border-color 0.15s, background 0.15s;
+    color: var(--text);
+    text-align: left;
+    width: 100%;
+  }
+  .q-opt:hover { border-color: var(--accent); background: #22253a; }
+  .q-opt.correct { background: #1a3a20; border-color: #3ab54a; color: #b8f4c0; }
+  .q-opt.wrong   { background: #2a1a1a; border-color: #e84040; color: #ffaaaa; }
+  .q-opt:disabled { cursor: default; }
+  .q-feedback {
+    margin-top: 0.6rem;
+    font-size: 0.87rem;
+    min-height: 1.3em;
+    color: var(--muted);
+    display: none;
+  }
+  .q-feedback.show { display: block; }
+  .q-feedback.ok { color: #3ab54a; }
+  .q-feedback.bad { color: #e84040; }
+
+  /* Progress bar */
+  .score-bar-wrap { margin-top: 1.5rem; }
+  .score-bar-label { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .score-bar { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+  .score-bar-fill { height: 100%; background: var(--green); border-radius: 4px; width: 0%; transition: width 0.4s; }
+  .score-text { font-size: 0.88rem; color: var(--muted); margin-top: 0.4rem; }
+  .perfect-msg { display: none; margin-top: 1rem; color: #b8f4c0; font-weight: 600; font-size: 0.95rem; }
+
+  /* Citations */
+  .citations {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .citations h2 { font-size: 0.85rem; color: var(--muted); margin-top: 0; margin-bottom: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .citations ol { padding-left: 1.2rem; }
+  .citations li { margin-bottom: 0.3rem; }
+  .citations a { color: #6b8aff; }
+
+  /* CTA */
+  .cta-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+  }
+  .cta-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+  /* Notation badge */
+  .move {
+    display: inline-block;
+    background: #22253a;
+    border: 1px solid #3a3f5a;
+    border-radius: 5px;
+    padding: 0.05em 0.45em;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 0.9em;
+    color: #ffcc80;
+    font-weight: 600;
+  }
+  .move-prime { color: #ff9a80; }
+
+  .separator { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="lesson-meta">Rubik's Cube · Lesson 2 of 8</div>
+  <h1>The White Cross</h1>
+  <p style="color:var(--muted); margin-top:0.4rem; margin-bottom:0;">Layer-by-layer · Step 1 of 7 · ~10 min</p>
+</header>
+
+<div class="win-box">
+  <span class="win-icon">🎯</span>
+  <p><strong>Your win today:</strong> Starting from a scrambled cube, build the white cross — 4 white edge pieces in a cross on the white face, each matching the adjacent center color.</p>
+</div>
+
+<h2>What is the White Cross?</h2>
+
+<p>The white cross is the very first step. It's not just a cross shape on the white face — it also needs the <strong>correct alignment</strong>: each white edge piece's second colour must match the centre of that side.</p>
+
+<div class="face-row">
+  <div class="face-wrap">
+    <div class="face-label">✅ Correct white cross (top view)</div>
+    <div class="face">
+      <div class="cell c-X"></div><div class="cell c-W"></div><div class="cell c-X"></div>
+      <div class="cell c-W"></div><div class="cell c-W"></div><div class="cell c-W"></div>
+      <div class="cell c-X"></div><div class="cell c-W"></div><div class="cell c-X"></div>
+    </div>
+  </div>
+  <div class="face-wrap">
+    <div class="face-label">Front side — must match</div>
+    <div class="face">
+      <div class="cell c-X"></div><div class="cell c-G"></div><div class="cell c-X"></div>
+      <div class="cell c-X"></div><div class="cell c-G"></div><div class="cell c-X"></div>
+      <div class="cell c-X"></div><div class="cell c-X"></div><div class="cell c-X"></div>
+    </div>
+  </div>
+  <div class="face-wrap">
+    <div class="face-label">Right side — must match</div>
+    <div class="face">
+      <div class="cell c-X"></div><div class="cell c-R"></div><div class="cell c-X"></div>
+      <div class="cell c-X"></div><div class="cell c-R"></div><div class="cell c-X"></div>
+      <div class="cell c-X"></div><div class="cell c-X"></div><div class="cell c-X"></div>
+    </div>
+  </div>
+</div>
+
+<p>The <strong>centre pieces never move</strong>. The green centre is always green, the red centre always red. Those centres are your compass for the whole solve. <a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank">↗ ruwix.com</a></p>
+
+<h2>The Daisy Method</h2>
+
+<p>The easiest way to build the white cross is in two stages via a <strong>"daisy"</strong>. Here's the full flow:</p>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">1</span>
+      <strong>Orient: Yellow on top</strong>
+    </div>
+    <p>Hold the cube so the <strong>yellow centre</strong> faces up (U face). White centre will be on the bottom (D face). This is your starting position for the whole solve.</p>
+  </div>
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">2</span>
+      <strong>Build the Daisy</strong>
+    </div>
+    <p>Find all 4 <strong>white edge pieces</strong> anywhere on the cube. Move them one by one to the top (U) face, surrounding the yellow centre — white sticker facing up. The result looks like a daisy: yellow in the middle, 4 white petals.</p>
+  </div>
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">3</span>
+      <strong>Match & Lock each petal</strong>
+    </div>
+    <p>For each white edge (daisy petal): rotate the <strong>U face</strong> until the petal's <em>side colour</em> aligns above the matching centre. Then do <span class="move">F2</span> to drive it to the bottom cross. Repeat for all 4 petals.</p>
+  </div>
+</div>
+
+<hr class="separator">
+
+<h2>Step-by-Step Walkthrough</h2>
+
+<h3>Stage 1 — Building the Daisy</h3>
+
+<p>A white edge piece has two stickers: <strong>white</strong> and one other colour. It can be in 4 places on the cube — and each needs a different technique to get it to the daisy position.</p>
+
+<p><strong>Case A — white edge is already on the top layer (U face), white sticker facing sideways:</strong><br>
+Rotate U until the piece is above its matching centre, then do <span class="move">F</span> <span class="move">U</span> <span class="move move-prime">R'</span> or just check if <span class="move">U</span> turns alone can get white sticker facing up. Usually one or two moves.</p>
+
+<p><strong>Case B — white edge is in the middle layer (E layer):</strong><br>
+Pick the front face of that piece, do <span class="move">F</span> to bring it to the top. Adjust with U turns.</p>
+
+<p><strong>Case C — white edge is in the bottom layer (D face), white sticker facing down:</strong></p>
+
+<div class="algo-box">
+  F2
+  <div class="algo-note">Rotate the front face twice — the piece hops to the top layer, white sticker now facing up. Then move the daisy to accommodate it with U turns.</div>
+</div>
+
+<p><strong>Case D — white edge is in the bottom layer, white sticker facing sideways:</strong></p>
+<div class="algo-box">
+  F U R U'
+  <div class="algo-note">Front, U, Right, U-prime — lifts the edge into the daisy position.</div>
+</div>
+
+<div class="tip">
+  <strong>💡 Tip:</strong> You don't need to memorise exact algorithms for the daisy — just fiddle. The goal is simple: get 4 white-sticker-up pieces around the yellow centre. If you accidentally knock one out, it's fine, fix it. This stage is meant to be exploratory.
+</div>
+
+<h3>Stage 2 — Matching and Locking Petals</h3>
+
+<p>Once you have the daisy, this stage is purely mechanical:</p>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">1</span>
+      <strong>Look at a petal's side colour</strong>
+    </div>
+    <p>Each daisy petal (white edge on U) shows a second colour on the side. For example: the white-green edge has a green sticker facing outward on the U layer.</p>
+  </div>
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">2</span>
+      <strong>Rotate U until it aligns</strong>
+    </div>
+    <p>Turn the U face until that green sticker is directly above the <strong>green centre</strong>. This "aims" the petal at its home.</p>
+  </div>
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">3</span>
+      <strong>F2 — done</strong>
+    </div>
+    <p>Double-turn the front face (<span class="move">F2</span>). The white-green edge drops to the bottom, white sticker on the D face, green sticker matching the green centre. ✅</p>
+  </div>
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">4</span>
+      <strong>Repeat for remaining 3 petals</strong>
+    </div>
+    <p>Each F2 preserves the petals already locked in. Work around the cube until all 4 are in the white cross.</p>
+  </div>
+</div>
+
+<div class="face-row" style="margin-top:1.5rem;">
+  <div class="face-wrap">
+    <div class="face-label">Daisy (U face)</div>
+    <div class="face">
+      <div class="cell c-X"></div><div class="cell c-W"></div><div class="cell c-X"></div>
+      <div class="cell c-W"></div><div class="cell c-Y"></div><div class="cell c-W"></div>
+      <div class="cell c-X"></div><div class="cell c-W"></div><div class="cell c-X"></div>
+    </div>
+  </div>
+  <div class="arrow-right">→</div>
+  <div class="face-wrap">
+    <div class="face-label">After all F2s (D face)</div>
+    <div class="face">
+      <div class="cell c-X"></div><div class="cell c-W"></div><div class="cell c-X"></div>
+      <div class="cell c-W"></div><div class="cell c-W"></div><div class="cell c-W"></div>
+      <div class="cell c-X"></div><div class="cell c-W"></div><div class="cell c-X"></div>
+    </div>
+  </div>
+</div>
+
+<hr class="separator">
+
+<h2>Check Your White Cross</h2>
+
+<p>Flip the cube so white is on top. Verify all 4 conditions:</p>
+<ul style="padding-left:1.3rem; margin-bottom:1rem; color:var(--text);">
+  <li>White sticker in the top position of each cross arm ✓</li>
+  <li>White centre in the middle ✓</li>
+  <li>Front arm's side sticker = front centre colour ✓</li>
+  <li>Right, Back, Left arms similarly match ✓</li>
+</ul>
+
+<div class="tip">
+  <strong>🔗 Practice on a virtual cube:</strong> Use <a href="https://rubiks-cube-solver.com/" target="_blank">rubiks-cube-solver.com</a> — you can scramble it and practice just the cross without needing a physical cube. The "solve" button shows you a verified state if you get stuck.
+</div>
+
+<hr class="separator">
+
+<!-- QUIZ -->
+<div class="quiz-section">
+  <h2>⚡ Quick Check</h2>
+  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.5rem;">4 questions. Instant feedback.</p>
+
+  <!-- Q1 -->
+  <div class="q-block" id="q1">
+    <p class="q-text">1. Which type of piece makes up the white cross?</p>
+    <div class="q-options">
+      <button class="q-opt" onclick="answer('q1',this,false)">Corner pieces (3 colours)</button>
+      <button class="q-opt" onclick="answer('q1',this,true)">Edge pieces (2 colours)</button>
+      <button class="q-opt" onclick="answer('q1',this,false)">Centre pieces (1 colour)</button>
+    </div>
+    <p class="q-feedback" id="q1-fb"></p>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-block" id="q2">
+    <p class="q-text">2. You have the daisy ready. A petal's second colour is <strong>orange</strong>. What do you do before executing F2?</p>
+    <div class="q-options">
+      <button class="q-opt" onclick="answer('q2',this,false)">Rotate the whole cube until orange faces front</button>
+      <button class="q-opt" onclick="answer('q2',this,true)">Turn the U face until the orange sticker is above the orange centre</button>
+      <button class="q-opt" onclick="answer('q2',this,false)">Do F2 immediately — alignment happens automatically</button>
+    </div>
+    <p class="q-feedback" id="q2-fb"></p>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-block" id="q3">
+    <p class="q-text">3. A white edge is stuck in the middle layer (E layer). What is the first move to free it?</p>
+    <div class="q-options">
+      <button class="q-opt" onclick="answer('q3',this,false)">D2 — double-turn the bottom face</button>
+      <button class="q-opt" onclick="answer('q3',this,true)">F — turn the front face to bring it to the top layer</button>
+      <button class="q-opt" onclick="answer('q3',this,false)">U — rotate the top layer</button>
+    </div>
+    <p class="q-feedback" id="q3-fb"></p>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-block" id="q4">
+    <p class="q-text">4. How many white edge pieces does the completed white cross contain?</p>
+    <div class="q-options">
+      <button class="q-opt" onclick="answer('q4',this,false)">3</button>
+      <button class="q-opt" onclick="answer('q4',this,true)">4</button>
+      <button class="q-opt" onclick="answer('q4',this,false)">8</button>
+    </div>
+    <p class="q-feedback" id="q4-fb"></p>
+  </div>
+
+  <div class="score-bar-wrap">
+    <div class="score-bar-label">Score</div>
+    <div class="score-bar"><div class="score-bar-fill" id="score-fill"></div></div>
+    <p class="score-text" id="score-text">0 / 4 answered</p>
+    <p class="perfect-msg" id="perfect-msg">🎉 Perfect score — you're ready to practice on the cube!</p>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-box">
+  <span class="cta-icon">💬</span>
+  <p>Got stuck, or something unclear? Ask your AI teacher. Say something like: <em>"Explain Step 2 of the daisy method again"</em> or <em>"My white-blue edge is in the D layer, white sticker down — what do I do?"</em></p>
+</div>
+
+<!-- Citations -->
+<div class="citations">
+  <h2>Sources</h2>
+  <ol>
+    <li><a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank">Ruwix — Beginner's Layer-by-Layer Method</a></li>
+    <li><a href="https://solvethecube.com/guide" target="_blank">SolvetheCube.com — Step-by-step beginner guide</a></li>
+    <li><a href="https://www.youtube.com/watch?v=7Ron6MN45LY" target="_blank">J Perm — How to Solve the Rubik's Cube (YouTube)</a></li>
+    <li><a href="https://rubiks-cube-solver.com/" target="_blank">Rubik's Cube Solver — virtual practice tool</a></li>
+  </ol>
+</div>
+
+<script>
+  const answers = { q1: 0, q2: 0, q3: 0, q4: 0 };
+  const feedback = {
+    q1: {
+      t: "Correct! Edge pieces have exactly 2 coloured stickers. The cross uses the 4 white edges.",
+      f: "Not quite. Edge pieces (2 stickers) form the cross — corners have 3 stickers, centres can't move."
+    },
+    q2: {
+      t: "Exactly right. Rotate U to align the petal's colour above the matching centre, then F2.",
+      f: "Close — but you don't rotate the whole cube. Instead, turn just the U face to align the petal. Then F2."
+    },
+    q3: {
+      t: "Correct. An F turn brings the middle-layer edge up to the top layer, where you can work with it.",
+      f: "That won't do it. Turning F (front face) moves the middle-layer piece upward so you can then position it for the daisy."
+    },
+    q4: {
+      t: "Right — 4 edge pieces, one on each side of the white face (front, right, back, left).",
+      f: "Not quite — there are exactly 4 white edge pieces forming the cross, one per side."
+    }
+  };
+
+  let correct = 0;
+  const total = 4;
+  const answered = {};
+
+  function answer(qid, btn, isCorrect) {
+    if (answered[qid]) return;
+    answered[qid] = true;
+
+    const opts = btn.parentElement.querySelectorAll('.q-opt');
+    opts.forEach(o => { o.disabled = true; });
+
+    const fb = document.getElementById(qid + '-fb');
+    if (isCorrect) {
+      btn.classList.add('correct');
+      fb.textContent = '✓ ' + feedback[qid].t;
+      fb.className = 'q-feedback show ok';
+      correct++;
+    } else {
+      btn.classList.add('wrong');
+      fb.textContent = '✗ ' + feedback[qid].f;
+      fb.className = 'q-feedback show bad';
+    }
+
+    const answered_count = Object.keys(answered).length;
+    const pct = (correct / total * 100).toFixed(0);
+    document.getElementById('score-fill').style.width = (correct / total * 100) + '%';
+    document.getElementById('score-text').textContent = correct + ' / ' + answered_count + ' correct so far';
+
+    if (answered_count === total) {
+      document.getElementById('score-text').textContent = correct + ' / ' + total + ' correct';
+      if (correct === total) {
+        document.getElementById('perfect-msg').style.display = 'block';
+      }
+    }
+  }
+</script>
+</body>
+</html>
