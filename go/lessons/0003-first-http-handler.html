@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go Lesson 3 — Your First HTTP Handler</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --white: #ffffff;
+    --go: #00adb5;
+    --ts: #3178c6;
+    --green: #3ab54a;
+    --green-bg: #0d2b12;
+    --red: #e84040;
+    --red-bg: #2b0d0d;
+    --yellow: #f5d600;
+    --yellow-bg: #2b2500;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  /* HEADER */
+  .lesson-meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  h1 { font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; line-height: 1.25; }
+  .intro { color: var(--muted); font-size: 1rem; margin-bottom: 2.5rem; max-width: 620px; }
+  .goal-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.8rem 1.1rem;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 2.5rem;
+  }
+  .goal-bar strong { color: var(--accent); }
+
+  /* SECTIONS */
+  h2 { font-size: 1.2rem; color: var(--accent); margin: 2.5rem 0 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1rem; color: var(--white); margin: 1.5rem 0 0.45rem; }
+  p { margin-bottom: 0.9rem; color: var(--text); }
+
+  /* CODE */
+  pre, code {
+    font-family: 'Cascadia Code', 'Fira Mono', 'Consolas', monospace;
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin: 0.6rem 0 1.2rem;
+  }
+  code {
+    background: var(--surface2);
+    border-radius: 3px;
+    padding: 0.1em 0.4em;
+    font-size: 0.87em;
+    color: var(--accent);
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  /* SYNTAX COLORS inside pre */
+  .kw  { color: #c792ea; }   /* keyword */
+  .fn  { color: #82aaff; }   /* function/method */
+  .str { color: #c3e88d; }   /* string */
+  .cm  { color: var(--muted); font-style: italic; } /* comment */
+  .ty  { color: #ffcb6b; }   /* type */
+  .nu  { color: #f78c6c; }   /* number/const */
+  .pk  { color: #89ddff; }   /* package */
+
+  /* SIDE-BY-SIDE COMPARE */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0.75rem 0 1.5rem;
+    font-size: 0.86rem;
+  }
+  .compare-header { display: contents; }
+  .compare-header > div {
+    padding: 0.45rem 1rem;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .col-ts { background: #1b2a3d; color: var(--ts); border-bottom: 1px solid var(--border); }
+  .col-go { background: #0d2426; color: var(--go); border-bottom: 1px solid var(--border); }
+  .compare-row { display: contents; }
+  .compare-row > div {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-row:last-child > div { border-bottom: none; }
+  .compare-row > div:first-child { border-right: 1px solid var(--border); background: #161a28; }
+  .compare-row > div:last-child { background: #0d1a1c; }
+  .compare-row pre {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  /* CALLOUT BOXES */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.92rem;
+  }
+  .callout.warn {
+    border-left: 3px solid var(--yellow);
+    background: #1a1c10;
+  }
+  .callout.tip {
+    border-left: 3px solid var(--green);
+    background: #0e1d12;
+  }
+  .callout .label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.3rem;
+  }
+  .callout.warn .label { color: var(--yellow); }
+  .callout.tip .label  { color: var(--green); }
+
+  /* ANATOMY DIAGRAM */
+  .anatomy {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin: 0.8rem 0 1.5rem;
+    font-family: 'Cascadia Code', 'Fira Mono', monospace;
+    font-size: 0.87rem;
+    line-height: 2;
+  }
+  .anatomy .annot {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-left: 1.5rem;
+  }
+  .hl { color: var(--yellow); font-weight: 600; }
+
+  /* QUIZ */
+  #quiz {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem 1.5rem 1.8rem;
+    margin-top: 2.5rem;
+  }
+  #quiz h2 {
+    font-size: 1.1rem;
+    color: var(--white);
+    border: none;
+    padding: 0;
+    margin: 0 0 0.25rem;
+  }
+  #quiz .quiz-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+  .q-block { margin-bottom: 1.6rem; }
+  .q-block:last-of-type { margin-bottom: 0; }
+  .q-text {
+    font-size: 0.93rem;
+    color: var(--white);
+    margin-bottom: 0.65rem;
+    font-weight: 500;
+  }
+  .q-text code { color: var(--yellow); }
+  .options { display: flex; flex-direction: column; gap: 0.45rem; }
+  .opt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+    text-align: left;
+  }
+  .opt:hover { border-color: var(--accent); background: #1e2638; }
+  .opt.correct { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .opt.wrong   { background: var(--red-bg);   border-color: var(--red);   color: var(--red); }
+  .opt:disabled { cursor: default; }
+  .feedback {
+    margin-top: 0.55rem;
+    font-size: 0.83rem;
+    min-height: 1.2em;
+    color: var(--muted);
+  }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong   { color: var(--red); }
+
+  #quiz-score {
+    display: none;
+    margin-top: 1.4rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  #quiz-score .score-num { font-size: 1.5rem; font-weight: 700; color: var(--white); }
+  #quiz-score .retry-btn {
+    margin-top: 0.75rem;
+    background: var(--accent);
+    color: #0f1117;
+    border: none;
+    border-radius: 5px;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* CITATION */
+  .cite-list { list-style: none; margin: 0.5rem 0 0; }
+  .cite-list li { font-size: 0.83rem; margin-bottom: 0.35rem; }
+  .cite-list a { color: var(--accent); text-decoration: none; }
+  .cite-list a:hover { text-decoration: underline; }
+  .cite-list .cite-label { color: var(--muted); margin-right: 0.3rem; }
+
+  /* NEXT */
+  .next-box {
+    margin-top: 3rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .next-box strong { color: var(--white); }
+  .next-box a { color: var(--accent); text-decoration: none; }
+  .next-box a:hover { text-decoration: underline; }
+
+  /* NAV BREADCRUMB */
+  .breadcrumb { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.8rem; }
+  .breadcrumb a { color: var(--muted); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<p class="breadcrumb"><a href="../../index.html">← All lessons</a></p>
+
+<p class="lesson-meta">Go for TypeScript Devs · Lesson 3 of 7</p>
+<h1>Your First HTTP Handler</h1>
+<p class="intro">No framework needed. Go's standard library ships a full HTTP server. This lesson wires one up from scratch.</p>
+
+<div class="goal-bar">
+  <strong>Goal:</strong> By the end you can write a Go HTTP handler, register it, and run a server that responds to requests — the core pattern every Go HTTP server is built on.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>1. The Pattern in 10 Lines</h2>
+
+<p>Before dissecting anything, here's the complete working server:</p>
+
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="str">"fmt"</span>
+    <span class="str">"net/http"</span>
+)
+
+<span class="kw">func</span> <span class="fn">hello</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+    <span class="fn">fmt.Fprintln</span>(w, <span class="str">"Hello, world!"</span>)
+}
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    <span class="fn">http.HandleFunc</span>(<span class="str">"/"</span>, hello)
+    <span class="fn">http.ListenAndServe</span>(<span class="str">":8080"</span>, <span class="kw">nil</span>)
+}</code></pre>
+
+<p>Save this as <code>main.go</code>, then:</p>
+<pre><code>go run .
+# in another terminal:
+curl http://localhost:8080/
+# → Hello, world!</code></pre>
+
+<div class="callout tip">
+  <div class="label">✓ No install step</div>
+  <code>net/http</code> is part of Go's standard library — it ships with the Go toolchain. No <code>go get</code> needed.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>2. Anatomy of a Handler</h2>
+
+<p>A <strong>handler</strong> is just a function with this exact signature:</p>
+
+<div class="anatomy">
+  <span class="kw">func</span> <span class="fn">hello</span>(<span class="hl">w http.ResponseWriter</span>, <span class="hl">r *http.Request</span>) { ... }
+  <div class="annot">↑ write your response here &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↑ everything about the incoming request</div>
+</div>
+
+<p>Two parameters, always in this order:</p>
+
+<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:1.2rem;">
+  <thead>
+    <tr>
+      <th style="text-align:left;color:var(--muted);padding:0.35rem 0.7rem;border-bottom:1px solid var(--border);font-size:0.78rem;">Parameter</th>
+      <th style="text-align:left;color:var(--muted);padding:0.35rem 0.7rem;border-bottom:1px solid var(--border);font-size:0.78rem;">Type</th>
+      <th style="text-align:left;color:var(--muted);padding:0.35rem 0.7rem;border-bottom:1px solid var(--border);font-size:0.78rem;">What you do with it</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:0.55rem 0.7rem;border-bottom:1px solid var(--border);font-family:monospace;color:var(--accent);">w</td>
+      <td style="padding:0.55rem 0.7rem;border-bottom:1px solid var(--border);font-family:monospace;color:var(--yellow);">http.ResponseWriter</td>
+      <td style="padding:0.55rem 0.7rem;border-bottom:1px solid var(--border);">Write the response — status code, headers, body</td>
+    </tr>
+    <tr>
+      <td style="padding:0.55rem 0.7rem;font-family:monospace;color:var(--accent);">r</td>
+      <td style="padding:0.55rem 0.7rem;font-family:monospace;color:var(--yellow);">*http.Request</td>
+      <td style="padding:0.55rem 0.7rem;">Read the request — method, URL, headers, body</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code>http.ResponseWriter</code> is an <strong>interface</strong> (more on those in a later lesson). For now, think of it as something you can write bytes into. <code>http.Request</code> is a plain struct with all the request data.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>3. TS → Go: Side-by-Side</h2>
+
+<p>If you've used Express, this maps almost 1:1:</p>
+
+<div class="compare">
+  <div class="compare-header">
+    <div class="col-ts">TypeScript (Express)</div>
+    <div class="col-go">Go (net/http)</div>
+  </div>
+  <div class="compare-row">
+    <div><pre><code>import express from 'express'
+const app = express()
+
+app.get('/', (req, res) =&gt; {
+  res.send('Hello, world!')
+})
+
+app.listen(8080)</code></pre></div>
+    <div><pre><code>import "net/http"
+
+func hello(
+  w http.ResponseWriter,
+  r *http.Request,
+) {
+  fmt.Fprintln(w, "Hello, world!")
+}
+
+http.HandleFunc("/", hello)
+http.ListenAndServe(":8080", nil)</code></pre></div>
+  </div>
+  <div class="compare-row">
+    <div><pre><code>// read the method
+req.method  // "GET", "POST"…
+
+// read the URL path
+req.path    // "/users/42"</code></pre></div>
+    <div><pre><code>// read the method
+r.Method    // "GET", "POST"…
+
+// read the URL path
+r.URL.Path  // "/users/42"</code></pre></div>
+  </div>
+  <div class="compare-row">
+    <div><pre><code>res.status(404)
+res.send('Not found')</code></pre></div>
+    <div><pre><code>w.WriteHeader(http.StatusNotFound)
+fmt.Fprintln(w, "Not found")</code></pre></div>
+  </div>
+</div>
+
+<div class="callout warn">
+  <div class="label">⚠ Order matters: headers before body</div>
+  In Go, you must call <code>w.WriteHeader(code)</code> <strong>before</strong> writing the body. Once you write bytes to <code>w</code>, Go sends a 200 automatically. Calling <code>WriteHeader</code> after writing the body has no effect — unlike Express where you can chain freely.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>4. Reading Request Info</h2>
+
+<pre><code><span class="kw">func</span> <span class="fn">info</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+    <span class="cm">// HTTP method: "GET", "POST", "PUT", etc.</span>
+    method := r.Method
+
+    <span class="cm">// The URL path: "/users/42"</span>
+    path := r.URL.Path
+
+    <span class="cm">// A query param: /search?q=go</span>
+    q := r.URL.Query().Get(<span class="str">"q"</span>)
+
+    <span class="cm">// A request header</span>
+    ua := r.Header.Get(<span class="str">"User-Agent"</span>)
+
+    <span class="fn">fmt.Fprintf</span>(w, <span class="str">"method=%s path=%s q=%s ua=%s\n"</span>,
+        method, path, q, ua)
+}</code></pre>
+
+<p>Try registering this as <code>http.HandleFunc("/info", info)</code> and hitting <code>curl "http://localhost:8080/info?q=go"</code>.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>5. Setting Response Headers</h2>
+
+<p>Headers are set via <code>w.Header().Set()</code> — and <em>must</em> be called before <code>WriteHeader</code> or the first body write:</p>
+
+<pre><code><span class="kw">func</span> <span class="fn">jsonReply</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+    w.Header().Set(<span class="str">"Content-Type"</span>, <span class="str">"application/json"</span>)
+    w.WriteHeader(<span class="ty">http.StatusOK</span>)          <span class="cm">// 200 — optional, this is the default</span>
+    <span class="fn">fmt.Fprintln</span>(w, <span class="str">`{"ok": true}`</span>)
+}</code></pre>
+
+<p>You'll do real JSON encoding with <code>encoding/json</code> in Lesson 5 — but for now, <code>fmt.Fprintln</code> is fine for a string body.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>6. What is <code>nil</code> in <code>ListenAndServe</code>?</h2>
+
+<pre><code>http.ListenAndServe(<span class="str">":8080"</span>, <span class="kw">nil</span>)</code></pre>
+
+<p>The second argument is the <code>http.Handler</code> to use as the router. Passing <code>nil</code> tells Go to use the <strong>DefaultServeMux</strong> — a global router that <code>http.HandleFunc</code> registers handlers on.</p>
+
+<p>Think of <code>DefaultServeMux</code> like Express's default <code>app</code> instance. You'll eventually replace it with a custom mux for more control (Lesson 4), but for now <code>nil</code> is exactly right.</p>
+
+<div class="callout tip">
+  <div class="label">💡 Full picture</div>
+  <code>http.HandleFunc("/", hello)</code> is shorthand for <code>http.DefaultServeMux.HandleFunc("/", hello)</code>. The two are identical.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>7. Putting It Together</h2>
+
+<p>A tiny server with two routes:</p>
+
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="str">"fmt"</span>
+    <span class="str">"net/http"</span>
+)
+
+<span class="kw">func</span> <span class="fn">home</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+    <span class="fn">fmt.Fprintln</span>(w, <span class="str">"Welcome!"</span>)
+}
+
+<span class="kw">func</span> <span class="fn">status</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+    w.Header().Set(<span class="str">"Content-Type"</span>, <span class="str">"application/json"</span>)
+    <span class="fn">fmt.Fprintln</span>(w, <span class="str">`{"status": "ok"}`</span>)
+}
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    <span class="fn">http.HandleFunc</span>(<span class="str">"/"</span>, home)
+    <span class="fn">http.HandleFunc</span>(<span class="str">"/status"</span>, status)
+
+    <span class="fn">fmt.Println</span>(<span class="str">"Server running on :8080"</span>)
+    <span class="fn">http.ListenAndServe</span>(<span class="str">":8080"</span>, <span class="kw">nil</span>)
+}</code></pre>
+
+<pre><code>go run .
+curl http://localhost:8080/          # → Welcome!
+curl http://localhost:8080/status    # → {"status": "ok"}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>8. Quiz</h2>
+
+<div id="quiz">
+  <h2>Check Your Understanding</h2>
+  <p class="quiz-sub">5 questions · instant feedback</p>
+
+  <!-- Q1 -->
+  <div class="q-block" id="q1">
+    <p class="q-text">What is the correct signature for a Go HTTP handler function?</p>
+    <div class="options">
+      <button class="opt" onclick="answer(this, 'q1', false)">func handler(req Request, res ResponseWriter)</button>
+      <button class="opt" onclick="answer(this, 'q1', true)">func handler(w http.ResponseWriter, r *http.Request)</button>
+      <button class="opt" onclick="answer(this, 'q1', false)">func handler(r *http.Request) http.Response</button>
+      <button class="opt" onclick="answer(this, 'q1', false)">func handler(ctx context.Context, w http.ResponseWriter)</button>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-block" id="q2">
+    <p class="q-text">You want to return a <code>404</code> status. Which call must come <strong>before</strong> writing the body?</p>
+    <div class="options">
+      <button class="opt" onclick="answer(this, 'q2', false)">fmt.Fprintln(w, "not found")</button>
+      <button class="opt" onclick="answer(this, 'q2', false)">w.Header().Set("status", "404")</button>
+      <button class="opt" onclick="answer(this, 'q2', true)">w.WriteHeader(http.StatusNotFound)</button>
+      <button class="opt" onclick="answer(this, 'q2', false)">w.SetStatus(404)</button>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-block" id="q3">
+    <p class="q-text">What does passing <code>nil</code> as the second argument to <code>http.ListenAndServe(":8080", nil)</code> mean?</p>
+    <div class="options">
+      <button class="opt" onclick="answer(this, 'q3', false)">No handler is registered — the server returns 404 for all routes</button>
+      <button class="opt" onclick="answer(this, 'q3', true)">Use the DefaultServeMux, where http.HandleFunc registered routes</button>
+      <button class="opt" onclick="answer(this, 'q3', false)">The server runs without TLS</button>
+      <button class="opt" onclick="answer(this, 'q3', false)">Listen on all interfaces</button>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-block" id="q4">
+    <p class="q-text">How do you read the URL path from a request — e.g. <code>/users/42</code>?</p>
+    <div class="options">
+      <button class="opt" onclick="answer(this, 'q4', false)">r.Path</button>
+      <button class="opt" onclick="answer(this, 'q4', false)">r.URL</button>
+      <button class="opt" onclick="answer(this, 'q4', true)">r.URL.Path</button>
+      <button class="opt" onclick="answer(this, 'q4', false)">r.Request.Path</button>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="q-block" id="q5">
+    <p class="q-text">Which import contains Go's HTTP server functionality?</p>
+    <div class="options">
+      <button class="opt" onclick="answer(this, 'q5', false)">"http"</button>
+      <button class="opt" onclick="answer(this, 'q5', false)">"golang/http"</button>
+      <button class="opt" onclick="answer(this, 'q5', true)">"net/http"</button>
+      <button class="opt" onclick="answer(this, 'q5', false)">"std/http"</button>
+    </div>
+    <div class="feedback" id="q5-fb"></div>
+  </div>
+
+  <div id="quiz-score">
+    <div>Score: <span class="score-num" id="score-display"></span></div>
+    <div id="score-msg" style="color:var(--muted);font-size:0.88rem;margin-top:0.3rem;"></div>
+    <button class="retry-btn" onclick="resetQuiz()">↺ Try Again</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>References</h2>
+<ul class="cite-list">
+  <li><span class="cite-label">[1]</span><a href="https://pkg.go.dev/net/http" target="_blank">pkg.go.dev/net/http</a> — official documentation for the net/http package</li>
+  <li><span class="cite-label">[2]</span><a href="https://pkg.go.dev/net/http#ResponseWriter" target="_blank">http.ResponseWriter interface</a> — full interface definition</li>
+  <li><span class="cite-label">[3]</span><a href="https://pkg.go.dev/net/http#Request" target="_blank">http.Request struct</a> — all fields available on the request</li>
+  <li><span class="cite-label">[4]</span><a href="https://pkg.go.dev/net/http#ListenAndServe" target="_blank">http.ListenAndServe</a> — server startup docs</li>
+  <li><span class="cite-label">[5]</span><a href="https://pkg.go.dev/net/http#DefaultServeMux" target="_blank">DefaultServeMux</a> — the default router</li>
+  <li><span class="cite-label">[6]</span><a href="https://go.dev/doc/articles/wiki/" target="_blank">Writing Web Applications (go.dev)</a> — official tutorial on building HTTP servers in Go</li>
+</ul>
+
+<div class="next-box">
+  <strong>Up next → Lesson 4: Routing &amp; Path Parameters</strong><br>
+  Replace <code>DefaultServeMux</code> with a custom <code>http.ServeMux</code>, match exact vs. prefix routes, and extract values from the URL path.
+  <br><br>
+  Questions? Ask your agent — it's your teacher. Drop any confusion as a message and it'll pick up from here.
+</div>
+
+<script>
+  const state = { answered: 0, correct: 0, total: 5 };
+
+  const explanations = {
+    q1: { ok: 'Correct. The signature is always (w http.ResponseWriter, r *http.Request) — ResponseWriter first, pointer to Request second.', bad: 'The correct signature is func handler(w http.ResponseWriter, r *http.Request). ResponseWriter comes first, then a pointer to Request.' },
+    q2: { ok: 'Correct. WriteHeader must be called before any body write. Once bytes reach the wire, the status line is already sent.', bad: 'WriteHeader(http.StatusNotFound) must be called before writing the body. After the first write, Go auto-sends 200 and it\'s too late to change it.' },
+    q3: { ok: 'Correct. nil delegates to DefaultServeMux — the same mux http.HandleFunc registers handlers on.', bad: 'nil means "use DefaultServeMux" — the global router where http.HandleFunc registers routes. It does NOT mean no handlers.' },
+    q4: { ok: 'Correct. r.URL is an *url.URL struct; the path component is r.URL.Path.', bad: 'The URL path lives at r.URL.Path. r.URL is a *url.URL struct — you need to access the .Path field on it.' },
+    q5: { ok: 'Correct. Go\'s HTTP package is "net/http" — part of the standard library.', bad: 'The import path is "net/http". It\'s in the standard library under the net/ subtree.' },
+  };
+
+  function answer(btn, qid, isCorrect) {
+    const block = document.getElementById(qid);
+    const fb = document.getElementById(qid + '-fb');
+    const opts = block.querySelectorAll('.opt');
+
+    opts.forEach(o => { o.disabled = true; o.onclick = null; });
+    btn.classList.add(isCorrect ? 'correct' : 'wrong');
+    fb.textContent = isCorrect ? explanations[qid].ok : explanations[qid].bad;
+    fb.className = 'feedback ' + (isCorrect ? 'correct' : 'wrong');
+
+    if (isCorrect) state.correct++;
+    state.answered++;
+
+    if (state.answered === state.total) showScore();
+  }
+
+  function showScore() {
+    const el = document.getElementById('quiz-score');
+    const pct = Math.round((state.correct / state.total) * 100);
+    document.getElementById('score-display').textContent = state.correct + ' / ' + state.total + ' (' + pct + '%)';
+    const msgs = {
+      100: '🎉 Perfect. You\'ve got the handler pattern down cold.',
+      80: '✓ Solid. One slip — review the callout boxes for the detail you missed.',
+      60: 'Getting there. Re-read the anatomy section and the order-matters callout.',
+      0: 'Work through the lesson again — the quiz questions map directly to the sections above.',
+    };
+    const key = pct === 100 ? 100 : pct >= 80 ? 80 : pct >= 60 ? 60 : 0;
+    document.getElementById('score-msg').textContent = msgs[key];
+    el.style.display = 'block';
+  }
+
+  function resetQuiz() {
+    state.answered = 0; state.correct = 0;
+    ['q1','q2','q3','q4','q5'].forEach(qid => {
+      const block = document.getElementById(qid);
+      const fb = document.getElementById(qid + '-fb');
+      block.querySelectorAll('.opt').forEach(o => {
+        o.disabled = false;
+        o.classList.remove('correct','wrong');
+        const qnum = qid;
+        o.onclick = function(){ answer(this, qnum, this.onclick.isCorrect); };
+      });
+      fb.textContent = ''; fb.className = 'feedback';
+    });
+    // Re-attach onclick properly
+    document.querySelectorAll('.opt').forEach(btn => {
+      const orig = btn.getAttribute('onclick');
+      btn.removeAttribute('onclick');
+      btn.onclick = new Function(orig);
+    });
+    document.getElementById('quiz-score').style.display = 'none';
+  }
+</script>
+</body>
+</html>

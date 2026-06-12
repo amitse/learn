@@ -45,6 +45,65 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
+<h2>HTTP Server (Lesson 3)</h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>net/http <span class="new-badge">new</span></td>
+    <td>express (sort of)</td>
+    <td>Standard library package providing HTTP client and server primitives. No install needed.</td>
+  </tr>
+  <tr>
+    <td>http.ResponseWriter <span class="new-badge">new</span></td>
+    <td>res (Express)</td>
+    <td>Interface passed to every handler. Write status, headers, and body through it. Headers must be set before body.</td>
+  </tr>
+  <tr>
+    <td>*http.Request <span class="new-badge">new</span></td>
+    <td>req (Express)</td>
+    <td>Pointer to a struct containing the full incoming request: Method, URL, Header, Body, etc.</td>
+  </tr>
+  <tr>
+    <td>http.HandleFunc <span class="new-badge">new</span></td>
+    <td>app.get / app.post</td>
+    <td>Registers a handler function on the DefaultServeMux for a given path pattern.</td>
+  </tr>
+  <tr>
+    <td>http.ListenAndServe <span class="new-badge">new</span></td>
+    <td>app.listen</td>
+    <td>Starts the HTTP server. Second arg is the handler/mux; <code>nil</code> uses DefaultServeMux.</td>
+  </tr>
+  <tr>
+    <td>DefaultServeMux <span class="new-badge">new</span></td>
+    <td>the default Express app</td>
+    <td>The global default router. <code>http.HandleFunc</code> registers on it; passing <code>nil</code> to ListenAndServe uses it.</td>
+  </tr>
+  <tr>
+    <td>w.WriteHeader(code) <span class="new-badge">new</span></td>
+    <td>res.status(code)</td>
+    <td>Sends the HTTP status code. Must be called before writing the body — cannot be changed after.</td>
+  </tr>
+  <tr>
+    <td>w.Header().Set(k,v) <span class="new-badge">new</span></td>
+    <td>res.set(k, v)</td>
+    <td>Sets a response header. Must be called before WriteHeader or first body write.</td>
+  </tr>
+  <tr>
+    <td>r.URL.Path <span class="new-badge">new</span></td>
+    <td>req.path</td>
+    <td>The URL path string of the request, e.g. <code>"/users/42"</code>.</td>
+  </tr>
+  <tr>
+    <td>r.Method <span class="new-badge">new</span></td>
+    <td>req.method</td>
+    <td>The HTTP verb as a string: <code>"GET"</code>, <code>"POST"</code>, <code>"DELETE"</code>, etc.</td>
+  </tr>
+</table>
+
 <h2>Modules &amp; Build (Lesson 2)</h2>
 <table>
   <tr>
