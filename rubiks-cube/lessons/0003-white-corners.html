@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 3 — White Corners</title>
+<style>
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #21253a;
+  --border: #2a2d3a; --text: #e8eaf0; --muted: #7a7f99;
+  --accent: #f57c00; --white-text: #ffffff;
+  --U: #f0f0f0; --D: #f5d600; --R: #e84040; --L: #f57c00; --F: #3ab54a; --B: #2979ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 15px; line-height: 1.7;
+  max-width: 740px; margin: 0 auto; padding: 2rem 1.5rem 5rem;
+}
+h1, h2, h3 { color: var(--white-text); }
+h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.25rem; }
+h2 {
+  font-size: 1.15rem; margin: 2.5rem 0 0.9rem;
+  padding-top: 2rem; border-top: 1px solid var(--border);
+}
+h2:first-of-type { border-top: none; padding-top: 0; margin-top: 1.8rem; }
+h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+p { margin-bottom: 0.9rem; }
+a { color: var(--accent); }
+code {
+  font-family: 'Fira Mono', Consolas, monospace;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.1em 0.4em; font-size: 0.88em; color: #ffcc80;
+}
+strong { color: var(--white-text); }
+
+.meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.8rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+/* GOAL BOX */
+.goal-box {
+  background: var(--surface); border: 1px solid #1e3a1e;
+  border-left: 3px solid #3ab54a; border-radius: 8px;
+  padding: 1rem 1.25rem; margin-bottom: 2rem;
+}
+.goal-box .label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #3ab54a; margin-bottom: 0.4rem;
+}
+
+/* CALLOUT */
+.callout {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: 8px;
+  padding: 1rem 1.25rem; margin: 1.5rem 0;
+}
+.callout.tip { border-left-color: #3ab54a; }
+.callout.warn { border-left-color: #f5d600; }
+
+/* ALGORITHM DISPLAY */
+.algo-row { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin: 0.4rem 0; }
+.move {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0.25em 0.55em; border-radius: 5px;
+  font-family: 'Fira Mono', Consolas, monospace;
+  font-size: 0.95rem; font-weight: 700;
+  border: 1px solid rgba(0,0,0,0.25);
+  min-width: 2em; line-height: 1;
+}
+.m-U, .m-Up, .m-U2 { background: #e5e5e5; color: #111; border-color: #bbb; }
+.m-R, .m-Rp, .m-R2 { background: var(--R); color: #fff; }
+.m-F, .m-Fp, .m-F2 { background: var(--F); color: #fff; }
+.m-L, .m-Lp         { background: var(--L); color: #fff; }
+.m-B, .m-Bp         { background: var(--B); color: #fff; }
+.m-sep { color: var(--muted); font-size: 0.8rem; }
+
+/* TRIGGER HERO BOX */
+.trigger-hero {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid #3ab54a; border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+}
+.trigger-hero .algo-name {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #3ab54a; margin-bottom: 0.5rem;
+}
+.trigger-hero .say-it { font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem; }
+
+/* CASE CARDS */
+.cases-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem; margin: 1.5rem 0;
+}
+.case-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.25rem;
+}
+.case-card h3 { font-size: 0.9rem; margin-bottom: 0.9rem; color: var(--white-text); }
+.case-tag {
+  display: inline-block; font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  padding: 0.15em 0.5em; border-radius: 4px; margin-bottom: 0.6rem;
+  background: var(--surface2); color: var(--muted);
+}
+.algo-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem; margin-top: 0.75rem; }
+
+/* CORNER STICKER VIEW */
+.corner-view {
+  display: grid;
+  grid-template-areas: "u u" "f r";
+  grid-template-columns: 50px 50px;
+  grid-template-rows: 50px 50px;
+  gap: 4px; margin: 0 auto 0.5rem; width: fit-content;
+}
+.sticker {
+  border-radius: 7px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em;
+  border: 2px solid rgba(0,0,0,0.2);
+}
+.s-u { grid-area: u; }
+.s-f { grid-area: f; }
+.s-r { grid-area: r; }
+.s-white  { background: var(--U); color: #222; }
+.s-yellow { background: var(--D); color: #333; }
+.s-red    { background: var(--R); color: #fff; }
+.s-orange { background: var(--L); color: #fff; }
+.s-green  { background: var(--F); color: #fff; }
+.s-blue   { background: var(--B); color: #fff; }
+.s-dim    { background: var(--surface2); color: var(--muted); border-color: var(--border); }
+
+/* STEPS */
+ol.steps { padding-left: 1.75rem; }
+ol.steps li { margin-bottom: 0.55rem; }
+ol.steps li::marker { color: var(--accent); font-weight: 700; }
+
+/* TABLE */
+.ref-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+.ref-table th {
+  text-align: left; color: var(--muted); font-size: 0.73rem;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);
+}
+.ref-table td { padding: 0.75rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.ref-table tr:last-child td { border-bottom: none; }
+.move-sm { font-size: 0.78rem; padding: 0.15em 0.4em; min-width: 1.6em; }
+
+/* QUIZ */
+.quiz {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem; margin-top: 2rem;
+}
+.quiz-title {
+  font-size: 1.1rem; font-weight: 700; color: var(--white-text);
+  margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.q-block { margin-bottom: 1.75rem; }
+.q-block:last-of-type { margin-bottom: 0.5rem; }
+.q-text { font-weight: 600; color: var(--white-text); margin-bottom: 0.75rem; font-size: 0.95rem; }
+.q-options { display: flex; flex-direction: column; gap: 0.45rem; }
+.q-option {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.7rem 1rem; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s; font-size: 0.9rem;
+}
+.q-option:hover { border-color: var(--accent); }
+.q-option input[type="radio"] { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+.q-option.correct { border-color: #3ab54a; background: #0d2014; }
+.q-option.wrong   { border-color: #e84040; background: #200d0d; }
+.q-feedback {
+  display: none; margin-top: 0.5rem; font-size: 0.85rem;
+  padding: 0.5rem 0.75rem; border-radius: 6px; line-height: 1.5;
+}
+.q-feedback.show { display: block; }
+.q-feedback.ok  { background: #0d2014; color: #5acc6a; border: 1px solid #1a4020; }
+.q-feedback.bad { background: #200d0d; color: #e07070; border: 1px solid #401a1a; }
+.check-btn {
+  margin-top: 0.6rem; padding: 0.5rem 1.1rem;
+  background: var(--accent); color: #fff; border: none; border-radius: 6px;
+  font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+}
+.check-btn:hover { opacity: 0.85; }
+.check-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.score-box {
+  display: none; margin-top: 1.25rem; padding: 1rem 1.25rem;
+  border-radius: 8px; font-weight: 600; font-size: 0.95rem;
+}
+.score-box.show { display: block; }
+
+/* PRACTICE */
+.practice-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+}
+.practice-box h3 { font-size: 1rem; margin-bottom: 0.75rem; }
+
+/* TEACHER PROMPT */
+.teacher-box {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 1.25rem; margin-top: 3rem; text-align: center;
+  color: var(--muted); font-size: 0.9rem; line-height: 1.6;
+}
+
+/* SOURCES */
+.sources { font-size: 0.83rem; color: var(--muted); padding-left: 1.5rem; }
+.sources li { margin-bottom: 0.3rem; }
+.sources a { color: var(--accent); }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <span>🟠 Rubik's Cube · Lesson 3 of 8</span>
+  <span>⏱ ~8 min</span>
+  <span>📅 June 2026</span>
+</div>
+
+<h1>White Corners</h1>
+<p style="color:var(--muted); font-size:1rem; margin-bottom:1.75rem;">Complete Layer 1 — insert all 4 white corners</p>
+
+<div class="goal-box">
+  <div class="label">✅ What you'll accomplish</div>
+  <p style="margin:0">After this lesson you can finish the entire white layer from scratch. You'll learn the Right Trigger — the single most useful algorithm in beginner cubing — and how to apply it across three situations.</p>
+</div>
+
+<!-- ── SETUP ─────────────────────────────────────── -->
+<h2>Setup</h2>
+<p>You've solved the white cross. The next step is inserting the 4 white corner pieces into the gaps between the cross edges. Once they're all in, Layer 1 is complete.</p>
+
+<div class="callout warn">
+  <strong>Hold white DOWN for this entire step.</strong> Keep the white face on the bottom (D face) throughout. Never flip the cube — you'll only ever turn the top layer and the right or front faces.
+</div>
+
+<!-- ── WHERE DOES EACH CORNER BELONG ─────────────── -->
+<h2>Where does each corner belong?</h2>
+
+<p>Each white corner has <strong>3 coloured stickers</strong>: white plus two side colours. Its home slot is where those two side colours match the two adjacent <em>centre</em> pieces.</p>
+
+<div class="callout">
+  <strong>Example:</strong> A corner with white + green + red stickers belongs in the front-right-bottom slot — between the green centre (front) and red centre (right).
+</div>
+
+<p>Centres never move. They are your colour compass for the whole solve — always match to centres, never to edges.</p>
+
+<!-- ── THE RIGHT TRIGGER ─────────────────────────── -->
+<h2>The Right Trigger: R U R′ U′</h2>
+
+<p>This 4-move sequence is the most important algorithm in the beginner method. The cubing community calls it the <strong>Right Trigger</strong> (sometimes "Sexy Move"). You'll use it for corners, middle-layer edges, and beyond — learn it cold.</p>
+
+<div class="trigger-hero">
+  <div class="algo-name">Right Trigger</div>
+  <div class="algo-row">
+    <span class="move m-R">R</span>
+    <span class="move m-U">U</span>
+    <span class="move m-Rp">R′</span>
+    <span class="move m-Up">U′</span>
+  </div>
+  <div class="say-it">Say it aloud: <em>"Right — Up — Right-back — Up-back"</em></div>
+</div>
+
+<p>What it does: it briefly pulls the front-right corner out of the bottom layer, shifts the top layer, then returns the corner — but in a new orientation. Applied to a corner above its slot, this either inserts it directly or re-orients it for a second attempt.</p>
+
+<!-- ── THE 3 CASES ────────────────────────────────── -->
+<h2>The 3 cases</h2>
+
+<p>For each white corner:</p>
+<ol class="steps">
+  <li>Use <code>U</code> turns to move the corner <strong>directly above its target slot</strong> (front-right-top = UFR position). Match the corner's two side colours to the two centres below.</li>
+  <li>Look at where the <strong>white sticker</strong> is pointing. There are 3 possibilities:</li>
+</ol>
+
+<div class="cases-grid">
+
+  <!-- Case 1 -->
+  <div class="case-card">
+    <div class="case-tag">Case 1</div>
+    <h3>White faces Right</h3>
+    <div class="corner-view">
+      <div class="sticker s-u s-dim">U</div>
+      <div class="sticker s-f s-green">F</div>
+      <div class="sticker s-r s-white">W</div>
+    </div>
+    <div class="algo-label">Algorithm</div>
+    <div class="algo-row">
+      <span class="move m-R">R</span>
+      <span class="move m-U">U</span>
+      <span class="move m-Rp">R′</span>
+      <span class="move m-Up">U′</span>
+    </div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-top:0.6rem; margin-bottom:0;">
+      1 trigger · done ✓
+    </p>
+  </div>
+
+  <!-- Case 2 -->
+  <div class="case-card">
+    <div class="case-tag">Case 2</div>
+    <h3>White faces Front</h3>
+    <div class="corner-view">
+      <div class="sticker s-u s-dim">U</div>
+      <div class="sticker s-f s-white">W</div>
+      <div class="sticker s-r s-red">R</div>
+    </div>
+    <div class="algo-label">Algorithm</div>
+    <div class="algo-row">
+      <span class="move m-Fp">F′</span>
+      <span class="move m-Up">U′</span>
+      <span class="move m-F">F</span>
+    </div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-top:0.6rem; margin-bottom:0;">
+      3 moves · done ✓
+    </p>
+  </div>
+
+  <!-- Case 3 -->
+  <div class="case-card">
+    <div class="case-tag">Case 3</div>
+    <h3>White faces Up</h3>
+    <div class="corner-view">
+      <div class="sticker s-u s-white">W</div>
+      <div class="sticker s-f s-green">F</div>
+      <div class="sticker s-r s-red">R</div>
+    </div>
+    <div class="algo-label">Algorithm — 3 triggers in one go</div>
+    <div class="algo-row" style="flex-wrap:wrap;">
+      <span class="move m-R">R</span>
+      <span class="move m-U">U</span>
+      <span class="move m-Rp">R′</span>
+      <span class="move m-Up">U′</span>
+      <span class="m-sep">×3</span>
+    </div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-top:0.6rem; margin-bottom:0;">
+      12 moves, executed continuously · done ✓
+    </p>
+  </div>
+
+</div>
+
+<div class="callout tip">
+  <strong>💡 Case 3 tip:</strong> Apply all 12 moves in one smooth sequence without pausing. <code>R U R' U'</code> × 3 will cycle the corner through two intermediate states before landing it correctly on the third repetition.
+</div>
+
+<!-- ── EXTRACTION ─────────────────────────────────── -->
+<h2 id="extraction">Corner stuck in the bottom layer?</h2>
+
+<p>Sometimes you'll find a white corner already in the bottom layer — but in the wrong slot, or twisted the wrong way. You can't insert it directly from there.</p>
+
+<p><strong>Extract it first:</strong></p>
+<ol class="steps">
+  <li>Position the stuck corner at the front-right-bottom slot (rotate the <strong>whole cube</strong> — holding white still down — so the problem corner is at front-right).</li>
+  <li>Apply <span class="algo-row" style="display:inline-flex; vertical-align:middle; gap:0.25rem;">
+    <span class="move m-R move-sm">R</span>
+    <span class="move m-U move-sm">U</span>
+    <span class="move m-Rp move-sm">R′</span>
+  </span> — this lifts the corner into the top layer.</li>
+  <li>Now use <code>U</code> turns to bring it above its correct slot, identify the case, and insert normally.</li>
+</ol>
+
+<!-- ── FULL PROCESS ───────────────────────────────── -->
+<h2>Full process — layer 1 from white cross</h2>
+
+<ol class="steps">
+  <li><strong>Keep white DOWN.</strong> Always.</li>
+  <li>Scan the top layer for a white corner. Spot its two side colours.</li>
+  <li>Use <code>U</code> turns to bring the corner above its target slot (match side colours to centres below).</li>
+  <li>Identify which case applies (right / front / up) and execute the algorithm.</li>
+  <li>If a corner is stuck in the bottom layer → extract with <code>R U R′</code>, then go back to step 2.</li>
+  <li>Repeat for all 4 corners. White layer done.</li>
+</ol>
+
+<!-- ── QUICK REFERENCE ────────────────────────────── -->
+<h2>Quick reference</h2>
+
+<table class="ref-table">
+  <thead>
+    <tr>
+      <th>Situation</th>
+      <th>Algorithm</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>White sticker faces <strong>Right</strong></td>
+      <td>
+        <div class="algo-row">
+          <span class="move m-R move-sm">R</span>
+          <span class="move m-U move-sm">U</span>
+          <span class="move m-Rp move-sm">R′</span>
+          <span class="move m-Up move-sm">U′</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>White sticker faces <strong>Front</strong></td>
+      <td>
+        <div class="algo-row">
+          <span class="move m-Fp move-sm">F′</span>
+          <span class="move m-Up move-sm">U′</span>
+          <span class="move m-F move-sm">F</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>White sticker faces <strong>Up</strong></td>
+      <td>
+        <div class="algo-row">
+          <span class="move m-R move-sm">R</span>
+          <span class="move m-U move-sm">U</span>
+          <span class="move m-Rp move-sm">R′</span>
+          <span class="move m-Up move-sm">U′</span>
+          <span style="color:var(--muted); font-size:0.75rem;">× 3 (no pause)</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Corner in bottom layer, wrong place</td>
+      <td>
+        <div class="algo-row" style="display:inline-flex;">
+          <span class="move m-R move-sm">R</span>
+          <span class="move m-U move-sm">U</span>
+          <span class="move m-Rp move-sm">R′</span>
+        </div>
+        <span style="color:var(--muted); font-size:0.85rem; margin-left:0.5rem;">then re-insert</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ── QUIZ ──────────────────────────────────────── -->
+<div class="quiz">
+  <div class="quiz-title">⚡ Quick Check</div>
+
+  <!-- Q1 -->
+  <div class="q-block" id="q1">
+    <p class="q-text">1. White corner is above its slot. White sticker faces the <strong>Right</strong> face. What do you do?</p>
+    <div class="q-options">
+      <label class="q-option"><input type="radio" name="q1" value="a"> U R U′ R′</label>
+      <label class="q-option"><input type="radio" name="q1" value="b"> R U R′ U′</label>
+      <label class="q-option"><input type="radio" name="q1" value="c"> F′ U′ F</label>
+    </div>
+    <div class="q-feedback" id="q1-fb"></div>
+    <button class="check-btn" id="q1-btn" onclick="check('q1','b',
+      'Correct! R U R\u2019 U\u2019 is the Right Trigger. When white faces right, one trigger drops the corner straight in.',
+      'Not quite. White facing Right is the natural case for the Right Trigger: R U R\u2019 U\u2019.')">Check</button>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-block" id="q2">
+    <p class="q-text">2. White corner is above its slot. White sticker faces the <strong>Front</strong> face. Which algorithm?</p>
+    <div class="q-options">
+      <label class="q-option"><input type="radio" name="q2" value="a"> R U R′ U′</label>
+      <label class="q-option"><input type="radio" name="q2" value="b"> F′ U′ F</label>
+      <label class="q-option"><input type="radio" name="q2" value="c"> R U2 R′ U′</label>
+    </div>
+    <div class="q-feedback" id="q2-fb"></div>
+    <button class="check-btn" id="q2-btn" onclick="check('q2','b',
+      'Correct! F\u2019 U\u2019 F is the Front Trigger \u2014 three moves, corner goes straight in.',
+      'Not quite. When white faces the Front, use F\u2019 U\u2019 F.')">Check</button>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-block" id="q3">
+    <p class="q-text">3. A white corner is in the bottom layer in the <strong>wrong slot</strong>. What should you do first?</p>
+    <div class="q-options">
+      <label class="q-option"><input type="radio" name="q3" value="a"> Spin the top layer (U turns) until it lines up</label>
+      <label class="q-option"><input type="radio" name="q3" value="b"> Apply R U R′ to lift it into the top layer</label>
+      <label class="q-option"><input type="radio" name="q3" value="c"> Try F2 to flip it to the right place</label>
+    </div>
+    <div class="q-feedback" id="q3-fb"></div>
+    <button class="check-btn" id="q3-btn" onclick="check('q3','b',
+      'Correct! R U R\u2019 extracts the corner from the bottom layer. Then you can reposition it with U turns and insert it properly.',
+      'U turns only move top-layer pieces. Corners in the bottom layer need R U R\u2019 to be extracted first.')">Check</button>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-block" id="q4">
+    <p class="q-text">4. How do you figure out <em>which slot</em> a white corner belongs in?</p>
+    <div class="q-options">
+      <label class="q-option"><input type="radio" name="q4" value="a"> Its two non-white stickers match the two adjacent centre pieces</label>
+      <label class="q-option"><input type="radio" name="q4" value="b"> It always goes to the front-right slot first</label>
+      <label class="q-option"><input type="radio" name="q4" value="c"> Any slot works as long as white faces down</label>
+    </div>
+    <div class="q-feedback" id="q4-fb"></div>
+    <button class="check-btn" id="q4-btn" onclick="check('q4','a',
+      'Exactly. The two side colours must match the two nearest centres. Centres are fixed \u2014 they\u2019re your permanent colour compass.',
+      'Not quite. Match the corner\u2019s two non-white stickers to the adjacent centre pieces. Any slot won\u2019t do \u2014 each corner has a unique home.')">Check</button>
+  </div>
+
+  <div class="score-box" id="score-box"></div>
+</div>
+
+<!-- ── PRACTICE ───────────────────────────────────── -->
+<h2>Practice</h2>
+
+<div class="practice-box">
+  <h3>🎲 Drill it on a virtual cube</h3>
+  <ol class="steps">
+    <li>Open <a href="https://rubikscu.be/" target="_blank">rubikscu.be</a> (free 3D virtual cube)</li>
+    <li>Scramble, then build the white cross (Lesson 2)</li>
+    <li>Insert each white corner using the 3 cases</li>
+    <li>Aim to complete 5 full white layers before the next lesson</li>
+  </ol>
+  <p style="color:var(--muted); font-size:0.85rem; margin-bottom:0; margin-top:0.5rem;">
+    💡 <em>Rotate the whole cube (keep white down) to bring each target slot to front-right before inserting.</em>
+  </p>
+</div>
+
+<!-- ── SOURCES ────────────────────────────────────── -->
+<h2>Sources</h2>
+<ul class="sources">
+  <li><a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/step2/" target="_blank">Ruwix — Beginner Method: White Corners</a></li>
+  <li><a href="https://youtu.be/7Ron6MN45LY" target="_blank">J Perm — How to Solve a Rubik's Cube (50M views)</a></li>
+  <li><a href="https://ruwix.com/the-rubiks-cube/notation/" target="_blank">Ruwix — Cube Notation Reference</a></li>
+</ul>
+
+<!-- ── TEACHER PROMPT ─────────────────────────────── -->
+<div class="teacher-box">
+  <p>🤔 <strong>Got a question?</strong><br>
+  Ask your teacher anything — <em>"Why does Case 3 need 3 triggers?"</em> · <em>"What if I mess up the white cross while inserting corners?"</em> · <em>"I keep mis-identifying the case — help!"</em><br>
+  <br>Reply to this lesson message or start a new chat with your Hermes agent.</p>
+</div>
+
+<script>
+const answered = {};
+
+function check(qId, correct, okMsg, badMsg) {
+  const selected = document.querySelector(`input[name="${qId}"]:checked`);
+  const fb = document.getElementById(`${qId}-fb`);
+
+  if (!selected) {
+    fb.textContent = 'Select an answer first.';
+    fb.className = 'q-feedback show bad';
+    return;
+  }
+
+  // Highlight options
+  document.querySelectorAll(`#${qId} .q-option`).forEach(opt => {
+    const val = opt.querySelector('input').value;
+    if (val === correct) opt.classList.add('correct');
+    else if (val === selected.value) opt.classList.add('wrong');
+  });
+
+  const ok = selected.value === correct;
+  fb.textContent = (ok ? '✓ ' : '✗ ') + (ok ? okMsg : badMsg);
+  fb.className = `q-feedback show ${ok ? 'ok' : 'bad'}`;
+
+  document.getElementById(`${qId}-btn`).disabled = true;
+  document.querySelectorAll(`input[name="${qId}"]`).forEach(i => i.disabled = true);
+
+  answered[qId] = ok;
+  if (Object.keys(answered).length === 4) showScore();
+}
+
+function showScore() {
+  const correct = Object.values(answered).filter(Boolean).length;
+  const box = document.getElementById('score-box');
+  box.classList.add('show');
+
+  if (correct === 4) {
+    Object.assign(box.style, { background: '#0d2014', color: '#5acc6a', border: '1px solid #1a4020' });
+    box.innerHTML = '🎉 4/4 — Nailed it! Get to a virtual cube and drill those triggers.';
+  } else if (correct >= 2) {
+    Object.assign(box.style, { background: '#1a1a0a', color: '#cccc55', border: '1px solid #3a3a1a' });
+    box.innerHTML = `${correct}/4 — Good. Re-read the cases you missed, then practice.`;
+  } else {
+    Object.assign(box.style, { background: '#200d0d', color: '#e07070', border: '1px solid #401a1a' });
+    box.innerHTML = `${correct}/4 — Review the 3 Cases section above before moving on.`;
+  }
+}
+</script>
+
+</body>
+</html>
