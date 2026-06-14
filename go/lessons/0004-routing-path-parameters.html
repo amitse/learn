@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 4 — Routing & Path Parameters · Go for TS Devs</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #20243a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --go: #00adb5;
+    --ts: #3178c6;
+    --green: #3ab54a;
+    --green-bg: #0d2b12;
+    --red: #e05c5c;
+    --red-bg: #2b0d0d;
+    --yellow: #f5c842;
+    --white: #ffffff;
+    --code-bg: #12151e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.7;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  /* ── Header ── */
+  .lesson-meta { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.82rem; margin-bottom: 1.2rem; }
+  .badge-go { background: #0d2e30; color: var(--go); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.03em; }
+  .badge-lesson { background: var(--surface); color: var(--muted); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+  h1 { font-size: 2rem; color: var(--white); line-height: 1.25; margin-bottom: 0.4rem; }
+  .subtitle { color: var(--muted); margin-bottom: 2.5rem; font-size: 0.95rem; }
+
+  /* ── Sections ── */
+  h2 { font-size: 1.15rem; color: var(--white); margin: 2.5rem 0 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+  h2::before { content: ''; display: inline-block; width: 3px; height: 1.1em; background: var(--accent); border-radius: 2px; }
+  h3 { font-size: 0.95rem; color: var(--accent); margin: 1.5rem 0 0.5rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; font-size: 0.78rem; }
+  p { color: var(--text); margin-bottom: 0.9rem; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 0.9rem 1.1rem;
+    margin: 1.2rem 0;
+    font-size: 0.92rem;
+  }
+  .callout strong { color: var(--accent); }
+  .callout.warn { border-color: var(--yellow); }
+  .callout.warn strong { color: var(--yellow); }
+
+  /* ── Code ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.25rem;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.87rem;
+    line-height: 1.6;
+    margin: 0.7rem 0 1.2rem;
+  }
+  code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    background: #22263a;
+    border-radius: 3px;
+    padding: 0.1em 0.38em;
+    font-size: 0.87em;
+    color: #a8c8ff;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+  /* Syntax highlighting (manual, inline) */
+  .kw { color: #c792ea; }   /* keywords */
+  .fn { color: #82aaff; }   /* functions */
+  .str { color: #c3e88d; }  /* strings */
+  .typ { color: #ffcb6b; }  /* types */
+  .cmt { color: #546e7a; font-style: italic; } /* comments */
+  .num { color: #f78c6c; }  /* numbers */
+  .pkg { color: #80cbc4; }  /* package names */
+  .ts-kw { color: #89ddff; }
+
+  /* ── Side-by-side comparison ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 1rem 0 1.5rem;
+  }
+  @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+  .compare-col { }
+  .compare-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.75rem;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
+  }
+  .compare-label.ts { background: #0d1e3a; color: var(--ts); }
+  .compare-label.go { background: #0d2e30; color: var(--go); }
+  .compare-col pre { margin: 0; border-radius: 0 0 8px 8px; border-top: none; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 0.8rem 0 1.5rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 0.78rem; padding: 0.4rem 0.7rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-family: 'Cascadia Code', monospace; color: var(--accent); font-size: 0.84rem; }
+
+  /* ── What you'll learn ── */
+  .learn-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    list-style: none;
+    margin-bottom: 2rem;
+  }
+  .learn-list li { padding: 0.3rem 0; display: flex; align-items: flex-start; gap: 0.55rem; font-size: 0.93rem; }
+  .learn-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 0.05rem; }
+
+  /* ── Quiz ── */
+  .quiz {
+    margin: 2.5rem 0 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .quiz-header {
+    background: var(--surface2);
+    padding: 1rem 1.4rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .quiz-header h2 { margin: 0; font-size: 1rem; color: var(--white); }
+  .quiz-header h2::before { display: none; }
+  .quiz-icon { font-size: 1.1rem; }
+  .quiz-progress { margin-left: auto; font-size: 0.8rem; color: var(--muted); }
+
+  .question { padding: 1.4rem; border-bottom: 1px solid var(--border); display: none; }
+  .question.active { display: block; }
+  .question-num { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+  .question p { font-size: 0.97rem; color: var(--white); margin-bottom: 1rem; line-height: 1.5; }
+  .question pre { margin: 0 0 1rem; font-size: 0.82rem; }
+
+  .options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .option {
+    background: var(--code-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: 'Cascadia Code', monospace;
+    color: var(--text);
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .option:hover:not(:disabled) { border-color: var(--accent); background: #0d2e30; }
+  .option.correct { border-color: var(--green) !important; background: var(--green-bg) !important; color: var(--green) !important; }
+  .option.wrong { border-color: var(--red) !important; background: var(--red-bg) !important; color: var(--red) !important; }
+  .option:disabled { cursor: default; }
+
+  .feedback {
+    margin-top: 0.9rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 7px;
+    font-size: 0.88rem;
+    display: none;
+    line-height: 1.5;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: var(--green-bg); color: var(--green); border: 1px solid #1a4d22; }
+  .feedback.wrong { background: var(--red-bg); color: #f08080; border: 1px solid #4d1a1a; }
+
+  .next-btn {
+    margin-top: 1rem;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 7px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.15s;
+  }
+  .next-btn:hover { opacity: 0.85; }
+  .next-btn.show { display: inline-block; }
+
+  .quiz-result {
+    padding: 1.8rem 1.4rem;
+    text-align: center;
+    display: none;
+  }
+  .quiz-result.show { display: block; }
+  .result-score { font-size: 2.5rem; font-weight: 700; color: var(--white); margin-bottom: 0.3rem; }
+  .result-msg { color: var(--muted); font-size: 0.95rem; }
+
+  /* ── Footer ── */
+  .teacher-note {
+    margin-top: 3rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .teacher-note strong { color: var(--white); }
+  .next-lesson {
+    margin-top: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 1.1rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .next-lesson strong { color: var(--accent); }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .citation { font-size: 0.78rem; color: var(--muted); }
+  .citation a { color: var(--muted); border-bottom: 1px dotted var(--muted); }
+  .citation a:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.3rem; }
+</style>
+</head>
+<body>
+
+<div class="lesson-meta">
+  <span class="badge-go">Go</span>
+  <span class="badge-lesson">Lesson 4 of 7+</span>
+  <span>·</span>
+  <span>~8 min</span>
+</div>
+
+<h1>Routing &amp; Path Parameters</h1>
+<p class="subtitle">Upgrade from the default router to a custom <code>ServeMux</code>, match routes by method, and extract <code>/users/{id}</code>-style segments.</p>
+
+<ul class="learn-list">
+  <li>Create and use a custom <code>http.ServeMux</code> instead of the global default</li>
+  <li>Understand exact vs. subtree pattern matching</li>
+  <li>Register method-specific routes with Go 1.22's enhanced patterns</li>
+  <li>Extract path parameters using <code>r.PathValue("name")</code></li>
+  <li>Wire it all together with a clean multi-route example</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2>The problem with DefaultServeMux</h2>
+
+<p>In Lesson 3 you used <code>http.HandleFunc</code> and passed <code>nil</code> to <code>http.ListenAndServe</code>. That works, but it registers routes on a <strong>global singleton</strong> called <code>DefaultServeMux</code>. This is fine for toy code but creates problems in real programs:</p>
+
+<ul>
+  <li>Third-party packages you import can silently register routes on the same mux</li>
+  <li>You can't run multiple servers with different route trees in the same process</li>
+  <li>It's harder to test handlers in isolation</li>
+</ul>
+
+<p>The fix is one line: create your own mux.</p>
+
+<div class="compare">
+  <div class="compare-col">
+    <div class="compare-label ts">TypeScript (Express)</div>
+    <pre><code><span class="ts-kw">import</span> express <span class="ts-kw">from</span> <span class="str">'express'</span>
+<span class="ts-kw">const</span> app = express()  <span class="cmt">// isolated router</span>
+app.get(<span class="str">'/'</span>, handler)
+app.listen(<span class="num">8080</span>)</code></pre>
+  </div>
+  <div class="compare-col">
+    <div class="compare-label go">Go (net/http)</div>
+    <pre><code>mux := <span class="pkg">http</span>.<span class="fn">NewServeMux</span>()  <span class="cmt">// isolated mux</span>
+mux.<span class="fn">HandleFunc</span>(<span class="str">"/"</span>, handler)
+<span class="pkg">http</span>.<span class="fn">ListenAndServe</span>(<span class="str">":8080"</span>, mux)</code></pre>
+  </div>
+</div>
+
+<p class="citation">Ref: <a href="https://pkg.go.dev/net/http#NewServeMux" target="_blank">pkg.go.dev — http.NewServeMux</a></p>
+
+<p>Notice: you now pass <code>mux</code> (not <code>nil</code>) to <code>ListenAndServe</code>. That's the only change.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2>Exact vs. subtree patterns</h2>
+
+<p>Go's ServeMux has two kinds of path patterns — and mixing them up is the #1 routing bug for beginners:</p>
+
+<table>
+  <tr>
+    <th>Pattern</th>
+    <th>Type</th>
+    <th>Matches</th>
+  </tr>
+  <tr>
+    <td>"/users"</td>
+    <td>Exact</td>
+    <td><code>/users</code> only</td>
+  </tr>
+  <tr>
+    <td>"/users/"</td>
+    <td>Subtree</td>
+    <td><code>/users/</code>, <code>/users/42</code>, <code>/users/42/posts</code> …</td>
+  </tr>
+  <tr>
+    <td>"GET /users/{id}"</td>
+    <td>Exact + method + param</td>
+    <td><code>GET /users/42</code>, <code>GET /users/bob</code> …</td>
+  </tr>
+</table>
+
+<div class="callout warn">
+  <strong>Gotcha:</strong> Registering <code>"/users/"</code> (subtree) also catches <code>/users</code> with a redirect — which can surprise you. If you want <em>only</em> <code>/users</code>, use the exact form (no trailing slash).
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2>Go 1.22: method + path parameters</h2>
+
+<p>Go 1.22 (released Feb 2024) added <strong>enhanced routing patterns</strong> to the standard <code>ServeMux</code>. You can now restrict a route to a specific HTTP method and use <code>{name}</code> wildcards directly in the pattern string — no third-party router needed for most apps.</p>
+
+<pre><code>mux.<span class="fn">HandleFunc</span>(<span class="str">"GET /users/{id}"</span>, getUserHandler)
+mux.<span class="fn">HandleFunc</span>(<span class="str">"DELETE /users/{id}"</span>, deleteUserHandler)
+mux.<span class="fn">HandleFunc</span>(<span class="str">"GET /users"</span>, listUsersHandler)</code></pre>
+
+<p class="citation">Ref: <a href="https://go.dev/blog/routing-enhancements" target="_blank">go.dev — Routing Enhancements for Go 1.22</a></p>
+
+<p>Before 1.22, you'd have to check <code>r.Method</code> manually inside the handler. Now the mux does it for you — a request to the wrong method gets a <strong>405 Method Not Allowed</strong> automatically.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2>Extracting path parameters</h2>
+
+<p>Once you've declared a <code>{name}</code> wildcard in your pattern, extract it inside the handler with <code>r.PathValue("name")</code>:</p>
+
+<div class="compare">
+  <div class="compare-col">
+    <div class="compare-label ts">TypeScript (Express)</div>
+    <pre><code>app.get(<span class="str">'/users/:id'</span>, (req, res) => {
+  <span class="ts-kw">const</span> id = req.params.id
+  res.json({ id })
+})</code></pre>
+  </div>
+  <div class="compare-col">
+    <div class="compare-label go">Go (net/http 1.22+)</div>
+    <pre><code>mux.<span class="fn">HandleFunc</span>(<span class="str">"GET /users/{id}"</span>,
+  <span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+    id := r.<span class="fn">PathValue</span>(<span class="str">"id"</span>)
+    <span class="pkg">fmt</span>.<span class="fn">Fprintf</span>(w, <span class="str">"user: %s"</span>, id)
+  })</code></pre>
+  </div>
+</div>
+
+<p class="citation">Ref: <a href="https://pkg.go.dev/net/http#Request.PathValue" target="_blank">pkg.go.dev — Request.PathValue</a></p>
+
+<p><code>r.PathValue</code> returns an empty string if the wildcard isn't present. Always validate it — a missing or non-numeric ID should return a 400, not a panic.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2>Full working example</h2>
+
+<p>Here's a complete, runnable server with three routes. Paste this into <code>main.go</code> in an initialized module and run with <code>go run .</code>.</p>
+
+<pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+	<span class="str">"fmt"</span>
+	<span class="str">"log"</span>
+	<span class="str">"net/http"</span>
+)
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+	mux := <span class="pkg">http</span>.<span class="fn">NewServeMux</span>()
+
+	<span class="cmt">// GET /users — list all users</span>
+	mux.<span class="fn">HandleFunc</span>(<span class="str">"GET /users"</span>, <span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+		<span class="pkg">fmt</span>.<span class="fn">Fprintln</span>(w, <span class="str">"[alice, bob, carol]"</span>)
+	})
+
+	<span class="cmt">// GET /users/{id} — get one user</span>
+	mux.<span class="fn">HandleFunc</span>(<span class="str">"GET /users/{id}"</span>, <span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+		id := r.<span class="fn">PathValue</span>(<span class="str">"id"</span>)
+		<span class="kw">if</span> id == <span class="str">""</span> {
+			<span class="pkg">http</span>.<span class="fn">Error</span>(w, <span class="str">"missing id"</span>, <span class="pkg">http</span>.StatusBadRequest)
+			<span class="kw">return</span>
+		}
+		<span class="pkg">fmt</span>.<span class="fn">Fprintf</span>(w, <span class="str">"user: %s\n"</span>, id)
+	})
+
+	<span class="cmt">// DELETE /users/{id}</span>
+	mux.<span class="fn">HandleFunc</span>(<span class="str">"DELETE /users/{id}"</span>, <span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+		id := r.<span class="fn">PathValue</span>(<span class="str">"id"</span>)
+		<span class="pkg">fmt</span>.<span class="fn">Fprintf</span>(w, <span class="str">"deleted user: %s\n"</span>, id)
+	})
+
+	<span class="pkg">log</span>.<span class="fn">Println</span>(<span class="str">"listening on :8080"</span>)
+	<span class="pkg">log</span>.<span class="fn">Fatal</span>(<span class="pkg">http</span>.<span class="fn">ListenAndServe</span>(<span class="str">":8080"</span>, mux))
+}
+</code></pre>
+
+<div class="callout">
+  <strong>Try it:</strong> Run the server, then in a second terminal:
+  <pre style="background:transparent;border:none;padding:0.4rem 0;margin:0.3rem 0 0;font-size:0.84rem;"><code>curl localhost:8080/users
+curl localhost:8080/users/42
+curl -X DELETE localhost:8080/users/42
+curl -X POST localhost:8080/users/42   # → 405 Method Not Allowed</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2>Cheat sheet</h2>
+
+<table>
+  <tr>
+    <th>What you want</th>
+    <th>How to do it</th>
+  </tr>
+  <tr>
+    <td>New, isolated mux</td>
+    <td><code>mux := http.NewServeMux()</code></td>
+  </tr>
+  <tr>
+    <td>Match GET /users exactly</td>
+    <td><code>mux.HandleFunc("GET /users", h)</code></td>
+  </tr>
+  <tr>
+    <td>Match any method on /users</td>
+    <td><code>mux.HandleFunc("/users", h)</code></td>
+  </tr>
+  <tr>
+    <td>Path parameter <code>{id}</code></td>
+    <td>pattern: <code>"GET /users/{id}"</code></td>
+  </tr>
+  <tr>
+    <td>Read path parameter</td>
+    <td><code>r.PathValue("id")</code></td>
+  </tr>
+  <tr>
+    <td>Use the custom mux</td>
+    <td><code>http.ListenAndServe(":8080", mux)</code></td>
+  </tr>
+  <tr>
+    <td>Catch-all subtree</td>
+    <td>trailing slash: <code>"/static/"</code></td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="quiz">
+  <div class="quiz-header">
+    <span class="quiz-icon">⚡</span>
+    <h2>Quick Check</h2>
+    <span class="quiz-progress" id="qprogress">1 / 4</span>
+  </div>
+
+  <!-- Q1 -->
+  <div class="question active" id="q1">
+    <div class="question-num">Question 1</div>
+    <p>You register <code>"GET /users/{id}"</code> on your mux. A client sends a <strong>POST</strong> request to <code>/users/42</code>. What happens?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q1',false)">A. The handler runs normally; you check r.Method yourself</button>
+      <button class="option" onclick="answer(this,'q1',true)">B. The mux automatically returns <strong>405 Method Not Allowed</strong></button>
+      <button class="option" onclick="answer(this,'q1',false)">C. The mux returns 404 Not Found</button>
+      <button class="option" onclick="answer(this,'q1',false)">D. The request is silently ignored</button>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+    <button class="next-btn" id="q1-next" onclick="nextQuestion(2)">Next →</button>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question" id="q2">
+    <div class="question-num">Question 2</div>
+    <p>How do you extract the <code>{id}</code> wildcard from this pattern inside the handler?</p>
+    <pre><code>mux.HandleFunc("GET /users/{id}", myHandler)</code></pre>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q2',false)">A. r.URL.Query().Get("id")</button>
+      <button class="option" onclick="answer(this,'q2',false)">B. r.URL.Path[8:]</button>
+      <button class="option" onclick="answer(this,'q2',true)">C. r.PathValue("id")</button>
+      <button class="option" onclick="answer(this,'q2',false)">D. r.Params["id"]</button>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+    <button class="next-btn" id="q2-next" onclick="nextQuestion(3)">Next →</button>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question" id="q3">
+    <div class="question-num">Question 3</div>
+    <p>What is the difference between registering <code>"/api"</code> and <code>"/api/"</code> on a ServeMux?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q3',false)">A. No difference — they match the same requests</button>
+      <button class="option" onclick="answer(this,'q3',true)">B. <code>"/api"</code> matches <em>only</em> <code>/api</code> exactly; <code>"/api/"</code> matches <code>/api/</code> and any sub-path like <code>/api/v1/users</code></button>
+      <button class="option" onclick="answer(this,'q3',false)">C. <code>"/api/"</code> matches <em>only</em> <code>/api/</code> exactly; <code>"/api"</code> is the wildcard version</button>
+      <button class="option" onclick="answer(this,'q3',false)">D. Both are exact matches; the trailing slash is just style</button>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+    <button class="next-btn" id="q3-next" onclick="nextQuestion(4)">Next →</button>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question" id="q4">
+    <div class="question-num">Question 4</div>
+    <p>You want to use your custom <code>mux</code> instead of the global default. Which call is correct?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q4',false)">A. http.ListenAndServe(":8080", nil)</button>
+      <button class="option" onclick="answer(this,'q4',true)">B. http.ListenAndServe(":8080", mux)</button>
+      <button class="option" onclick="answer(this,'q4',false)">C. mux.ListenAndServe(":8080")</button>
+      <button class="option" onclick="answer(this,'q4',false)">D. http.ListenAndServe(":8080", &mux)</button>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+    <button class="next-btn" id="q4-next" onclick="showResult()">See results →</button>
+  </div>
+
+  <!-- Result -->
+  <div class="quiz-result" id="quiz-result">
+    <div class="result-score" id="result-score"></div>
+    <div class="result-msg" id="result-msg"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="next-lesson">
+  ↓ Up next: <strong>Lesson 5 — JSON Request &amp; Response</strong> &nbsp;·&nbsp; encoding/json, struct tags, decoding request bodies
+</div>
+
+<div class="teacher-note" style="margin-top:1.2rem;">
+  <strong>Questions?</strong> Ask your AI teacher anything that's unclear — "why does the mux return 405 instead of 404?", "when should I use a subtree pattern?", or "what if I need query parameters too?" Just ask.
+</div>
+
+<script>
+  const answers = {
+    q1: { correct: 1, explanations: [
+      "Incorrect. With Go 1.22+ enhanced patterns, the mux handles method matching for you — your handler won't run at all.",
+      "Correct! ✓ When you prefix a pattern with a method like \"GET /users/{id}\", the ServeMux automatically rejects requests with a different method and returns 405 Method Not Allowed.",
+      "Incorrect. The path /users/42 does exist — just the wrong method. Go distinguishes 404 (no matching path) from 405 (matching path, wrong method).",
+      "Incorrect. Go doesn't silently drop mismatched methods — it returns a proper 405 response."
+    ]},
+    q2: { correct: 2, explanations: [
+      "Incorrect. Query().Get() reads URL query string parameters like /users?id=42, not path wildcards.",
+      "Incorrect. Slicing the path string directly is fragile and error-prone. Go provides a proper API for this.",
+      "Correct! ✓ r.PathValue(\"id\") is the correct way to read a {id} wildcard declared in the pattern string. It returns an empty string if not found.",
+      "Incorrect. Go's *http.Request has no Params field. That's Express-style — Go uses r.PathValue()."
+    ]},
+    q3: { correct: 1, explanations: [
+      "Incorrect. The trailing slash makes a meaningful difference in Go's ServeMux.",
+      "Correct! ✓ \"/api\" is an exact pattern — only /api matches. \"/api/\" is a subtree pattern — it matches /api/ and any path that starts with /api/, like /api/v1/users.",
+      "Incorrect. It's the other way around: no trailing slash = exact, trailing slash = subtree.",
+      "Incorrect. Go's routing cares about the trailing slash. Without it, only the exact URL matches."
+    ]},
+    q4: { correct: 1, explanations: [
+      "Incorrect. Passing nil tells ListenAndServe to use the global DefaultServeMux, not your custom mux.",
+      "Correct! ✓ http.ListenAndServe accepts an http.Handler as its second argument. Your mux implements http.Handler, so pass it directly.",
+      "Incorrect. ServeMux doesn't have its own ListenAndServe method. You always call the package-level http.ListenAndServe.",
+      "Incorrect. http.NewServeMux() already returns a pointer (*http.ServeMux), so &mux would be a pointer-to-pointer."
+    ]}
+  };
+
+  let score = 0;
+
+  function answer(btn, qid, isCorrect) {
+    const q = document.getElementById(qid);
+    const opts = q.querySelectorAll('.option');
+    const fb = document.getElementById(qid + '-fb');
+    const next = document.getElementById(qid + '-next');
+    const qNum = parseInt(qid.replace('q', '')) - 1;
+
+    opts.forEach(o => o.disabled = true);
+    const idx = Array.from(opts).indexOf(btn);
+
+    if (isCorrect) {
+      btn.classList.add('correct');
+      score++;
+      fb.textContent = answers[qid].explanations[idx];
+      fb.className = 'feedback correct show';
+    } else {
+      btn.classList.add('wrong');
+      // Highlight the correct one
+      opts[answers[qid].correct].classList.add('correct');
+      fb.textContent = answers[qid].explanations[idx];
+      fb.className = 'feedback wrong show';
+    }
+
+    next.classList.add('show');
+  }
+
+  function nextQuestion(n) {
+    document.querySelector('.question.active').classList.remove('active');
+    document.getElementById('q' + n).classList.add('active');
+    document.getElementById('qprogress').textContent = n + ' / 4';
+  }
+
+  function showResult() {
+    document.querySelector('.question.active').classList.remove('active');
+    const result = document.getElementById('quiz-result');
+    result.classList.add('show');
+    document.getElementById('qprogress').textContent = '✓ done';
+
+    const scoreEl = document.getElementById('result-score');
+    const msgEl = document.getElementById('result-msg');
+    scoreEl.textContent = score + ' / 4';
+
+    if (score === 4) {
+      scoreEl.style.color = '#3ab54a';
+      msgEl.textContent = 'Perfect. You\'ve got routing wired in your head — on to JSON next.';
+    } else if (score >= 3) {
+      scoreEl.style.color = '#f5c842';
+      msgEl.textContent = 'Solid. Review the questions you missed, then move on to Lesson 5.';
+    } else {
+      scoreEl.style.color = '#e05c5c';
+      msgEl.textContent = 'Take another pass through the lesson, then retry. Routing patterns are core to the server you\'re building.';
+    }
+  }
+</script>
+
+</body>
+</html>

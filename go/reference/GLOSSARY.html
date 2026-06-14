@@ -45,6 +45,50 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
+<h2>Routing (Lesson 4)</h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>http.NewServeMux() <span class="new-badge">new</span></td>
+    <td>express() / new Router()</td>
+    <td>Creates a fresh, isolated HTTP multiplexer (router). Pass it to ListenAndServe instead of nil.</td>
+  </tr>
+  <tr>
+    <td>ServeMux <span class="new-badge">new</span></td>
+    <td>Express Router</td>
+    <td>Go's built-in HTTP request multiplexer. Matches incoming URLs to registered handler functions.</td>
+  </tr>
+  <tr>
+    <td>exact pattern <span class="new-badge">new</span></td>
+    <td>app.get('/path', h)</td>
+    <td>A pattern without a trailing slash — matches only that exact URL. E.g. <code>"/users"</code> matches only <code>/users</code>.</td>
+  </tr>
+  <tr>
+    <td>subtree pattern <span class="new-badge">new</span></td>
+    <td>app.use('/prefix', …)</td>
+    <td>A pattern with a trailing slash — matches the prefix and any sub-path. E.g. <code>"/api/"</code> matches <code>/api/v1/users</code>.</td>
+  </tr>
+  <tr>
+    <td>{name} wildcard <span class="new-badge">new</span></td>
+    <td>:name in Express</td>
+    <td>A path parameter in a Go 1.22+ mux pattern. E.g. <code>"GET /users/{id}"</code>. Extract with <code>r.PathValue("id")</code>.</td>
+  </tr>
+  <tr>
+    <td>r.PathValue(name) <span class="new-badge">new</span></td>
+    <td>req.params.name</td>
+    <td>Reads a named path wildcard from the matched pattern. Returns empty string if not found.</td>
+  </tr>
+  <tr>
+    <td>http.Error(w, msg, code) <span class="new-badge">new</span></td>
+    <td>res.status(code).send(msg)</td>
+    <td>Convenience function that writes a plain-text error body and sets the given HTTP status code.</td>
+  </tr>
+</table>
+
 <h2>HTTP Server (Lesson 3)</h2>
 <table>
   <tr>
@@ -53,52 +97,52 @@
     <th>Meaning</th>
   </tr>
   <tr>
-    <td>net/http <span class="new-badge">new</span></td>
+    <td>net/http</td>
     <td>express (sort of)</td>
     <td>Standard library package providing HTTP client and server primitives. No install needed.</td>
   </tr>
   <tr>
-    <td>http.ResponseWriter <span class="new-badge">new</span></td>
+    <td>http.ResponseWriter</td>
     <td>res (Express)</td>
     <td>Interface passed to every handler. Write status, headers, and body through it. Headers must be set before body.</td>
   </tr>
   <tr>
-    <td>*http.Request <span class="new-badge">new</span></td>
+    <td>*http.Request</td>
     <td>req (Express)</td>
     <td>Pointer to a struct containing the full incoming request: Method, URL, Header, Body, etc.</td>
   </tr>
   <tr>
-    <td>http.HandleFunc <span class="new-badge">new</span></td>
+    <td>http.HandleFunc</td>
     <td>app.get / app.post</td>
     <td>Registers a handler function on the DefaultServeMux for a given path pattern.</td>
   </tr>
   <tr>
-    <td>http.ListenAndServe <span class="new-badge">new</span></td>
+    <td>http.ListenAndServe</td>
     <td>app.listen</td>
     <td>Starts the HTTP server. Second arg is the handler/mux; <code>nil</code> uses DefaultServeMux.</td>
   </tr>
   <tr>
-    <td>DefaultServeMux <span class="new-badge">new</span></td>
+    <td>DefaultServeMux</td>
     <td>the default Express app</td>
     <td>The global default router. <code>http.HandleFunc</code> registers on it; passing <code>nil</code> to ListenAndServe uses it.</td>
   </tr>
   <tr>
-    <td>w.WriteHeader(code) <span class="new-badge">new</span></td>
+    <td>w.WriteHeader(code)</td>
     <td>res.status(code)</td>
     <td>Sends the HTTP status code. Must be called before writing the body — cannot be changed after.</td>
   </tr>
   <tr>
-    <td>w.Header().Set(k,v) <span class="new-badge">new</span></td>
+    <td>w.Header().Set(k,v)</td>
     <td>res.set(k, v)</td>
     <td>Sets a response header. Must be called before WriteHeader or first body write.</td>
   </tr>
   <tr>
-    <td>r.URL.Path <span class="new-badge">new</span></td>
+    <td>r.URL.Path</td>
     <td>req.path</td>
     <td>The URL path string of the request, e.g. <code>"/users/42"</code>.</td>
   </tr>
   <tr>
-    <td>r.Method <span class="new-badge">new</span></td>
+    <td>r.Method</td>
     <td>req.method</td>
     <td>The HTTP verb as a string: <code>"GET"</code>, <code>"POST"</code>, <code>"DELETE"</code>, etc.</td>
   </tr>
@@ -112,42 +156,42 @@
     <th>Meaning</th>
   </tr>
   <tr>
-    <td>module <span class="new-badge">new</span></td>
+    <td>module</td>
     <td>npm package / repo</td>
     <td>A collection of related Go packages declared by a single <code>go.mod</code> file. The module path (e.g. <code>github.com/user/repo</code>) is its globally unique name.</td>
   </tr>
   <tr>
-    <td>go.mod <span class="new-badge">new</span></td>
+    <td>go.mod</td>
     <td>package.json</td>
     <td>The module manifest. Declares module path, minimum Go version, and required dependencies.</td>
   </tr>
   <tr>
-    <td>go.sum <span class="new-badge">new</span></td>
+    <td>go.sum</td>
     <td>package-lock.json</td>
     <td>Cryptographic checksums for all dependencies. Auto-managed — commit it, never edit by hand.</td>
   </tr>
   <tr>
-    <td>package <span class="new-badge">new</span></td>
+    <td>package</td>
     <td>directory of files (roughly)</td>
     <td>The unit of code organization in Go. One directory = one package. Declared with <code>package &lt;name&gt;</code> at the top of every <code>.go</code> file.</td>
   </tr>
   <tr>
-    <td>go run . <span class="new-badge">new</span></td>
+    <td>go run .</td>
     <td>ts-node src/index.ts</td>
     <td>Compiles and runs the current package immediately. Good for development.</td>
   </tr>
   <tr>
-    <td>go build . <span class="new-badge">new</span></td>
+    <td>go build .</td>
     <td>tsc + node dist/index.js</td>
     <td>Compiles to a static native binary. No runtime required to execute it.</td>
   </tr>
   <tr>
-    <td>go get &lt;path&gt; <span class="new-badge">new</span></td>
+    <td>go get &lt;path&gt;</td>
     <td>npm install &lt;pkg&gt;</td>
     <td>Fetches a dependency and adds it to <code>go.mod</code> / <code>go.sum</code>.</td>
   </tr>
   <tr>
-    <td>exported identifier <span class="new-badge">new</span></td>
+    <td>exported identifier</td>
     <td>export keyword</td>
     <td>Any identifier starting with a capital letter is exported (public). Lowercase = package-private. No keyword needed.</td>
   </tr>
