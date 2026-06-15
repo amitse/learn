@@ -91,6 +91,15 @@
   <dt>Extraction</dt><dd>Moving a piece that's in the wrong bottom-layer slot up to the top layer so it can be repositioned. Done with R U R′ for corners.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 3 — White Corners (2026-06-13)</p>
+<h2>Second Layer (Layer 2) Algorithms</h2>
+<dl>
+  <dt>Right Insert</dt><dd><code>U R U′ R′ U′ F′ U F</code> — inserts an edge into the front-right middle slot when the edge's front-facing sticker matches the front centre. Case A.</dd>
+  <dt>Left Insert</dt><dd><code>U′ L′ U L U F U′ F′</code> — inserts an edge into the front-right middle slot when the edge's right-facing sticker matches the right centre. Case B. Mirror of the Right Insert.</dd>
+  <dt>y rotation</dt><dd>A whole-cube rotation turning the cube left (counter-clockwise when viewed from above). Used to reposition the target slot to front-right without altering the cube state.</dd>
+  <dt>Extraction (L2)</dt><dd>Popping a mis-inserted middle-layer edge back to the top layer by applying an insertion algorithm from above. The wrongly placed edge is displaced to U, then reinserted correctly.</dd>
+  <dt>Side sticker</dt><dd>For an edge sitting on the U face: the sticker that faces a side (not upward). Used to determine Case A vs Case B for second-layer insertion.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 4 — Second Layer Edges (2026-06-15)</p>
 </body>
 </html>

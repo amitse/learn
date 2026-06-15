@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 4 — Second Layer Edges</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #21253a;
+  --surface3: #262b40;
+  --border: #2a2d3a;
+  --text: #e8eaf0;
+  --muted: #7a7f99;
+  --accent: #f57c00;
+  --white-text: #ffffff;
+  --correct: #3ab54a;
+  --wrong: #e84040;
+  --U: #f0f0f0;
+  --D: #f5d600;
+  --R: #e84040;
+  --L: #f57c00;
+  --F: #3ab54a;
+  --B: #2979ff;
+  --grey: #444;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+}
+h1 { font-size: 1.75rem; font-weight: 700; color: var(--white-text); }
+h2 {
+  font-size: 1.1rem; font-weight: 600; color: var(--white-text);
+  margin: 2.5rem 0 0.8rem;
+  padding-top: 2rem; border-top: 1px solid var(--border);
+}
+h2:first-of-type { border-top: none; padding-top: 0; margin-top: 1.5rem; }
+h3 { font-size: 0.95rem; font-weight: 600; color: var(--white-text); margin-bottom: 0.4rem; }
+p { margin-bottom: 0.85rem; }
+a { color: var(--accent); }
+strong { color: var(--white-text); }
+
+.meta { color: var(--muted); font-size: 0.82rem; margin-top: 0.25rem; margin-bottom: 0.4rem; }
+.progress-bar {
+  display: flex; gap: 4px; margin: 1.2rem 0 1.5rem;
+}
+.progress-bar .step {
+  height: 6px; border-radius: 3px; flex: 1; background: var(--surface2);
+}
+.progress-bar .step.done { background: var(--correct); }
+.progress-bar .step.current { background: var(--accent); }
+
+/* ─── Card ─── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.25rem 1.4rem; margin-bottom: 1.2rem;
+}
+.card-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--muted); margin-bottom: 0.7rem;
+}
+
+/* ─── Algorithm display ─── */
+.algo {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding: 0.9rem 1rem; border-radius: 8px;
+  background: var(--surface2); border: 1px solid var(--border);
+  margin: 0.8rem 0;
+}
+.move {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; height: 34px; padding: 0 6px;
+  background: var(--surface3); border: 1px solid var(--border);
+  border-radius: 6px; font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 0.92rem; font-weight: 700; color: var(--white-text);
+  letter-spacing: 0.02em; user-select: all;
+}
+.move.u { border-bottom-color: var(--U); color: #ddd; }
+.move.r { border-bottom-color: var(--R); color: #f99; }
+.move.l { border-bottom-color: #dd8833; color: #ffc08a; }
+.move.f { border-bottom-color: var(--F); color: #88e098; }
+.algo-name {
+  font-size: 0.8rem; color: var(--muted); margin-left: 4px; white-space: nowrap;
+}
+
+/* ─── 2-case layout ─── */
+.cases { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+@media (max-width: 540px) { .cases { grid-template-columns: 1fr; } }
+.case-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem; text-align: center;
+}
+.case-card .case-label {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); margin-bottom: 0.6rem;
+}
+.case-card h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+.case-card p { font-size: 0.85rem; color: var(--muted); text-align: left; margin-bottom: 0.6rem; }
+
+/* ─── Mini cube face diagrams ─── */
+.cube-diag { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 0.7rem auto; }
+.face-row { display: flex; gap: 2px; }
+.cell {
+  width: 28px; height: 28px; border-radius: 3px; border: 1px solid #111;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 700; color: rgba(0,0,0,0.55);
+}
+.cell.blank { background: var(--surface3); border-color: var(--surface3); }
+.cell.U { background: var(--U); }
+.cell.D { background: var(--D); }
+.cell.R { background: var(--R); color: #fff; }
+.cell.L { background: var(--L); }
+.cell.F { background: var(--F); }
+.cell.B { background: var(--B); color: #fff; }
+.cell.grey { background: #3a3d4a; border-color: #3a3d4a; }
+.cell.target { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* ─── Diagram label ─── */
+.diag-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; text-align: center; }
+
+/* ─── Tip box ─── */
+.tip {
+  display: flex; gap: 0.7rem;
+  background: #1a2a1a; border: 1px solid #2a4a2a;
+  border-radius: 8px; padding: 0.9rem 1rem; margin: 1rem 0;
+}
+.tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+.tip p { margin: 0; font-size: 0.9rem; }
+
+.warn {
+  display: flex; gap: 0.7rem;
+  background: #2a1a0a; border: 1px solid #4a3010;
+  border-radius: 8px; padding: 0.9rem 1rem; margin: 1rem 0;
+}
+.warn p { margin: 0; font-size: 0.9rem; }
+
+/* ─── Steps list ─── */
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps li {
+  counter-increment: step;
+  display: flex; gap: 0.9rem; align-items: flex-start;
+  padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+}
+.steps li:last-child { border-bottom: none; }
+.steps li::before {
+  content: counter(step);
+  min-width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #000;
+  font-size: 0.78rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+.steps li span { font-size: 0.9rem; }
+
+/* ─── Quiz ─── */
+#quiz { margin-top: 1rem; }
+.question {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.3rem 1.4rem; margin-bottom: 1rem;
+}
+.q-num { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.4rem; }
+.q-text { font-size: 0.95rem; color: var(--white-text); margin-bottom: 1rem; line-height: 1.5; }
+.options { display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 7px; padding: 0.6rem 1rem;
+  font-size: 0.88rem; cursor: pointer; text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--text);
+  font-family: inherit;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.opt:hover { border-color: var(--accent); background: var(--surface3); }
+.opt.correct { border-color: var(--correct); background: #0d2210; color: #7de89a; }
+.opt.wrong   { border-color: var(--wrong);   background: #1f0a0a; color: #f09090; }
+.opt:disabled { pointer-events: none; }
+.opt-indicator { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+.feedback {
+  margin-top: 0.75rem; padding: 0.6rem 0.9rem; border-radius: 6px;
+  font-size: 0.85rem; line-height: 1.5; display: none;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: #0d2210; color: #7de89a; border: 1px solid #1e5a2e; }
+.feedback.wrong   { background: #1f0a0a; color: #f09090; border: 1px solid #5a1a1a; }
+
+/* ─── Score ─── */
+#score-section { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; text-align: center; margin-top: 1rem; }
+#score-section h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+#score-val { font-size: 2.5rem; font-weight: 700; color: var(--accent); display: block; }
+#score-msg { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+
+/* ─── Footer ─── */
+.footer { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
+.footer a { color: var(--accent); }
+.back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); text-decoration: none; font-size: 0.85rem; margin-bottom: 1.5rem; }
+.back-link:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<a href="../../index.html" class="back-link">← All lessons</a>
+
+<p class="meta">Rubik's Cube · Lesson 4 of 8 · ~8 min</p>
+<h1>Second Layer Edges</h1>
+<p class="meta">Complete Layer 2 — the middle band of the cube.</p>
+
+<!-- progress bar -->
+<div class="progress-bar">
+  <div class="step done" title="Cube Notation"></div>
+  <div class="step done" title="White Cross"></div>
+  <div class="step done" title="White Corners"></div>
+  <div class="step current" title="Second Layer Edges"></div>
+  <div class="step" title="Yellow Cross"></div>
+  <div class="step" title="Orient Yellow Corners"></div>
+  <div class="step" title="Permute Yellow Corners"></div>
+  <div class="step" title="Permute Last Layer Edges"></div>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<h2>Where you are</h2>
+
+<p>Layer 1 is finished — white face solved, four white corners in place. Now <strong>flip the cube over</strong> so white is on the bottom, yellow on top. You'll hold it this way for the rest of the solve.</p>
+
+<div class="card">
+  <div class="card-title">Cube orientation from now on</div>
+  <ul class="steps">
+    <li><span>White face <strong>DOWN</strong> (D). Yellow face <strong>UP</strong> (U). Keep this throughout Layers 2 and 3.</span></li>
+    <li><span>The 4 <strong>middle-layer slots</strong> sit between the four side centres. Your goal: fill all 4 with the right edge pieces.</span></li>
+    <li><span>A middle-layer edge has <strong>no yellow sticker</strong>. If an edge piece has a yellow sticker, it belongs in the last layer — skip it for now.</span></li>
+  </ul>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<h2>Finding your target edges</h2>
+
+<p>Scan the top layer (U face) for edge pieces with <strong>no yellow sticker</strong>. Each one belongs in the middle band.</p>
+
+<div class="tip">
+  <div class="tip-icon">💡</div>
+  <p>If a non-yellow edge is <em>already in the middle layer</em> but in the wrong slot or orientation, you'll handle it last — see <a href="#extraction">Extraction</a> below.</p>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<h2>Setup: bring the edge above its slot</h2>
+
+<p>For each target edge:</p>
+
+<ol class="steps">
+  <li><span>Identify which <strong>two centre colours</strong> the edge should sit between (the edge's two sticker colours match two adjacent centres).</span></li>
+  <li><span>Rotate <strong>U</strong> until the edge is directly above the matching column — the side sticker of the edge faces the same direction as its matching centre.</span></li>
+  <li><span>Turn the whole cube (y rotation) so the target slot is at <strong>front-right</strong>. Now look at how the edge is oriented on the U face.</span></li>
+</ol>
+
+<!-- ──────────────────────────────────────── -->
+<h2>Two cases — Right Insert vs Left Insert</h2>
+
+<p>With the target slot at front-right and the edge set up directly above it, there are exactly two orientations:</p>
+
+<div class="cases">
+  <!-- Case A: Right Insert -->
+  <div class="case-card">
+    <div class="case-label">Case A</div>
+    <h3>Right Insert</h3>
+    <!-- Mini diagram: U face top-down (3×3 grid) + front strip below -->
+    <!-- Edge is at U-F position, green on front, red on top -->
+    <div class="cube-diag" title="Top-down U face + front strip. Edge is at UF slot.">
+      <!-- U face row 0 -->
+      <div class="face-row">
+        <div class="cell grey"></div>
+        <div class="cell grey"></div>
+        <div class="cell grey"></div>
+      </div>
+      <!-- U face row 1 -->
+      <div class="face-row">
+        <div class="cell grey"></div>
+        <div class="cell D" style="background:#f5d600">Y</div>
+        <div class="cell grey"></div>
+      </div>
+      <!-- U face row 2 (front edge of U face) — target edge here -->
+      <div class="face-row">
+        <div class="cell grey"></div>
+        <div class="cell U target">W</div>
+        <div class="cell grey"></div>
+      </div>
+      <!-- front strip (F face top row) -->
+      <div class="face-row" style="margin-top:2px">
+        <div class="cell grey"></div>
+        <div class="cell F target">G</div>
+        <div class="cell grey"></div>
+      </div>
+    </div>
+    <div class="diag-label">Edge: top sticker = <strong style="color:var(--U)">white/light</strong><br>front sticker = <strong style="color:var(--F)">front colour</strong></div>
+    <p style="margin-top:0.6rem"><strong>Sign:</strong> front-facing sticker <strong>matches the front centre</strong>. Top sticker matches the right centre.</p>
+    <div class="algo">
+      <span class="move u">U</span>
+      <span class="move r">R</span>
+      <span class="move u">U′</span>
+      <span class="move r">R′</span>
+      <span class="move u">U′</span>
+      <span class="move f">F′</span>
+      <span class="move u">U</span>
+      <span class="move f">F</span>
+    </div>
+  </div>
+
+  <!-- Case B: Left Insert -->
+  <div class="case-card">
+    <div class="case-label">Case B</div>
+    <h3>Left Insert</h3>
+    <!-- Edge at U-R position, red facing right, green on top -->
+    <div class="cube-diag" title="Edge is at UR slot, rotated.">
+      <!-- U face row 0 -->
+      <div class="face-row">
+        <div class="cell grey"></div>
+        <div class="cell grey"></div>
+        <div class="cell grey"></div>
+      </div>
+      <!-- U face row 1 -->
+      <div class="face-row">
+        <div class="cell grey"></div>
+        <div class="cell D" style="background:#f5d600">Y</div>
+        <div class="cell F target">G</div>
+      </div>
+      <!-- U face row 2 -->
+      <div class="face-row">
+        <div class="cell grey"></div>
+        <div class="cell grey"></div>
+        <div class="cell grey"></div>
+      </div>
+      <!-- right strip -->
+      <div class="face-row" style="margin-top:2px">
+        <div class="cell grey"></div>
+        <div class="cell grey"></div>
+        <div class="cell R target">R</div>
+      </div>
+    </div>
+    <div class="diag-label">Edge: top sticker = <strong style="color:var(--F)">front colour</strong><br>right sticker = <strong style="color:var(--R)">right colour</strong></div>
+    <p style="margin-top:0.6rem"><strong>Sign:</strong> right-facing sticker <strong>matches the right centre</strong>. Top sticker matches the front centre.</p>
+    <div class="algo">
+      <span class="move u">U′</span>
+      <span class="move l">L′</span>
+      <span class="move u">U</span>
+      <span class="move l">L</span>
+      <span class="move u">U</span>
+      <span class="move f">F</span>
+      <span class="move u">U′</span>
+      <span class="move f">F′</span>
+    </div>
+  </div>
+</div>
+
+<div class="tip">
+  <div class="tip-icon">🔑</div>
+  <p><strong>Easy way to remember which case:</strong> look at the <em>side sticker</em> of the edge (the one not on the U face). If it faces the <strong>front</strong> → Right Insert. If it faces the <strong>right</strong> → Left Insert.</p>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<h2 id="extraction">Extraction: edge stuck in the middle layer</h2>
+
+<p>Sometimes you'll find a correct-looking edge already in the middle layer — but flipped the wrong way, or in the wrong slot. You can't insert over it; you need to <strong>pop it out first</strong>.</p>
+
+<div class="warn">
+  <div class="tip-icon">⚠️</div>
+  <p><strong>Do this:</strong> Align the cube so the stuck edge is at the front-right slot. Apply <em>either</em> insertion algorithm (Right or Left) from the top — this bumps the stuck piece up to the U layer and inserts whatever was on top. Then reinsert the freed piece normally.</p>
+</div>
+
+<ol class="steps">
+  <li><span>Rotate the cube so the mis-inserted edge is at <strong>front-right</strong>.</span></li>
+  <li><span>Apply any second-layer insertion algorithm (e.g. Right Insert) — this pops the edge to the top layer.</span></li>
+  <li><span>Now treat the freed edge as a normal top-layer edge and reinsert it correctly.</span></li>
+</ol>
+
+<!-- ──────────────────────────────────────── -->
+<h2>Putting it together</h2>
+
+<p>Repeat for all four middle-layer edges. The order doesn't matter.</p>
+
+<div class="card">
+  <div class="card-title">Full Layer 2 checklist</div>
+  <ol class="steps">
+    <li><span>White face down, yellow up.</span></li>
+    <li><span>Scan the U layer for edges with <strong>no yellow sticker</strong>.</span></li>
+    <li><span>For each: rotate <strong>U</strong> to set up, orient cube so target slot is front-right.</span></li>
+    <li><span>Identify Case A or B by looking at the side sticker.</span></li>
+    <li><span>Execute the algorithm. Edge inserts cleanly.</span></li>
+    <li><span>Extract any mis-inserted edges and redo them.</span></li>
+    <li><span>Repeat until all 4 middle slots are filled.</span></li>
+  </ol>
+</div>
+
+<div class="tip">
+  <div class="tip-icon">💡</div>
+  <p>Algorithms look long at first. After 5–6 repetitions, your hands start to do them automatically. Focus on <em>understanding the setup</em> first — the algorithm execution will follow with practice. Use <a href="https://ruwix.com/the-rubiks-cube/online-rubiks-cube-solver-program/" target="_blank" rel="noopener">Ruwix online solver</a> or <a href="https://alg.cubing.net/" target="_blank" rel="noopener">alg.cubing.net</a> to visualise the algorithms in 3D.</p>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<h2>Quick knowledge check</h2>
+<p>Five questions — instant feedback.</p>
+
+<div id="quiz">
+
+  <!-- Q1 -->
+  <div class="question" id="q1">
+    <div class="q-num">Question 1 of 5</div>
+    <div class="q-text">After finishing Layer 1, you flip the cube. Which face is now on top?</div>
+    <div class="options">
+      <button class="opt" onclick="answer(this,'q1',false)">
+        <span class="opt-indicator"></span> White face
+      </button>
+      <button class="opt" onclick="answer(this,'q1',true)">
+        <span class="opt-indicator"></span> Yellow face
+      </button>
+      <button class="opt" onclick="answer(this,'q1',false)">
+        <span class="opt-indicator"></span> Green face
+      </button>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question" id="q2">
+    <div class="q-num">Question 2 of 5</div>
+    <div class="q-text">You find an edge piece in the top layer. It has a <strong>green and orange</strong> sticker — no yellow. What layer does it belong in?</div>
+    <div class="options">
+      <button class="opt" onclick="answer(this,'q2',false)">
+        <span class="opt-indicator"></span> Layer 1 (white layer)
+      </button>
+      <button class="opt" onclick="answer(this,'q2',true)">
+        <span class="opt-indicator"></span> Layer 2 (middle band)
+      </button>
+      <button class="opt" onclick="answer(this,'q2',false)">
+        <span class="opt-indicator"></span> Layer 3 (last layer)
+      </button>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question" id="q3">
+    <div class="q-num">Question 3 of 5</div>
+    <div class="q-text">The target slot is at front-right. The edge's <strong>front-facing sticker matches the front centre</strong>. Which algorithm do you use?</div>
+    <div class="options">
+      <button class="opt" onclick="answer(this,'q3',true)">
+        <span class="opt-indicator"></span> Right Insert — U R U′ R′ U′ F′ U F
+      </button>
+      <button class="opt" onclick="answer(this,'q3',false)">
+        <span class="opt-indicator"></span> Left Insert — U′ L′ U L U F U′ F′
+      </button>
+      <button class="opt" onclick="answer(this,'q3',false)">
+        <span class="opt-indicator"></span> Right Trigger — R U R′ U′
+      </button>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question" id="q4">
+    <div class="q-num">Question 4 of 5</div>
+    <div class="q-text">The target slot is front-right. The edge's <strong>right-facing sticker matches the right centre</strong>. Which case is this?</div>
+    <div class="options">
+      <button class="opt" onclick="answer(this,'q4',false)">
+        <span class="opt-indicator"></span> Case A — Right Insert
+      </button>
+      <button class="opt" onclick="answer(this,'q4',true)">
+        <span class="opt-indicator"></span> Case B — Left Insert
+      </button>
+      <button class="opt" onclick="answer(this,'q4',false)">
+        <span class="opt-indicator"></span> Neither — the edge is already solved
+      </button>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="question" id="q5">
+    <div class="q-num">Question 5 of 5</div>
+    <div class="q-text">A middle-layer edge is already inserted but with the wrong orientation. What's the fastest fix?</div>
+    <div class="options">
+      <button class="opt" onclick="answer(this,'q5',false)">
+        <span class="opt-indicator"></span> Restart the whole solve
+      </button>
+      <button class="opt" onclick="answer(this,'q5',false)">
+        <span class="opt-indicator"></span> There's no fix — live with it
+      </button>
+      <button class="opt" onclick="answer(this,'q5',true)">
+        <span class="opt-indicator"></span> Apply an insertion algorithm to pop it out, then reinsert correctly
+      </button>
+    </div>
+    <div class="feedback" id="q5-fb"></div>
+  </div>
+
+  <div id="score-section">
+    <h3>Quiz complete!</h3>
+    <span id="score-val"></span>
+    <p id="score-msg"></p>
+  </div>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<h2>References</h2>
+<ul style="padding-left:1.2rem; font-size:0.9rem; color:var(--muted);">
+  <li><a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank" rel="noopener">Ruwix — Beginner's Method (step-by-step with visuals)</a></li>
+  <li><a href="https://alg.cubing.net/?alg=U_R_U-_R-_U-_F-_U_F&setup=B2_D-_L-_D_B2_U-_R_U_R-_U-&type=alg" target="_blank" rel="noopener">alg.cubing.net — visualise the Right Insert algorithm in 3D</a></li>
+  <li><a href="https://www.speedsolving.com/wiki/index.php/F2L" target="_blank" rel="noopener">SpeedSolving Wiki — F2L (background reading)</a></li>
+</ul>
+
+<div class="footer">
+  <p>← <a href="0003-white-corners.html">Lesson 3 — White Corners</a></p>
+  <p style="margin-top:0.5rem">Ask your teacher anything: open a Hermes session and ask a follow-up question about this lesson. The more specific, the better.</p>
+</div>
+
+<script>
+const feedbacks = {
+  q1: {
+    correct: "Correct. White goes DOWN for all of Layer 2 and 3. Yellow (the last layer) stays on top — that's your working face from now on.",
+    wrong: "Not quite. You flip the cube so white is at the bottom and yellow is on top. You hold this orientation for the rest of the solve."
+  },
+  q2: {
+    correct: "Correct. Any edge with no yellow sticker belongs in the middle band (Layer 2). Yellow-sticker edges are reserved for the last layer.",
+    wrong: "Think about it: this edge has no yellow sticker. Yellow stickers belong in Layer 3. Layer 1 only has white pieces. So middle layer (Layer 2) is right."
+  },
+  q3: {
+    correct: "Correct — that's Case A, Right Insert. The front-facing sticker aligns with the front centre, meaning the edge needs to go to the right.",
+    wrong: "Remember: if the front-facing sticker of the edge matches the front centre, the edge slots into the right — use the Right Insert algorithm."
+  },
+  q4: {
+    correct: "Correct — Case B, Left Insert. The right-facing sticker matches the right centre, so the edge is 'leaning' right, and the algorithm pushes it left into the slot.",
+    wrong: "If the RIGHT-facing sticker matches the right centre, the edge needs to arc left into the slot — that's Case B, Left Insert."
+  },
+  q5: {
+    correct: "Exactly. Extraction: run any insertion algorithm from the top to dislodge the wrong piece into the top layer, then insert correctly. There's no special 'fix' move — you just use what you already know.",
+    wrong: "There's no need to restart. Extraction works by running an insertion algorithm with an edge above the stuck slot — the stuck piece pops to the top layer and can then be inserted correctly."
+  }
+};
+
+let answered = {};
+let correct = 0;
+const total = 5;
+
+function answer(btn, qid, isCorrect) {
+  if (answered[qid]) return;
+  answered[qid] = true;
+  if (isCorrect) correct++;
+
+  const q = document.getElementById(qid);
+  const allOpts = q.querySelectorAll('.opt');
+  allOpts.forEach(o => {
+    o.disabled = true;
+    const ind = o.querySelector('.opt-indicator');
+    if (o === btn) {
+      o.classList.add(isCorrect ? 'correct' : 'wrong');
+      ind.textContent = isCorrect ? '✓' : '✗';
+      ind.style.background = isCorrect ? 'var(--correct)' : 'var(--wrong)';
+      ind.style.color = '#fff';
+    }
+  });
+
+  const fb = document.getElementById(qid + '-fb');
+  fb.textContent = feedbacks[qid][isCorrect ? 'correct' : 'wrong'];
+  fb.className = 'feedback show ' + (isCorrect ? 'correct' : 'wrong');
+
+  if (Object.keys(answered).length === total) {
+    setTimeout(showScore, 500);
+  }
+}
+
+function showScore() {
+  const sec = document.getElementById('score-section');
+  const val = document.getElementById('score-val');
+  const msg = document.getElementById('score-msg');
+  sec.style.display = 'block';
+  val.textContent = correct + ' / ' + total;
+  if (correct === total) {
+    msg.textContent = 'Perfect! You\'re ready to practice on a real cube. Next up: the Yellow Cross.';
+  } else if (correct >= 3) {
+    msg.textContent = 'Good understanding. Review the case you missed, then try both algorithms on a real or virtual cube.';
+  } else {
+    msg.textContent = 'Re-read the two-case section above and try again. The setup step (matching sticker to centre) is the key.';
+  }
+}
+</script>
+</body>
+</html>
