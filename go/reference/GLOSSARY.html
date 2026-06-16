@@ -45,6 +45,55 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
+<h2>JSON (Lesson 5) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>encoding/json</td>
+    <td>JSON.stringify / parse</td>
+    <td>Standard library package for JSON encoding and decoding. No install needed. Docs: <a href="https://pkg.go.dev/encoding/json" style="color:inherit">pkg.go.dev/encoding/json</a></td>
+  </tr>
+  <tr>
+    <td>struct tag</td>
+    <td>field rename in serialiser</td>
+    <td>Backtick string on a struct field: <code>`json:"key"`</code>. Controls the JSON key name used during encode/decode. Without a tag, Go uses the exact field name (PascalCase).</td>
+  </tr>
+  <tr>
+    <td>json:"key,omitempty"</td>
+    <td>optional field / undefined</td>
+    <td>Omits the field from JSON output when it holds the zero value (empty string, 0, nil, false). Does NOT omit non-zero values.</td>
+  </tr>
+  <tr>
+    <td>json:"-"</td>
+    <td>@Exclude() / separate DTO</td>
+    <td>Completely excludes the field from both marshalling and unmarshalling. Use for sensitive fields (passwords, internal tokens).</td>
+  </tr>
+  <tr>
+    <td>json.NewDecoder(r.Body).Decode(&amp;v)</td>
+    <td>req.body (via middleware)</td>
+    <td>Streams-decodes the request body JSON into struct <code>v</code>. Must pass a pointer (<code>&amp;v</code>). Always check returned error.</td>
+  </tr>
+  <tr>
+    <td>json.NewEncoder(w).Encode(v)</td>
+    <td>res.json(obj)</td>
+    <td>Streams-encodes struct <code>v</code> as JSON directly into the response writer. Set <code>Content-Type: application/json</code> header first.</td>
+  </tr>
+  <tr>
+    <td>json.Marshal(v)</td>
+    <td>JSON.stringify(obj)</td>
+    <td>Returns <code>[]byte</code>. Use when you need the raw JSON bytes (logging, signing). Prefer <code>NewEncoder</code> for HTTP responses.</td>
+  </tr>
+  <tr>
+    <td>json.Unmarshal(b, &amp;v)</td>
+    <td>JSON.parse(str)</td>
+    <td>Decodes <code>[]byte</code> into struct <code>v</code>. Use when you already have a byte slice, not a reader.</td>
+  </tr>
+</table>
+
 <h2>Routing (Lesson 4)</h2>
 <table>
   <tr>
@@ -53,37 +102,37 @@
     <th>Meaning</th>
   </tr>
   <tr>
-    <td>http.NewServeMux() <span class="new-badge">new</span></td>
+    <td>http.NewServeMux()</td>
     <td>express() / new Router()</td>
     <td>Creates a fresh, isolated HTTP multiplexer (router). Pass it to ListenAndServe instead of nil.</td>
   </tr>
   <tr>
-    <td>ServeMux <span class="new-badge">new</span></td>
+    <td>ServeMux</td>
     <td>Express Router</td>
     <td>Go's built-in HTTP request multiplexer. Matches incoming URLs to registered handler functions.</td>
   </tr>
   <tr>
-    <td>exact pattern <span class="new-badge">new</span></td>
+    <td>exact pattern</td>
     <td>app.get('/path', h)</td>
     <td>A pattern without a trailing slash — matches only that exact URL. E.g. <code>"/users"</code> matches only <code>/users</code>.</td>
   </tr>
   <tr>
-    <td>subtree pattern <span class="new-badge">new</span></td>
+    <td>subtree pattern</td>
     <td>app.use('/prefix', …)</td>
     <td>A pattern with a trailing slash — matches the prefix and any sub-path. E.g. <code>"/api/"</code> matches <code>/api/v1/users</code>.</td>
   </tr>
   <tr>
-    <td>{name} wildcard <span class="new-badge">new</span></td>
+    <td>{name} wildcard</td>
     <td>:name in Express</td>
     <td>A path parameter in a Go 1.22+ mux pattern. E.g. <code>"GET /users/{id}"</code>. Extract with <code>r.PathValue("id")</code>.</td>
   </tr>
   <tr>
-    <td>r.PathValue(name) <span class="new-badge">new</span></td>
+    <td>r.PathValue(name)</td>
     <td>req.params.name</td>
     <td>Reads a named path wildcard from the matched pattern. Returns empty string if not found.</td>
   </tr>
   <tr>
-    <td>http.Error(w, msg, code) <span class="new-badge">new</span></td>
+    <td>http.Error(w, msg, code)</td>
     <td>res.status(code).send(msg)</td>
     <td>Convenience function that writes a plain-text error body and sets the given HTTP status code.</td>
   </tr>
