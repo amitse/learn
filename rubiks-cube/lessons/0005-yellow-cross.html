@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 0005 — Yellow Cross (OLL Step 1)</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #21253a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #f5d600;
+    --green: #3ab54a;
+    --red: #e84040;
+    --white-c: #ffffff;
+    --dim: #3a3d50;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  /* Header */
+  .lesson-header {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .lesson-tag {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--white-c);
+    line-height: 1.2;
+  }
+  .objective {
+    margin-top: 0.7rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .objective strong { color: var(--accent); }
+
+  /* Sections */
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--white-c);
+    margin: 2.5rem 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  h2 .n {
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    width: 1.5rem; height: 1.5rem;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+
+  p { margin-bottom: 0.9rem; }
+  ul, ol { margin: 0.4rem 0 0.9rem 1.3rem; line-height: 2.1; }
+
+  /* Callouts */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    margin: 1.1rem 0;
+    font-size: 0.9rem;
+  }
+  .callout.tip  { border-left-color: var(--green); }
+  .callout.info { border-left-color: #7986cb; }
+
+  /* Algorithm pill row */
+  .algo-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  .algo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.4rem 0 1rem;
+    align-items: center;
+  }
+  .mv {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.65rem;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    min-width: 2.2rem;
+    text-align: center;
+    color: #ffcc80;
+  }
+  .mv.f { color: #4caf50; border-color: #4caf50; }
+  .mv.r { color: #ef5350; border-color: #ef5350; }
+  .mv.u { color: var(--accent); border-color: var(--accent); }
+
+  /* Case grid */
+  .cases-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 1.4rem 0;
+  }
+  @media (min-width: 500px) {
+    .cases-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .case-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 0.7rem;
+    text-align: center;
+  }
+  .case-card.done { border-color: var(--green); }
+  .case-name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--white-c);
+    margin-bottom: 0.15rem;
+  }
+  .case-detail {
+    font-size: 0.73rem;
+    color: var(--muted);
+    line-height: 1.4;
+    margin-top: 0.4rem;
+  }
+
+  /* Move breakdown table */
+  .breakdown {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin: 0.8rem 0 1.2rem;
+  }
+  .breakdown tr { border-bottom: 1px solid var(--border); }
+  .breakdown tr:last-child { border-bottom: none; }
+  .breakdown td { padding: 0.45rem 0.5rem; vertical-align: middle; }
+  .breakdown td:first-child {
+    font-family: 'Fira Mono', monospace;
+    color: #ffcc80;
+    width: 3rem;
+    font-weight: 700;
+  }
+
+  /* Setup cards */
+  .setup-row { display: flex; flex-direction: column; gap: 0.8rem; margin: 1rem 0; }
+  .setup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .setup-card .badge {
+    flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+  .setup-card .setup-text { font-size: 0.88rem; }
+  code {
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+    font-size: 0.86em;
+    color: #ffcc80;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1.2rem 0;
+    justify-content: center;
+  }
+  .flow-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.83rem;
+    text-align: center;
+  }
+  .flow-node.start { border-color: #7986cb; color: #9fa8da; }
+  .flow-node.end   { border-color: var(--green); color: #a5d6a7; font-weight: 700; }
+  .flow-arrow { color: var(--accent); font-weight: 700; font-size: 1.1rem; }
+  .flow-label { font-size: 0.72rem; color: var(--muted); }
+
+  /* Quiz */
+  .quiz-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem;
+    margin: 2rem 0;
+  }
+  .quiz-header {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .q-progress { color: var(--muted); }
+  .question { display: none; }
+  .question.active { display: block; }
+  .q-text {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--white-c);
+    margin-bottom: 1.1rem;
+    line-height: 1.55;
+  }
+  .options { display: grid; gap: 0.55rem; }
+  .opt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text);
+    text-align: left;
+    width: 100%;
+    transition: border-color 0.15s, background 0.15s;
+    line-height: 1.4;
+  }
+  .opt:hover:not([disabled]) { border-color: var(--accent); }
+  .opt.correct { border-color: var(--green) !important; background: rgba(58,181,74,0.1) !important; color: #a5d6a7; }
+  .opt.wrong   { border-color: var(--red) !important; background: rgba(232,64,64,0.08) !important; color: #ef9a9a; }
+  .feedback {
+    margin-top: 0.9rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.c { background: rgba(58,181,74,0.1); border: 1px solid var(--green); color: #a5d6a7; }
+  .feedback.w { background: rgba(232,64,64,0.07); border: 1px solid var(--red); color: #ef9a9a; }
+  .next-btn {
+    margin-top: 0.9rem;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.3rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+  }
+  .next-btn:hover { opacity: 0.88; }
+  .score-area { display: none; text-align: center; padding: 0.5rem; }
+  .score-area.show { display: block; }
+  .score-big { font-size: 2.8rem; font-weight: 900; color: var(--accent); }
+  .score-sub { color: var(--muted); margin-top: 0.3rem; font-size: 0.9rem; }
+  .score-next { margin-top: 1rem; font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .ask-box {
+    margin-top: 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .ask-box strong { color: var(--white-c); }
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─────────────────────────────────────── -->
+<div class="lesson-header">
+  <div class="lesson-tag">Rubik's Cube · Lesson 0005</div>
+  <h1>The Yellow Cross</h1>
+  <p class="objective">
+    <strong>Goal:</strong> Get all 4 yellow edge stickers facing up — completing the first step of solving the last layer (OLL Step 1).
+  </p>
+</div>
+
+<!-- ─── SECTION 1: WHERE YOU ARE ─────────────────── -->
+<h2><span class="n">1</span> Where You Are</h2>
+<p>
+  Layers 1 and 2 are complete — white face down, two full layers solved.
+  The top face (yellow) still needs work. The last layer is solved in two stages:
+</p>
+<ul>
+  <li><strong>OLL — Orientation:</strong> Get all yellow stickers facing up.</li>
+  <li><strong>PLL — Permutation:</strong> Move pieces into the right positions.</li>
+</ul>
+<p>
+  This lesson covers <strong>OLL Step 1</strong>: making the yellow cross.
+  You only need the 4 yellow <em>edge</em> stickers to face up.
+  Yellow corners are irrelevant at this stage — ignore them completely.
+</p>
+
+<div class="callout">
+  Keep <strong>white face DOWN</strong> for all remaining steps of the solve.
+</div>
+
+<!-- ─── SECTION 2: THE 4 CASES ────────────────────── -->
+<h2><span class="n">2</span> The 4 Cases</h2>
+<p>
+  Look at the top face. Ignoring corners, the 4 edge positions can show yellow or not.
+  You'll see exactly one of these four patterns:
+</p>
+
+<div class="cases-grid">
+
+  <!-- Dot -->
+  <div class="case-card">
+    <div class="case-name">Dot</div>
+    <svg width="96" height="96" viewBox="0 0 108 108" style="display:block;margin:0.6rem auto 0.3rem;">
+      <rect x="3"  y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="3"  y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="39" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="3"  y="39" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="39" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="39" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="39" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+    </svg>
+    <div class="case-detail">0 yellow edges up<br>Only the centre is yellow</div>
+  </div>
+
+  <!-- L-shape -->
+  <div class="case-card">
+    <div class="case-name">L-shape</div>
+    <svg width="96" height="96" viewBox="0 0 108 108" style="display:block;margin:0.6rem auto 0.3rem;">
+      <rect x="3"  y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="3"  y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <!-- Back edge: yellow -->
+      <rect x="39" y="3"  width="30" height="30" fill="#F5D600" rx="3"/>
+      <!-- Left edge: yellow -->
+      <rect x="3"  y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+      <!-- Right edge: dim -->
+      <rect x="75" y="39" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <!-- Front edge: dim -->
+      <rect x="39" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="39" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+    </svg>
+    <div class="case-detail">2 adjacent edges up<br>Shown: back + left (correct setup)</div>
+  </div>
+
+  <!-- Bar -->
+  <div class="case-card">
+    <div class="case-name">Bar</div>
+    <svg width="96" height="96" viewBox="0 0 108 108" style="display:block;margin:0.6rem auto 0.3rem;">
+      <rect x="3"  y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="3"  y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <!-- Back edge: dim -->
+      <rect x="39" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <!-- Left edge: yellow -->
+      <rect x="3"  y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+      <!-- Right edge: yellow -->
+      <rect x="75" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+      <!-- Front edge: dim -->
+      <rect x="39" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="39" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+    </svg>
+    <div class="case-detail">2 opposite edges up<br>Shown: left + right (correct setup)</div>
+  </div>
+
+  <!-- Cross -->
+  <div class="case-card done">
+    <div class="case-name" style="color:#4caf50;">Cross ✓</div>
+    <svg width="96" height="96" viewBox="0 0 108 108" style="display:block;margin:0.6rem auto 0.3rem;">
+      <rect x="3"  y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="3"  y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="75" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+      <rect x="39" y="3"  width="30" height="30" fill="#F5D600" rx="3"/>
+      <rect x="3"  y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+      <rect x="75" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+      <rect x="39" y="75" width="30" height="30" fill="#F5D600" rx="3"/>
+      <rect x="39" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+    </svg>
+    <div class="case-detail">4 edges up — done!<br>Skip to Lesson 6.</div>
+  </div>
+
+</div>
+
+<div class="callout tip">
+  <strong>Yellow corners don't matter yet.</strong> Their stickers may face sideways or up — ignore them completely at this stage.
+</div>
+
+<div class="callout info">
+  <strong>Why only 0, 2, or 4?</strong> Edges can only flip in pairs on a standard 3×3 cube. Having 1 or 3 yellow edges up is geometrically impossible on a correctly assembled cube.
+</div>
+
+<!-- ─── SECTION 3: THE ALGORITHM ─────────────────── -->
+<h2><span class="n">3</span> One Algorithm — All Cases</h2>
+<p>
+  A single 6-move algorithm solves all three starting cases.
+  Apply it once (with the right setup) to get the cross.
+</p>
+
+<div class="algo-label">The Yellow Cross Algorithm</div>
+<div class="algo">
+  <span class="mv f">F</span>
+  <span class="mv r">R</span>
+  <span class="mv u">U</span>
+  <span class="mv r">R′</span>
+  <span class="mv u">U′</span>
+  <span class="mv f">F′</span>
+</div>
+
+<table class="breakdown">
+  <tr><td>F</td><td>Front face clockwise</td></tr>
+  <tr><td>R</td><td>Right face clockwise</td></tr>
+  <tr><td>U</td><td>Up (yellow) face clockwise</td></tr>
+  <tr><td>R′</td><td>Right face counter-clockwise</td></tr>
+  <tr><td>U′</td><td>Up (yellow) face counter-clockwise</td></tr>
+  <tr><td>F′</td><td>Front face counter-clockwise — undoes the opening F</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Recognise the pattern:</strong> The middle 4 moves — <code>R U R′ U′</code> — are the Right Trigger from Layer 1. The F and F′ wrap around it.
+</div>
+
+<!-- ─── SECTION 4: SETUP ───────────────────────────── -->
+<h2><span class="n">4</span> Setup + Apply</h2>
+<p>
+  For each case, orient the cube <em>before</em> applying the algorithm:
+</p>
+
+<div class="setup-row">
+
+  <div class="setup-card">
+    <span class="badge">Dot</span>
+    <div class="setup-text">
+      No setup needed — any orientation works. Apply <code>F R U R′ U′ F′</code> once.
+      You'll now see either an L-shape or a Bar. Identify which case you have, set it up correctly, and apply once more → Cross.
+    </div>
+  </div>
+
+  <div class="setup-card">
+    <span class="badge">L-shape</span>
+    <div class="setup-text">
+      Rotate the whole cube (U turns only) until the two yellow edges are at the
+      <strong>Back</strong> and <strong>Left</strong> — the elbow of the L points toward back-left, the gap faces front-right.
+      Apply <code>F R U R′ U′ F′</code> once → Cross.
+    </div>
+  </div>
+
+  <div class="setup-card">
+    <span class="badge">Bar</span>
+    <div class="setup-text">
+      Rotate the whole cube (U turns only) until the bar is <strong>horizontal</strong> — yellow edges pointing left and right.
+      Apply <code>F R U R′ U′ F′</code> once → Cross.
+    </div>
+  </div>
+
+</div>
+
+<p>Summary of the number of algorithm applications needed:</p>
+
+<!-- Flow diagram -->
+<div class="flow">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;">
+    <div class="flow-node start">Dot</div>
+    <div class="flow-label">apply (any orient)</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;">
+    <div class="flow-node start">L or Bar</div>
+    <div class="flow-label">orient + apply</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-node end">Cross ✓</div>
+</div>
+<div class="flow" style="margin-top:0.4rem;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;">
+    <div class="flow-node start">L-shape or Bar</div>
+    <div class="flow-label">orient + apply once</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-node end">Cross ✓</div>
+</div>
+
+<div class="callout tip">
+  <strong>Worst case is 2 applications.</strong> If you start with a Dot and the algorithm gives you an L or Bar, you're always one more application (with correct setup) away from the Cross.
+</div>
+
+<!-- ─── SECTION 5: QUIZ ────────────────────────────── -->
+<h2><span class="n">5</span> Quick Quiz</h2>
+<p>Four quick questions before you try it on the cube.</p>
+
+<div class="quiz-wrap">
+  <div class="quiz-header">
+    <span>Knowledge check</span>
+    <span id="q-prog" class="q-progress">1 / 4</span>
+  </div>
+
+  <!-- Q1 -->
+  <div class="question active" id="q1">
+    <div class="q-text">
+      You look at the top of your cube and see this pattern. Which case is it?
+      <div style="margin:1rem auto;width:fit-content;">
+        <svg width="88" height="88" viewBox="0 0 108 108">
+          <rect x="3"  y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+          <rect x="75" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+          <rect x="3"  y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+          <rect x="75" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+          <rect x="39" y="3"  width="30" height="30" fill="#3a3d50" rx="3"/>
+          <rect x="3"  y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+          <rect x="75" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+          <rect x="39" y="75" width="30" height="30" fill="#3a3d50" rx="3"/>
+          <rect x="39" y="39" width="30" height="30" fill="#F5D600" rx="3"/>
+        </svg>
+      </div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="ans(this,false,'q1')">Dot — 0 yellow edges</button>
+      <button class="opt" onclick="ans(this,false,'q1')">L-shape — 2 adjacent yellow edges</button>
+      <button class="opt" onclick="ans(this,true,'q1')">Bar — 2 opposite yellow edges (left + right)</button>
+      <button class="opt" onclick="ans(this,false,'q1')">Cross — already solved</button>
+    </div>
+    <div class="feedback" id="fb1"></div>
+    <button class="next-btn" id="nb1" onclick="nextQ(2)">Next →</button>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question" id="q2">
+    <div class="q-text">
+      You have the L-shape (2 adjacent yellow edges up). Before applying <code>F R U R′ U′ F′</code>, how should you hold the cube?
+    </div>
+    <div class="options">
+      <button class="opt" onclick="ans(this,false,'q2')">Yellow edges at Front and Right</button>
+      <button class="opt" onclick="ans(this,true,'q2')">Yellow edges at Back and Left</button>
+      <button class="opt" onclick="ans(this,false,'q2')">Yellow edges at Front and Left</button>
+      <button class="opt" onclick="ans(this,false,'q2')">Any orientation — it doesn't matter for the L</button>
+    </div>
+    <div class="feedback" id="fb2"></div>
+    <button class="next-btn" id="nb2" onclick="nextQ(3)">Next →</button>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question" id="q3">
+    <div class="q-text">
+      You have the L-shape, correctly oriented (yellow edges at Back and Left). You apply <code>F R U R′ U′ F′</code> once. What result do you expect?
+    </div>
+    <div class="options">
+      <button class="opt" onclick="ans(this,true,'q3')">The Yellow Cross — you're done with this step!</button>
+      <button class="opt" onclick="ans(this,false,'q3')">A Bar — you need to apply once more</button>
+      <button class="opt" onclick="ans(this,false,'q3')">A Dot — the algorithm reversed progress</button>
+      <button class="opt" onclick="ans(this,false,'q3')">Nothing — the L-shape is a locked state</button>
+    </div>
+    <div class="feedback" id="fb3"></div>
+    <button class="next-btn" id="nb3" onclick="nextQ(4)">Next →</button>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question" id="q4">
+    <div class="q-text">
+      Which of the following patterns will you <em>never</em> see when checking the yellow face for the cross step?
+    </div>
+    <div class="options">
+      <button class="opt" onclick="ans(this,false,'q4')">Dot (only the centre is yellow)</button>
+      <button class="opt" onclick="ans(this,true,'q4')">3 yellow edges up (three of the four)</button>
+      <button class="opt" onclick="ans(this,false,'q4')">Bar (two opposite edges yellow)</button>
+      <button class="opt" onclick="ans(this,false,'q4')">L-shape (two adjacent edges yellow)</button>
+    </div>
+    <div class="feedback" id="fb4"></div>
+    <button class="next-btn" id="nb4" onclick="showScore()">See Score →</button>
+  </div>
+
+  <!-- Score -->
+  <div class="score-area" id="score-area">
+    <div class="score-big" id="score-n">—</div>
+    <div class="score-sub" id="score-msg"></div>
+    <div class="score-next">
+      Now try it on a real or virtual cube:<br>
+      solve layers 1 + 2, identify the case, orient if needed, and apply <code>F R U R′ U′ F′</code>.
+    </div>
+  </div>
+</div>
+
+<!-- ─── SECTION 6: PRACTICE ───────────────────────── -->
+<h2><span class="n">6</span> Practice</h2>
+<p>The algorithm will feel stiff at first. Here's how to drill it:</p>
+<ol>
+  <li>Solve layers 1 and 2.</li>
+  <li>Look at the top face — identify your case (Dot / L / Bar / Cross).</li>
+  <li>Orient if needed (L → back-left · Bar → horizontal).</li>
+  <li>Apply <code>F R U R′ U′ F′</code>. Check. Repeat if coming from a Dot.</li>
+</ol>
+
+<p>
+  No physical cube? Practice on a virtual one:<br>
+  <a href="https://alg.cubing.net/?alg=F_R_U_R-_U-_F-&stage=OLL" target="_blank">alg.cubing.net — watch F R U R′ U′ F′ in action</a><br>
+  <a href="https://ruwix.com/online-rubiks-cube-solver-program/" target="_blank">Ruwix Online Solver</a>
+</p>
+
+<!-- ─── FOOTER ─────────────────────────────────────── -->
+<footer>
+  <strong>Sources</strong>
+  <ul style="margin:0.4rem 0 0 1.2rem;line-height:2;">
+    <li><a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank">Ruwix — Beginner's Layer-by-Layer Method (Yellow Cross)</a></li>
+    <li><a href="https://jperm.net/3x3/steps/oll" target="_blank">J Perm — OLL Reference (F R U R′ U′ F′)</a></li>
+    <li><a href="https://www.speedsolving.com/wiki/index.php/OLL" target="_blank">SpeedSolving Wiki — OLL</a></li>
+  </ul>
+  <div class="ask-box">
+    <strong>Questions?</strong> Ask your Hermes agent anything — why only 0/2/4 edges are possible, which direction "counter-clockwise" is for a given face, or what comes next in the solve.
+  </div>
+</footer>
+
+<script>
+  var score = 0;
+  var fb = {
+    q1: {
+      t: '✓ Correct! Left and right edges are yellow, back and front are not — two opposite edges up, which is the Bar. This is already the correct setup orientation (horizontal), so you can apply the algorithm immediately.',
+      f: '✗ Not quite. Count yellow-up edges: left (yellow), right (yellow) = 2 edges, and they are opposite each other. That's the Bar case.'
+    },
+    q2: {
+      t: '✓ Correct! Hold the cube so both yellow edges are at Back and Left — the corner (elbow) of the L faces toward back-left, the open part of the L faces front-right.',
+      f: '✗ For the L-shape, the two yellow edges must be at Back and Left. Use U turns to rotate until that\'s true, without disturbing the lower layers.'
+    },
+    q3: {
+      t: '✓ Correct! One application of F R U R′ U′ F′ on a correctly oriented L-shape (yellow at back and left) produces the Yellow Cross. This step is complete.',
+      f: '✗ One correctly set-up application is all that\'s needed. The L-shape (back + left, correctly oriented) → Cross in a single execution of F R U R′ U′ F′.'
+    },
+    q4: {
+      t: '✓ Correct! On a valid 3×3 cube, edge pieces can only flip in pairs. So the number of yellow-up edges is always even: 0, 2, or 4. Three yellow edges up is impossible.',
+      f: '✗ Think about edge parity: edges on a 3×3 can only flip in pairs. So yellow-up edges are always 0, 2, or 4. Having exactly 3 is geometrically impossible on an unmodified cube.'
+    }
+  };
+
+  function ans(btn, correct, qid) {
+    var q = document.getElementById(qid);
+    q.querySelectorAll('.opt').forEach(function(b){ b.disabled = true; });
+    btn.classList.add(correct ? 'correct' : 'wrong');
+    if (!correct) {
+      q.querySelectorAll('.opt').forEach(function(b){
+        if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf('true') !== -1) b.classList.add('correct');
+      });
+    }
+    var fbEl = document.getElementById('fb' + qid.slice(1));
+    fbEl.classList.add('show', correct ? 'c' : 'w');
+    fbEl.textContent = correct ? fb[qid].t : fb[qid].f;
+    if (correct) score++;
+    document.getElementById('nb' + qid.slice(1)).style.display = 'inline-block';
+  }
+
+  function nextQ(n) {
+    document.querySelectorAll('.question').forEach(function(q){ q.classList.remove('active'); });
+    document.getElementById('q' + n).classList.add('active');
+    document.getElementById('q-prog').textContent = n + ' / 4';
+  }
+
+  function showScore() {
+    document.querySelectorAll('.question').forEach(function(q){ q.classList.remove('active'); });
+    document.getElementById('q-prog').textContent = '✓ done';
+    var sa = document.getElementById('score-area');
+    sa.classList.add('show');
+    document.getElementById('score-n').textContent = score + ' / 4';
+    var msgs = [
+      'Re-read sections 2 and 4 — focus on case recognition and setup.',
+      'Good progress. Review the L-shape and Bar orientations.',
+      'Almost there! Double-check the worst-case count from a Dot.',
+      'Perfect! You\'re ready to try the Yellow Cross on a real cube.'
+    ];
+    document.getElementById('score-msg').textContent = msgs[score];
+  }
+</script>
+
+</body>
+</html>
