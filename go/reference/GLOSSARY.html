@@ -246,6 +246,45 @@
   </tr>
 </table>
 
+<h2>Middleware (Lesson 6)</h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>middleware</td>
+    <td>Express middleware</td>
+    <td>A function with signature <code>func(next http.Handler) http.Handler</code>. Wraps a handler to run code before/after it. No global registry — compose by nesting.</td>
+  </tr>
+  <tr>
+    <td>http.Handler</td>
+    <td>RequestHandler type</td>
+    <td>An interface with one method: <code>ServeHTTP(ResponseWriter, *Request)</code>. Any type implementing that method is an http.Handler.</td>
+  </tr>
+  <tr>
+    <td>http.HandlerFunc</td>
+    <td>(type adapter)</td>
+    <td>A named function type that satisfies http.Handler. Converts a plain <code>func(w, r)</code> into an http.Handler so it can be passed to mux.Handle or used in middleware chains.</td>
+  </tr>
+  <tr>
+    <td>next.ServeHTTP(w, r)</td>
+    <td>next() in Express</td>
+    <td>Calls the wrapped/next handler in the middleware chain. Explicit — you must call it yourself; forgetting it short-circuits the chain.</td>
+  </tr>
+  <tr>
+    <td>mux.Handle(pattern, h)</td>
+    <td>app.use(path, h)</td>
+    <td>Registers an http.Handler (not a plain function) on the mux for a given path. Use http.HandlerFunc(fn) to convert a plain function.</td>
+  </tr>
+  <tr>
+    <td>handler := A(B(mux))</td>
+    <td>app.use(A); app.use(B)</td>
+    <td>Middleware chaining by nesting. A is outermost — runs first on request, last on response. Order matters.</td>
+  </tr>
+</table>
+
 <h2>Core Language (Lesson 1)</h2>
 <table>
   <tr>

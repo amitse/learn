@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 0006 — Middleware in Go</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --green: #3ab54a;
+    --red: #e05252;
+    --yellow: #f5d600;
+    --white: #ffffff;
+    --ts: #3178c6;
+    --go: #00adb5;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+  h1 { font-size: 1.9rem; color: var(--white); margin-bottom: .25rem; }
+  h2 { font-size: 1.2rem; color: var(--accent); margin: 2.5rem 0 .75rem; text-transform: uppercase; letter-spacing: .06em; }
+  h3 { font-size: 1rem; color: var(--white); margin: 1.5rem 0 .5rem; }
+  p { margin-bottom: .85rem; color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .meta { color: var(--muted); font-size: .85rem; margin-bottom: 2rem; }
+  .tag {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .15rem .55rem;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-right: .3rem;
+  }
+
+  /* Code blocks */
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    margin: .75rem 0 1.25rem;
+    font-size: .88rem;
+    line-height: 1.6;
+  }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }
+  p code, li code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: .1rem .35rem;
+    font-size: .85em;
+  }
+  .kw   { color: #c792ea; }
+  .fn   { color: #82aaff; }
+  .str  { color: #c3e88d; }
+  .cmt  { color: #546e7a; font-style: italic; }
+  .typ  { color: #ffcb6b; }
+  .pkg  { color: #f78c6c; }
+
+  /* Side-by-side */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: .75rem 0 1.5rem;
+  }
+  .compare-col { display: flex; flex-direction: column; }
+  .lang-label {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    margin-bottom: .35rem;
+  }
+  .lang-label.ts { color: var(--ts); }
+  .lang-label.go { color: var(--go); }
+  .lang-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .ts .lang-dot { background: var(--ts); }
+  .go .lang-dot { background: var(--go); }
+  .compare pre { margin: 0; flex: 1; font-size: .83rem; }
+
+  /* Info boxes */
+  .box {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: .85rem 1.1rem;
+    margin: 1rem 0 1.4rem;
+    font-size: .9rem;
+  }
+  .box.warn { border-color: var(--yellow); }
+  .box.tip  { border-color: var(--green); }
+  .box strong { color: var(--white); }
+
+  /* Diagram */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0 1.5rem;
+    font-family: monospace;
+    font-size: .85rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 2;
+  }
+  .diagram .arrow { color: var(--accent); font-size: 1.1rem; }
+  .diagram .node {
+    display: inline-block;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: .2rem .8rem;
+    color: var(--text);
+  }
+  .diagram .node.highlight { border-color: var(--accent); color: var(--accent); }
+
+  /* Quiz */
+  #quiz { margin-top: 3rem; }
+  .quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1.5rem;
+  }
+  .quiz-q {
+    font-size: .97rem;
+    color: var(--white);
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  .quiz-q .qnum {
+    color: var(--accent);
+    margin-right: .4rem;
+  }
+  .options { display: flex; flex-direction: column; gap: .55rem; }
+  .opt-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: .88rem;
+    padding: .65rem 1rem;
+    text-align: left;
+    transition: border-color .15s, background .15s;
+  }
+  .opt-btn:hover:not(:disabled) { border-color: var(--accent); background: #1e2235; }
+  .opt-btn:disabled { cursor: default; opacity: .85; }
+  .opt-btn.correct { border-color: var(--green); background: rgba(58,181,74,.12); color: var(--green); }
+  .opt-btn.wrong   { border-color: var(--red);   background: rgba(224,82,82,.10);  color: var(--red); }
+  .feedback {
+    margin-top: .9rem;
+    padding: .65rem .9rem;
+    border-radius: 6px;
+    font-size: .88rem;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok  { background: rgba(58,181,74,.12);  color: var(--green); border-left: 3px solid var(--green); }
+  .feedback.bad { background: rgba(224,82,82,.10);  color: var(--red);   border-left: 3px solid var(--red);  }
+  .score-banner {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.5rem;
+    text-align: center;
+    font-size: 1rem;
+    display: none;
+  }
+  .score-banner.show { display: block; }
+  .score-num { font-size: 2rem; font-weight: 700; color: var(--accent); margin: .3rem 0; }
+
+  /* Footer */
+  .footer {
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: .83rem;
+  }
+  .footer strong { color: var(--text); }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<p class="meta">
+  <span class="tag">Go for TypeScript Devs</span>
+  <span class="tag">Lesson 0006</span>
+  <span class="tag">~8 min</span>
+</p>
+
+<h1>Middleware in Go</h1>
+<p class="meta">Wrap handlers to add logging, headers, and auth — without repeating yourself.</p>
+
+<!-- ─── WHY MIDDLEWARE ─────────────────────────────── -->
+<h2>The Problem Middleware Solves</h2>
+
+<p>In lessons 3–5 you wrote several handlers. Every single one needed the same boilerplate:</p>
+
+<pre><code><span class="fn">w</span>.Header().Set(<span class="str">"Content-Type"</span>, <span class="str">"application/json"</span>)
+<span class="cmt">// ...same thing in every handler</span></code></pre>
+
+<p>In Express/TypeScript, you solve this with <code>app.use()</code> — a piece of middleware that runs for every request. Go has the same pattern, just more explicit.</p>
+
+<!-- ─── THE TYPE ───────────────────────────────────── -->
+<h2>The Middleware Signature</h2>
+
+<p>A Go middleware is simply a <strong>function that takes a handler and returns a handler</strong>:</p>
+
+<pre><code><span class="kw">func</span> <span class="fn">MyMiddleware</span>(next <span class="typ">http.Handler</span>) <span class="typ">http.Handler</span> {
+    <span class="kw">return</span> <span class="fn">http.HandlerFunc</span>(<span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+        <span class="cmt">// ① do something before the handler</span>
+        <span class="fn">next</span>.ServeHTTP(w, r)  <span class="cmt">// ② call the real handler</span>
+        <span class="cmt">// ③ optionally do something after</span>
+    })
+}</code></pre>
+
+<div class="box">
+  <strong>Key types to know:</strong>
+  <ul style="margin:.4rem 0 0 1.2rem; color:var(--text);">
+    <li style="margin-bottom:.3rem"><code>http.Handler</code> — an <em>interface</em> with one method: <code>ServeHTTP(w, r)</code></li>
+    <li style="margin-bottom:.3rem"><code>http.HandlerFunc</code> — a function <em>type</em> that implements <code>http.Handler</code>. Lets you use a plain function as a handler.</li>
+    <li><code>next.ServeHTTP(w, r)</code> — how you pass control to the wrapped handler</li>
+  </ul>
+</div>
+
+<p>Compare that with Express middleware in TypeScript:</p>
+
+<div class="compare">
+  <div class="compare-col">
+    <div class="lang-label ts"><span class="lang-dot"></span>TypeScript (Express)</div>
+    <pre><code><span class="cmt">// app.use() registers globally</span>
+<span class="fn">app</span>.use((<span class="fn">req</span>, <span class="fn">res</span>, <span class="fn">next</span>) =&gt; {
+  <span class="cmt">// before</span>
+  <span class="fn">next</span>();
+  <span class="cmt">// after (rarely useful)</span>
+});</code></pre>
+  </div>
+  <div class="compare-col">
+    <div class="lang-label go"><span class="lang-dot"></span>Go</div>
+    <pre><code><span class="cmt">// wrap a specific handler</span>
+<span class="kw">func</span> <span class="fn">MyMW</span>(next <span class="typ">http.Handler</span>) <span class="typ">http.Handler</span> {
+  <span class="kw">return</span> <span class="fn">http.HandlerFunc</span>(
+    <span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+      <span class="cmt">// before</span>
+      <span class="fn">next</span>.ServeHTTP(w, r)
+      <span class="cmt">// after</span>
+    })
+}</code></pre>
+  </div>
+</div>
+
+<div class="box tip">
+  <strong>Why no global <code>app.use()</code>?</strong> Go's <code>net/http</code> doesn't have a global middleware registry. Instead you compose middleware at the point of use — which actually makes dependencies more explicit. Frameworks like <a href="https://github.com/go-chi/chi">chi</a> add back the <code>Use()</code> pattern if you prefer it.
+</div>
+
+<!-- ─── EXAMPLE 1: LOGGER ─────────────────────────── -->
+<h2>Example 1 — Logger Middleware</h2>
+
+<p>Logs the HTTP method, path, and how long the handler took:</p>
+
+<pre><code><span class="kw">import</span> (
+    <span class="str">"fmt"</span>
+    <span class="str">"net/http"</span>
+    <span class="str">"time"</span>
+)
+
+<span class="kw">func</span> <span class="fn">Logger</span>(next <span class="typ">http.Handler</span>) <span class="typ">http.Handler</span> {
+    <span class="kw">return</span> <span class="fn">http.HandlerFunc</span>(<span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+        start := <span class="fn">time.Now</span>()
+
+        <span class="fn">next</span>.ServeHTTP(w, r)   <span class="cmt">// call the real handler</span>
+
+        <span class="fn">fmt.Printf</span>(<span class="str">"%s %s %s\n"</span>, r.Method, r.URL.Path, <span class="fn">time.Since</span>(start))
+    })
+}</code></pre>
+
+<p>Notice <code>time.Since(start)</code> runs <em>after</em> <code>next.ServeHTTP</code> — because it appears after that line in the returned function.</p>
+
+<!-- ─── EXAMPLE 2: JSON HEADERS ───────────────────── -->
+<h2>Example 2 — JSON Headers Middleware</h2>
+
+<p>Eliminates the repeated <code>w.Header().Set("Content-Type", "application/json")</code> from every handler:</p>
+
+<pre><code><span class="kw">func</span> <span class="fn">JSONContentType</span>(next <span class="typ">http.Handler</span>) <span class="typ">http.Handler</span> {
+    <span class="kw">return</span> <span class="fn">http.HandlerFunc</span>(<span class="kw">func</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+        w.Header().Set(<span class="str">"Content-Type"</span>, <span class="str">"application/json"</span>)
+        <span class="fn">next</span>.ServeHTTP(w, r)
+    })
+}</code></pre>
+
+<p>Now your handlers only encode the JSON — no more header boilerplate.</p>
+
+<!-- ─── CHAINING ───────────────────────────────────── -->
+<h2>Chaining Middleware</h2>
+
+<p>Middleware composes by nesting — outermost runs first:</p>
+
+<pre><code><span class="kw">func</span> <span class="fn">main</span>() {
+    mux := <span class="fn">http.NewServeMux</span>()
+    mux.HandleFunc(<span class="str">"/users"</span>, listUsers)
+
+    <span class="cmt">// Apply both middleware to the whole mux</span>
+    handler := <span class="fn">Logger</span>(<span class="fn">JSONContentType</span>(mux))
+    <span class="cmt">//           ↑ outer         ↑ inner</span>
+
+    <span class="fn">http.ListenAndServe</span>(<span class="str">":8080"</span>, handler)
+}</code></pre>
+
+<div class="diagram">
+  <div>
+    <span class="node highlight">Request</span>
+    <span class="arrow"> → </span>
+    <span class="node">Logger (before)</span>
+    <span class="arrow"> → </span>
+    <span class="node">JSONContentType (sets header)</span>
+    <span class="arrow"> → </span>
+    <span class="node">listUsers handler</span>
+  </div>
+  <div style="margin-top:.5rem">
+    <span class="node highlight">Response</span>
+    <span class="arrow"> ← </span>
+    <span class="node">Logger (after: prints duration)</span>
+    <span class="arrow"> ← </span>
+    <span class="node">JSONContentType (returns)</span>
+    <span class="arrow"> ← </span>
+    <span class="node">listUsers handler</span>
+  </div>
+</div>
+
+<div class="box warn">
+  <strong>Header ordering rule (from lesson 3):</strong> <code>w.Header().Set()</code> must be called <em>before</em> writing the body. Setting <code>Content-Type</code> in middleware is safe because middleware runs before the handler. If you tried to set it <em>after</em> <code>next.ServeHTTP()</code>, it would be too late — the headers would already be sent.
+</div>
+
+<!-- ─── PER-ROUTE ──────────────────────────────────── -->
+<h2>Applying Middleware to a Single Route</h2>
+
+<p>You don't have to apply middleware to the whole mux. Wrap just one handler:</p>
+
+<pre><code>mux.Handle(<span class="str">"/admin"</span>, <span class="fn">RequireAuth</span>(<span class="fn">http.HandlerFunc</span>(adminHandler)))
+mux.HandleFunc(<span class="str">"/health"</span>, healthHandler) <span class="cmt">// no auth needed</span></code></pre>
+
+<p>Note: <code>mux.Handle()</code> takes an <code>http.Handler</code>, while <code>mux.HandleFunc()</code> takes a plain function. Use <code>http.HandlerFunc(yourFunc)</code> to convert when needed.</p>
+
+<!-- ─── TS COMPARISON FULL ────────────────────────── -->
+<h2>Full TS ↔ Go Comparison</h2>
+
+<div class="compare">
+  <div class="compare-col">
+    <div class="lang-label ts"><span class="lang-dot"></span>TypeScript (Express)</div>
+    <pre><code><span class="cmt">// Global middleware</span>
+<span class="fn">app</span>.use(loggerMiddleware);
+<span class="fn">app</span>.use(express.json());
+
+<span class="cmt">// Per-route middleware</span>
+<span class="fn">app</span>.get(
+  <span class="str">"/admin"</span>,
+  requireAuth,       <span class="cmt">// middleware</span>
+  adminController    <span class="cmt">// handler</span>
+);
+
+<span class="cmt">// Middleware signature</span>
+(<span class="fn">req</span>: Request,
+ <span class="fn">res</span>: Response,
+ <span class="fn">next</span>: NextFunction) =&gt; <span class="typ">void</span></code></pre>
+  </div>
+  <div class="compare-col">
+    <div class="lang-label go"><span class="lang-dot"></span>Go</div>
+    <pre><code><span class="cmt">// Global middleware (wraps mux)</span>
+handler := <span class="fn">Logger</span>(<span class="fn">JSONContentType</span>(mux))
+
+<span class="cmt">// Per-route middleware</span>
+mux.Handle(
+  <span class="str">"/admin"</span>,
+  <span class="fn">RequireAuth</span>(           <span class="cmt">// middleware</span>
+    <span class="fn">http.HandlerFunc</span>(adminHandler)), <span class="cmt">// handler</span>
+)
+
+<span class="cmt">// Middleware signature</span>
+<span class="kw">func</span>(next <span class="typ">http.Handler</span>) <span class="typ">http.Handler</span></code></pre>
+  </div>
+</div>
+
+<!-- ─── QUIZ ───────────────────────────────────────── -->
+<div id="quiz">
+<h2>Quick Check — 5 Questions</h2>
+
+<!-- Q1 -->
+<div class="quiz-card" id="q1">
+  <p class="quiz-q"><span class="qnum">Q1.</span> What does <code>http.HandlerFunc</code> do?</p>
+  <div class="options">
+    <button class="opt-btn" onclick="answer(this,'q1',false)">It registers a new route in the mux</button>
+    <button class="opt-btn" onclick="answer(this,'q1',true)">It converts a plain function into an <code>http.Handler</code></button>
+    <button class="opt-btn" onclick="answer(this,'q1',false)">It calls the next middleware in the chain</button>
+    <button class="opt-btn" onclick="answer(this,'q1',false)">It sets the Content-Type response header</button>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<!-- Q2 -->
+<div class="quiz-card" id="q2">
+  <p class="quiz-q"><span class="qnum">Q2.</span> You write a middleware that sets <code>Content-Type: application/json</code>. Where should you call <code>next.ServeHTTP(w, r)</code>?</p>
+  <div class="options">
+    <button class="opt-btn" onclick="answer(this,'q2',false)">Before setting the header, so the real handler can override it</button>
+    <button class="opt-btn" onclick="answer(this,'q2',true)">After setting the header, so the header is in place before the handler writes the body</button>
+    <button class="opt-btn" onclick="answer(this,'q2',false)">It doesn't matter — headers can be set at any time</button>
+    <button class="opt-btn" onclick="answer(this,'q2',false)">In a separate goroutine</button>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<!-- Q3 -->
+<div class="quiz-card" id="q3">
+  <p class="quiz-q"><span class="qnum">Q3.</span> Given <code>handler := A(B(mux))</code>, which runs first when a request arrives?</p>
+  <div class="options">
+    <button class="opt-btn" onclick="answer(this,'q3',false)">B — innermost runs first</button>
+    <button class="opt-btn" onclick="answer(this,'q3',true)">A — outermost runs first</button>
+    <button class="opt-btn" onclick="answer(this,'q3',false)">mux — the mux always runs first</button>
+    <button class="opt-btn" onclick="answer(this,'q3',false)">Both run simultaneously</button>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+
+<!-- Q4 -->
+<div class="quiz-card" id="q4">
+  <p class="quiz-q"><span class="qnum">Q4.</span> You want to apply an <code>auth</code> middleware only to <code>/admin</code>, not to <code>/health</code>. Which is correct?</p>
+  <div class="options">
+    <button class="opt-btn" onclick="answer(this,'q4',false)"><code>handler := auth(mux)</code> — wraps the whole mux</button>
+    <button class="opt-btn" onclick="answer(this,'q4',true)"><code>mux.Handle("/admin", auth(http.HandlerFunc(adminHandler)))</code></button>
+    <button class="opt-btn" onclick="answer(this,'q4',false)"><code>mux.Use("/admin", auth)</code></button>
+    <button class="opt-btn" onclick="answer(this,'q4',false)"><code>mux.HandleFunc("/admin", auth)</code></button>
+  </div>
+  <div class="feedback" id="q4-fb"></div>
+</div>
+
+<!-- Q5 -->
+<div class="quiz-card" id="q5">
+  <p class="quiz-q"><span class="qnum">Q5.</span> What is the type of <code>http.Handler</code>?</p>
+  <div class="options">
+    <button class="opt-btn" onclick="answer(this,'q5',false)">A struct with a <code>Handle</code> method</button>
+    <button class="opt-btn" onclick="answer(this,'q5',false)">A function type: <code>func(ResponseWriter, *Request)</code></button>
+    <button class="opt-btn" onclick="answer(this,'q5',true)">An interface with a single method: <code>ServeHTTP(ResponseWriter, *Request)</code></button>
+    <button class="opt-btn" onclick="answer(this,'q5',false)">A channel that receives requests</button>
+  </div>
+  <div class="feedback" id="q5-fb"></div>
+</div>
+
+<div class="score-banner" id="score"></div>
+</div><!-- /quiz -->
+
+<!-- ─── NEXT ───────────────────────────────────────── -->
+<h2>What's Next</h2>
+<p>You now have all the building blocks: routing, JSON, and middleware. <strong>Lesson 0007</strong> puts it all together into a real mini HTTP server — multiple routes, shared middleware, JSON in/out, and proper error handling in one runnable binary.</p>
+
+<!-- ─── RESOURCES ─────────────────────────────────── -->
+<h2>References</h2>
+<ul style="margin-left:1.4rem; margin-bottom:1rem;">
+  <li><a href="https://pkg.go.dev/net/http#Handler" target="_blank">pkg.go.dev — http.Handler interface</a></li>
+  <li><a href="https://pkg.go.dev/net/http#HandlerFunc" target="_blank">pkg.go.dev — http.HandlerFunc type</a></li>
+  <li><a href="https://go.dev/doc/effective_go#interfaces" target="_blank">Effective Go — Interfaces</a></li>
+  <li><a href="https://www.alexedwards.net/blog/making-and-using-middleware" target="_blank">Alex Edwards — Making and Using Middleware in Go</a> (excellent deep-dive)</li>
+</ul>
+
+<!-- ─── FOOTER ────────────────────────────────────── -->
+<div class="footer">
+  <p><strong>Questions?</strong> Ask your Hermes agent — it's your teacher and can unpack anything that felt unclear.</p>
+  <p style="margin-top:.4rem">Lesson 0006 of the <em>Go for TypeScript Devs</em> track &nbsp;·&nbsp; <a href="../reference/GLOSSARY.html">Glossary</a></p>
+</div>
+
+<script>
+const explanations = {
+  q1: { ok: "Correct! <code>http.HandlerFunc</code> is a type adapter — it satisfies the <code>http.Handler</code> interface, so you can pass a plain <code>func(w, r)</code> wherever a <code>Handler</code> is expected.", bad: "Not quite. <code>http.HandlerFunc</code> is a type adapter that makes a plain function implement the <code>http.Handler</code> interface. It doesn't register routes." },
+  q2: { ok: "Correct! Headers must be set before any body is written. Since the header is set before <code>next.ServeHTTP</code> is called, it's already in place when the handler writes its JSON body.", bad: "Careful — once the handler writes the body, headers are already sent. You must call <code>w.Header().Set()</code> <em>before</em> <code>next.ServeHTTP(w, r)</code>." },
+  q3: { ok: "Correct! Think of it like nested function calls: A runs first (outermost), then B, then mux. On the way back out (after next.ServeHTTP returns) the order reverses.", bad: "Remember: <code>A(B(mux))</code> — A wraps everything, so A's code runs first when a request arrives, just like <code>A(B(...))</code> in any function call." },
+  q4: { ok: "Correct! Wrapping just the <code>/admin</code> route's handler leaves <code>/health</code> unaffected. <code>http.HandlerFunc(adminHandler)</code> is the type conversion needed because <code>mux.Handle</code> takes an <code>http.Handler</code>.", bad: "If you wrap the whole mux, auth runs for every route including <code>/health</code>. To target a single route, wrap just that handler: <code>mux.Handle(\"/admin\", auth(http.HandlerFunc(adminHandler)))</code>." },
+  q5: { ok: "Correct! <code>http.Handler</code> is an interface — it only requires a <code>ServeHTTP(ResponseWriter, *Request)</code> method. Any type with that method is an <code>http.Handler</code>.", bad: "Not quite. <code>http.Handler</code> is an interface: any type that has a <code>ServeHTTP(w ResponseWriter, r *Request)</code> method satisfies it — including <code>http.HandlerFunc</code> and the mux." },
+};
+
+let answered = {};
+const total = 5;
+
+function answer(btn, qid, correct) {
+  if (answered[qid]) return;
+  answered[qid] = true;
+
+  const card = document.getElementById(qid);
+  const fb = document.getElementById(qid + '-fb');
+  const btns = card.querySelectorAll('.opt-btn');
+
+  btns.forEach(b => { b.disabled = true; });
+
+  if (correct) {
+    btn.classList.add('correct');
+    fb.className = 'feedback ok show';
+    fb.innerHTML = '✓ ' + explanations[qid].ok;
+  } else {
+    btn.classList.add('wrong');
+    fb.className = 'feedback bad show';
+    fb.innerHTML = '✗ ' + explanations[qid].bad;
+    // highlight the correct button
+    btns.forEach(b => {
+      if (b.onclick && b.onclick.toString().includes('true')) b.classList.add('correct');
+    });
+  }
+
+  if (Object.keys(answered).length === total) showScore();
+}
+
+function showScore() {
+  const correct = Object.keys(answered).filter(q => {
+    const card = document.getElementById(q);
+    return card.querySelector('.opt-btn.correct') !== null;
+  }).length;
+  const banner = document.getElementById('score');
+  banner.className = 'score-banner show';
+  let msg = correct === 5 ? '🎉 Perfect score! Middleware mastered.' :
+            correct >= 3 ? '👍 Solid — review the ones you missed.' :
+                           '💡 Revisit the examples above, then retry.';
+  banner.innerHTML = `<div class="score-num">${correct} / ${total}</div><div style="color:var(--muted)">${msg}</div>`;
+}
+</script>
+</body>
+</html>
