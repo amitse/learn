@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 6 — Orienting Yellow Corners | Rubik's Cube</title>
+<style>
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #21253a;
+  --border: #2a2d3a; --text: #e8eaf0; --muted: #7a7f99;
+  --accent: #f57c00; --green: #3ab54a; --red: #e84040;
+  --yellow: #f5d600; --white: #fff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px; line-height: 1.75;
+  max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 5rem;
+}
+
+.lesson-header { border-bottom: 1px solid var(--border); padding-bottom: 1.2rem; margin-bottom: 2rem; }
+.lesson-num { color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.lesson-title { font-size: 1.8rem; color: var(--white); font-weight: 700; }
+.lesson-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+/* Progress bar */
+.progress-bar { display: flex; margin-bottom: 2.5rem; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.progress-step { flex: 1; text-align: center; padding: 0.45rem 0.2rem; font-size: 0.65rem; color: var(--muted); border-right: 1px solid var(--border); line-height: 1.3; }
+.progress-step:last-child { border-right: none; }
+.progress-step.done { background: #1a2a1a; color: var(--green); }
+.progress-step.current { background: #2a1f0a; color: var(--accent); font-weight: 700; }
+
+h2 { font-size: 1.12rem; color: var(--white); margin: 2.5rem 0 0.8rem; font-weight: 700; }
+h3 { font-size: 0.95rem; color: var(--text); margin: 1.5rem 0 0.5rem; font-weight: 600; }
+p { color: var(--text); margin-bottom: 0.9rem; }
+
+code {
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.1em 0.45em;
+  font-size: 0.88em; color: #ffcc80;
+}
+
+.callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 0.9rem 1.2rem; margin: 1.2rem 0; }
+.callout.green { border-left-color: var(--green); }
+.callout.red { border-left-color: var(--red); }
+.callout.yellow { border-left-color: var(--yellow); }
+
+/* Algorithm display */
+.algo { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 1rem 0 0.5rem; }
+.move {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.6rem; height: 3rem; padding: 0 0.5rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em;
+  transition: box-shadow 0.2s;
+}
+.move.R { border-color: #e84040; color: #e84040; }
+.move.U { border-color: var(--yellow); color: var(--yellow); }
+.move.active { box-shadow: 0 0 0 2px currentColor; }
+
+.citation { font-size: 0.78rem; color: var(--muted); margin-top: -0.4rem; margin-bottom: 1rem; }
+.citation a { color: var(--accent); text-decoration: none; }
+.citation a:hover { text-decoration: underline; }
+
+/* Cube face */
+.face-wrap { display: flex; flex-direction: column; align-items: center; margin: 1.2rem 0; }
+.face-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.45rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.cube-face {
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(3, 52px);
+  gap: 3px;
+  background: #080a10;
+  padding: 4px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+}
+.cell {
+  border-radius: 4px;
+  transition: background 0.35s, box-shadow 0.2s;
+}
+.cell.yellow { background: var(--yellow); }
+.cell.not-yellow { background: #252038; border: 1px solid #353060; }
+.cell.center { background: var(--yellow); }
+.cell.edge { background: var(--yellow); }
+.cell.br-highlight { box-shadow: 0 0 0 2px var(--accent), 0 0 10px rgba(245,124,0,0.5); }
+.face-pos {
+  display: grid; grid-template-columns: repeat(3, 52px); gap: 3px;
+  margin-top: 0.35rem; text-align: center;
+  font-size: 0.6rem; color: var(--muted);
+}
+
+/* Demo */
+.demo {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.4rem; margin: 1.2rem 0;
+}
+.demo-title { font-weight: 700; color: var(--white); font-size: 0.92rem; margin-bottom: 0.9rem; }
+.demo-inner { display: flex; gap: 1.8rem; align-items: flex-start; flex-wrap: wrap; }
+.demo-msg {
+  flex: 1; min-width: 200px;
+  background: var(--surface2); border-radius: 6px;
+  padding: 0.9rem 1rem; font-size: 0.88rem; color: var(--text);
+  line-height: 1.6;
+}
+.demo-controls { display: flex; gap: 0.6rem; margin-top: 1rem; align-items: center; }
+.btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 0.45rem 1.1rem;
+  border-radius: 6px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600;
+  transition: all 0.15s; font-family: inherit;
+}
+.btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn.primary:hover:not(:disabled) { background: #d96a00; }
+.step-ctr { font-size: 0.78rem; color: var(--muted); }
+
+/* Steps list */
+ol.steps { padding-left: 1.4rem; margin-bottom: 1rem; }
+ol.steps li { margin-bottom: 0.55rem; }
+
+/* Quiz */
+.quiz-q { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.3rem; margin-bottom: 1.1rem; }
+.quiz-q h3 { font-size: 0.97rem; color: var(--white); margin-bottom: 0.9rem; margin-top: 0; }
+.options { display: flex; flex-direction: column; gap: 0.45rem; }
+.option {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.6rem 1rem; cursor: pointer;
+  font-size: 0.88rem; transition: all 0.15s;
+  display: flex; align-items: center; gap: 0.65rem; font-family: inherit;
+}
+.option:hover { border-color: var(--accent); }
+.option.correct { background: #1a3a1a; border-color: var(--green); color: var(--green); pointer-events: none; }
+.option.wrong { background: #2a1a1a; border-color: var(--red); color: var(--red); pointer-events: none; }
+.option.disabled { pointer-events: none; opacity: 0.6; }
+.oi { width: 19px; height: 19px; border-radius: 50%; background: var(--border); flex-shrink: 0; font-size: 0.72rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.option.correct .oi { background: var(--green); color: #fff; }
+.option.wrong .oi { background: var(--red); color: #fff; }
+.qfb { margin-top: 0.7rem; font-size: 0.86rem; padding: 0.55rem 0.9rem; border-radius: 5px; display: none; line-height: 1.5; }
+.qfb.show { display: block; }
+.qfb.ok { background: #152a15; color: #81c784; }
+.qfb.nope { background: #2a1515; color: #e57373; }
+
+.summary { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 2.5rem 0 1.5rem; }
+.summary ul { padding-left: 1.2rem; margin-top: 0.5rem; }
+.summary li { margin-bottom: 0.35rem; }
+
+.next-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1.4rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.next-arrow { font-size: 1.4rem; color: var(--accent); }
+.next-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.next-name { color: var(--white); font-weight: 700; font-size: 0.95rem; }
+
+.ask { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem 1.2rem; font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+.ask strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header class="lesson-header">
+  <div class="lesson-num">🧩 Rubik's Cube · Lesson 6 of 8</div>
+  <h1 class="lesson-title">Orienting Yellow Corners</h1>
+  <p class="lesson-sub">One algorithm — applied 1 to 3 times — makes all 4 yellow corners face up.</p>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-step done">White<br>Cross</div>
+  <div class="progress-step done">White<br>Corners</div>
+  <div class="progress-step done">Layer 2<br>Edges</div>
+  <div class="progress-step done">Yellow<br>Cross</div>
+  <div class="progress-step current">⬡ Yellow<br>Corners</div>
+  <div class="progress-step">Permute<br>Corners</div>
+  <div class="progress-step">Permute<br>Edges</div>
+</div>
+
+<p>Layers 1 and 2 are solved. The top face has a yellow cross (4 edges + center). The 4 corner cells may show yellow — or may not. This lesson makes all of them yellow.</p>
+<p>Hold the cube <strong>yellow on top, white on bottom</strong> for this entire step. Don't flip it.</p>
+
+<h2>What you're looking at</h2>
+
+<p>Look down at the top face. The cross cells (edges + center) are already yellow. The 4 <strong>corners</strong> are what vary. A dark corner = a non-yellow sticker is facing up.</p>
+
+<div class="face-wrap">
+  <div class="face-label">Top face after Yellow Cross — example starting state</div>
+  <div class="cube-face" id="ex-face"></div>
+  <div class="face-pos">
+    <span>BL</span><span>B</span><span>BR</span>
+    <span>L</span><span>C</span><span>R</span>
+    <span>FL</span><span>F</span><span>FR</span>
+  </div>
+</div>
+
+<p class="citation">BL/BR/FL/FR = corners. B/F/L/R = edges (always yellow after lesson 5). C = center (always yellow).</p>
+
+<h2>The algorithm: Sune</h2>
+
+<p><strong>Sune</strong> (<em>ROO-neh</em>) is the single algorithm for this step. It's 7 moves. It leaves the <strong>back-right (BR) corner completely untouched</strong> while cycling and reorienting the other three.</p>
+
+<div class="algo" id="algo-display">
+  <div class="move R">R</div>
+  <div class="move U">U</div>
+  <div class="move R">R′</div>
+  <div class="move U">U</div>
+  <div class="move R">R</div>
+  <div class="move U">U2</div>
+  <div class="move R">R′</div>
+</div>
+
+<p class="citation">Source: <a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank">Ruwix — Beginner's Method</a> &middot; <a href="https://jperm.net/algs/oll" target="_blank">J Perm — OLL Algorithms</a></p>
+
+<div class="callout yellow">
+  <strong>Memory hook:</strong> The first 4 moves are <em>almost</em> a double Right Trigger (<code>R U R′ U</code>)&thinsp;— but then instead of ending, you continue: <code>R U2 R′</code>. The <strong>U2</strong> (double turn) before the last R′ is the distinguishing feature. Say it aloud: <em>"R U R-prime U, R U-two R-prime."</em>
+</div>
+
+<div class="callout" style="border-left-color: var(--muted)">
+  <strong>Don't confuse with lesson 5:</strong> The Yellow Cross algorithm was <code>F R U R′ U′ F′</code>. Sune is different — no F moves, starts and ends on R.
+</div>
+
+<h2>The 3-step rule</h2>
+
+<p>Repeat this loop until all 4 corners show yellow on top:</p>
+
+<ol class="steps">
+  <li><strong>Scan:</strong> Look at the 4 corners of the top face. Find one showing yellow on top.</li>
+  <li><strong>Position:</strong> Use <code>U</code> moves (top-layer rotations only — don't rotate the whole cube) to slide that corner to the <strong>back-right (BR)</strong> position. The cross stays intact because U moves only shift top-layer pieces.</li>
+  <li><strong>Apply Sune:</strong> Execute <code>R U R′ U R U2 R′</code>. The BR corner stays yellow-up. Others may change. Check and repeat.</li>
+</ol>
+
+<div class="callout red">
+  <strong>⚠ What if 0 corners show yellow?</strong> Apply Sune once from <em>any</em> hold. At least one corner will become yellow-up. Then use the 3-step loop above.
+</div>
+
+<div class="callout green">
+  <strong>Why U moves and not y-rotations?</strong> A <code>U</code> move only rotates the top layer — it moves pieces around the top face without changing which sticker faces up. So you can reposition corners freely using U without losing any progress on the cross or other corners.
+</div>
+
+<h2>Interactive demo</h2>
+
+<p>Step through two example progressions. Click <strong>Next Step</strong> to advance.</p>
+
+<!-- Demo A -->
+<div class="demo">
+  <div class="demo-title">Example A — completes in 1 Sune</div>
+  <div class="demo-inner">
+    <div class="face-wrap" style="margin:0">
+      <div class="face-label" id="dA-lbl">Starting state</div>
+      <div class="cube-face" style="grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px)" id="dA-face"></div>
+      <div class="face-pos" style="grid-template-columns:repeat(3,46px);font-size:0.58rem">
+        <span>BL</span><span>B</span><span>BR</span>
+        <span>L</span><span>C</span><span>R</span>
+        <span>FL</span><span>F</span><span>FR</span>
+      </div>
+    </div>
+    <div class="demo-msg" id="dA-msg">loading…</div>
+  </div>
+  <div class="demo-controls">
+    <button class="btn primary" id="dA-btn" onclick="advDemo('A')">Next Step →</button>
+    <button class="btn" onclick="resetDemo('A')">↺ Reset</button>
+    <span class="step-ctr" id="dA-ctr"></span>
+  </div>
+</div>
+
+<!-- Demo B -->
+<div class="demo">
+  <div class="demo-title">Example B — completes in 3 Sunes (worst case)</div>
+  <div class="demo-inner">
+    <div class="face-wrap" style="margin:0">
+      <div class="face-label" id="dB-lbl">Starting state</div>
+      <div class="cube-face" style="grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px)" id="dB-face"></div>
+      <div class="face-pos" style="grid-template-columns:repeat(3,46px);font-size:0.58rem">
+        <span>BL</span><span>B</span><span>BR</span>
+        <span>L</span><span>C</span><span>R</span>
+        <span>FL</span><span>F</span><span>FR</span>
+      </div>
+    </div>
+    <div class="demo-msg" id="dB-msg">loading…</div>
+  </div>
+  <div class="demo-controls">
+    <button class="btn primary" id="dB-btn" onclick="advDemo('B')">Next Step →</button>
+    <button class="btn" onclick="resetDemo('B')">↺ Reset</button>
+    <span class="step-ctr" id="dB-ctr"></span>
+  </div>
+</div>
+
+<h2>Quiz — check your understanding</h2>
+
+<div class="quiz-q">
+  <h3>Q1. Before applying Sune, which corner must already show yellow on top?</h3>
+  <div class="options">
+    <button class="option" onclick="ans(this,'q1','w')"><span class="oi">A</span> Front-left (FL)</button>
+    <button class="option" onclick="ans(this,'q1','w')"><span class="oi">B</span> Front-right (FR)</button>
+    <button class="option" onclick="ans(this,'q1','c')"><span class="oi">C</span> Back-right (BR)</button>
+    <button class="option" onclick="ans(this,'q1','w')"><span class="oi">D</span> Back-left (BL)</button>
+  </div>
+  <div class="qfb" id="q1-fb"></div>
+</div>
+
+<div class="quiz-q">
+  <h3>Q2. What is the Sune algorithm?</h3>
+  <div class="options">
+    <button class="option" onclick="ans(this,'q2','c')"><span class="oi">A</span> R U R′ U R U2 R′</button>
+    <button class="option" onclick="ans(this,'q2','w')"><span class="oi">B</span> R U R′ U′ R U2 R′</button>
+    <button class="option" onclick="ans(this,'q2','w')"><span class="oi">C</span> F R U R′ U′ F′</button>
+    <button class="option" onclick="ans(this,'q2','w')"><span class="oi">D</span> R U R′ U R U R′</button>
+  </div>
+  <div class="qfb" id="q2-fb"></div>
+</div>
+
+<div class="quiz-q">
+  <h3>Q3. You look at the top face: 0 yellow corners are showing. What's your first move?</h3>
+  <div class="options">
+    <button class="option" onclick="ans(this,'q3','w')"><span class="oi">A</span> Rotate U until a yellow corner appears</button>
+    <button class="option" onclick="ans(this,'q3','c')"><span class="oi">B</span> Apply Sune once from any hold — a yellow corner will appear</button>
+    <button class="option" onclick="ans(this,'q3','w')"><span class="oi">C</span> Flip the cube and re-do the yellow cross</button>
+    <button class="option" onclick="ans(this,'q3','w')"><span class="oi">D</span> Apply the Yellow Cross algorithm (F R U R′ U′ F′)</button>
+  </div>
+  <div class="qfb" id="q3-fb"></div>
+</div>
+
+<div class="quiz-q">
+  <h3>Q4. After a Sune, 3 corners are yellow-up — but BR is NOT one of them. What do you do?</h3>
+  <div class="options">
+    <button class="option" onclick="ans(this,'q4','w')"><span class="oi">A</span> Apply Sune immediately with BR as-is</button>
+    <button class="option" onclick="ans(this,'q4','c')"><span class="oi">B</span> Use U moves to bring a yellow corner to BR, then apply Sune</button>
+    <button class="option" onclick="ans(this,'q4','w')"><span class="oi">C</span> Put the non-yellow corner at BR and apply Sune</button>
+    <button class="option" onclick="ans(this,'q4','w')"><span class="oi">D</span> Stop — 3 yellow corners is complete enough</button>
+  </div>
+  <div class="qfb" id="q4-fb"></div>
+</div>
+
+<div class="summary">
+  <strong>✅ What you learned this lesson</strong>
+  <ul>
+    <li><strong>Sune</strong>: <code>R U R′ U R U2 R′</code> — the only algorithm for this step</li>
+    <li>BR corner must show yellow on top <strong>before</strong> applying Sune</li>
+    <li>Use <code>U</code> moves only (not whole-cube rotations) to position yellow at BR</li>
+    <li>Apply 1–3 Sunes depending on your starting case; worst case is always solved</li>
+    <li>If 0 corners yellow: apply Sune blindly once, then use the 3-step loop</li>
+  </ul>
+</div>
+
+<h2>Up next</h2>
+<div class="next-box">
+  <div class="next-arrow">→</div>
+  <div>
+    <div class="next-label">Lesson 7</div>
+    <div class="next-name">Permuting Yellow Corners — all 4 corners yellow-up, now get them into the right slots</div>
+  </div>
+</div>
+
+<div class="ask">
+  <strong>Questions?</strong> Ask your Hermes AI teacher anything — when exactly to apply Sune, how to spot the BR corner, why U moves are safe, or what to do if something goes wrong. Just send a message.
+</div>
+
+<script>
+// ── Face renderer ──────────────────────────────────────────────
+// corners: {BL, BR, FL, FR}  true=yellow, false=not-yellow
+// highlight: 'BR' to glow the BR cell
+function renderFace(el, corners, highlight) {
+  // Grid order: BL, B, BR, L, C, R, FL, F, FR
+  const defs = [
+    { cls: corners.BL ? 'yellow' : 'not-yellow', id: 'BL' },
+    { cls: 'edge' },
+    { cls: corners.BR ? 'yellow' : 'not-yellow', id: 'BR' },
+    { cls: 'edge' },
+    { cls: 'center' },
+    { cls: 'edge' },
+    { cls: corners.FL ? 'yellow' : 'not-yellow', id: 'FL' },
+    { cls: 'edge' },
+    { cls: corners.FR ? 'yellow' : 'not-yellow', id: 'FR' },
+  ];
+  el.innerHTML = defs.map(d =>
+    `<div class="cell ${d.cls}${d.id === highlight ? ' br-highlight' : ''}"></div>`
+  ).join('');
+}
+
+// ── Example face (top of page) ────────────────────────────────
+renderFace(document.getElementById('ex-face'),
+  { BL: false, BR: true, FL: false, FR: false }, 'BR');
+
+// ── Demo data ─────────────────────────────────────────────────
+const demos = {
+  A: {
+    steps: [
+      { c: {BL:false,BR:true,FL:false,FR:false}, hl:'BR', lbl:'Starting state',
+        msg:'✦ Back-right (BR) is the only yellow corner — and it\'s already at BR. Apply Sune: R U R′ U R U2 R′' },
+      { c: {BL:true,BR:true,FL:true,FR:true},    hl:null,  lbl:'After 1 Sune',
+        msg:'✅ All 4 corners yellow! OLL complete in a single Sune — this is the classic "Sune case."' },
+    ],
+    cur: 0
+  },
+  B: {
+    steps: [
+      { c: {BL:false,BR:false,FL:false,FR:false}, hl:null,  lbl:'Starting state',
+        msg:'⚠ Zero yellow corners showing. Apply Sune once from any hold — don\'t worry about positioning yet.' },
+      { c: {BL:false,BR:true,FL:false,FR:false},  hl:'BR',  lbl:'After 1st Sune',
+        msg:'✦ One corner appeared yellow — at BR. It\'s already in position. Apply Sune again!' },
+      { c: {BL:true,BR:true,FL:false,FR:true},    hl:null,  lbl:'After 2nd Sune',
+        msg:'3 corners yellow. FL is still wrong. BR is already yellow — apply Sune once more!' },
+      { c: {BL:true,BR:true,FL:true,FR:true},     hl:null,  lbl:'After 3rd Sune',
+        msg:'✅ All 4 yellow! Worst-case scenario solved in 3 Sunes. You\'re done with OLL.' },
+    ],
+    cur: 0
+  }
+};
+
+function renderDemo(id) {
+  const d = demos[id];
+  const s = d.steps[d.cur];
+  renderFace(document.getElementById(`d${id}-face`), s.c, s.hl);
+  document.getElementById(`d${id}-msg`).textContent = s.msg;
+  document.getElementById(`d${id}-lbl`).textContent = s.lbl;
+  document.getElementById(`d${id}-ctr`).textContent = `Step ${d.cur+1} of ${d.steps.length}`;
+  const btn = document.getElementById(`d${id}-btn`);
+  const done = d.cur >= d.steps.length - 1;
+  btn.disabled = done;
+  btn.textContent = done ? 'Done ✓' : 'Next Step →';
+  btn.className = done ? 'btn' : 'btn primary';
+}
+
+function advDemo(id) {
+  const d = demos[id];
+  if (d.cur < d.steps.length - 1) { d.cur++; renderDemo(id); }
+}
+
+function resetDemo(id) {
+  demos[id].cur = 0;
+  renderDemo(id);
+}
+
+renderDemo('A');
+renderDemo('B');
+
+// ── Quiz ──────────────────────────────────────────────────────
+const fb = {
+  q1: {
+    c: 'Correct. Sune leaves the back-right corner untouched — that\'s the whole trick. Yellow must be there first.',
+    w: 'Not quite. Sune fixes the <strong>back-right (BR)</strong> corner. Move yellow there first, then fire Sune.'
+  },
+  q2: {
+    c: 'Correct! R U R′ U R U2 R′ — the U2 (double U) before the final R′ is the key detail.',
+    w: 'Not quite. Sune is <strong>R U R′ U R U2 R′</strong>. Watch for the U2 — not U or U′ — before the final R′.'
+  },
+  q3: {
+    c: 'Correct. Rotating U just moves pieces around — no corner orientation changes. Apply Sune blindly, then a yellow corner will appear.',
+    w: 'Not quite. U rotations never change which sticker faces up — they just move pieces sideways. Apply <strong>Sune blindly</strong> to create a yellow corner, then use the 3-step rule.'
+  },
+  q4: {
+    c: 'Correct. You always need yellow at BR before Sune. Use U moves (top-layer only) to slide a yellow corner there.',
+    w: 'Not quite. Sune only works correctly when <strong>yellow is already at BR</strong>. Use U moves to bring one there first.'
+  }
+};
+
+function ans(el, qId, result) {
+  const qEl = el.closest('.quiz-q');
+  qEl.querySelectorAll('.option').forEach(o => {
+    o.classList.add(o === el ? (result === 'c' ? 'correct' : 'wrong') : 'disabled');
+  });
+  el.querySelector('.oi').textContent = result === 'c' ? '✓' : '✗';
+  const fbEl = document.getElementById(`${qId}-fb`);
+  fbEl.className = `qfb show ${result === 'c' ? 'ok' : 'nope'}`;
+  fbEl.innerHTML = fb[qId][result === 'c' ? 'c' : 'w'];
+}
+</script>
+</body>
+</html>

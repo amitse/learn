@@ -113,6 +113,15 @@
   <dt>F R U R′ U′ F′</dt><dd><strong>Yellow Cross algorithm.</strong> Orients top-layer edges to produce the Yellow Cross. The middle 4 moves are the Right Trigger (<code>R U R′ U′</code>) wrapped in <code>F … F′</code>. Apply at most twice from any starting case.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 5 — Yellow Cross (2026-06-17)</p>
+<h2>Yellow Corner Orientation (OLL Step 2)</h2>
+<dl>
+  <dt>Sune</dt><dd><code>R U R′ U R U2 R′</code> — the algorithm for orienting yellow corners. Places the BR corner and cycles/reorients FL, BL, FR. Named after speed-cuber Sune Berger. Apply up to 3 times to orient all 4 corners.</dd>
+  <dt>BR (corner)</dt><dd>The back-right corner of the top face. When applying Sune, a yellow-facing sticker must be at BR first. Sune leaves this corner unchanged.</dd>
+  <dt>U2</dt><dd>180° turn of the U (top) face. The key move in Sune (before the final R′) that distinguishes it from the Right Trigger variants.</dd>
+  <dt>OLL Step 2</dt><dd>Orienting the 4 yellow corners after the Yellow Cross is formed. Complete when all 9 top-face stickers show yellow. Solved using Sune.</dd>
+  <dt>0-corner case</dt><dd>A starting state where no yellow corner sticker faces up. Apply Sune blindly (any hold) once; at least one yellow corner will appear. Then use the normal 3-step Sune loop.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 6 — Orienting Yellow Corners (2026-06-20)</p>
 </body>
 </html>
