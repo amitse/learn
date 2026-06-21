@@ -45,7 +45,41 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>JSON (Lesson 5) <span class="new-badge">new</span></h2>
+<h2>Integration Patterns (Lesson 7) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>writeJSON(w, status, data)</td>
+    <td>res.status(n).json(obj)</td>
+    <td>Shared helper: sets <code>Content-Type: application/json</code>, writes status code, encodes data. Prevents repeating header/encoder boilerplate in every handler.</td>
+  </tr>
+  <tr>
+    <td>writeError(w, status, msg)</td>
+    <td>res.status(n).json({error})</td>
+    <td>Shared error helper: always returns <code>{"error":"..."}</code> JSON. Must be followed by <code>return</code> — Go does not stop handler execution automatically.</td>
+  </tr>
+  <tr>
+    <td>return (after error write)</td>
+    <td>implicit — res.json() ends chain</td>
+    <td>Explicit early exit in a handler after writing an error response. Without it, execution continues and a second write attempt triggers a "superfluous WriteHeader" warning.</td>
+  </tr>
+  <tr>
+    <td>log.Fatal(...)</td>
+    <td>process.exit(1) on throw</td>
+    <td>Calls <code>log.Println</code> then <code>os.Exit(1)</code>. Used to wrap <code>http.ListenAndServe</code> so a startup failure (port in use, permission denied) exits loudly rather than returning silently.</td>
+  </tr>
+  <tr>
+    <td>any</td>
+    <td>unknown / any (TS)</td>
+    <td>Go 1.18+ alias for <code>interface{}</code>. Accepts any type as a value. Prefer <code>any</code> over <code>interface{}</code> in new code — identical at runtime, cleaner syntax.</td>
+  </tr>
+</table>
+
+<h2>JSON (Lesson 5)</h2>
 <table>
   <tr>
     <th>Term</th>
