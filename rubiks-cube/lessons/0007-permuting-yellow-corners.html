@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 7 — Permuting Yellow Corners | Rubik's Cube</title>
+<style>
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #21253a;
+  --border: #2a2d3a; --text: #e8eaf0; --muted: #7a7f99;
+  --accent: #f57c00; --green: #3ab54a; --red: #e84040;
+  --yellow: #f5d600; --white: #fff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px; line-height: 1.75;
+  max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 5rem;
+}
+
+/* HEADER */
+.lesson-header { border-bottom: 1px solid var(--border); padding-bottom: 1.2rem; margin-bottom: 2rem; }
+.lesson-num { color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.lesson-title { font-size: 1.8rem; color: var(--white); font-weight: 700; }
+.lesson-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+/* PROGRESS */
+.progress-bar { display: flex; margin-bottom: 2.5rem; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.progress-step { flex: 1; text-align: center; padding: 0.45rem 0.2rem; font-size: 0.62rem; color: var(--muted); border-right: 1px solid var(--border); line-height: 1.3; }
+.progress-step:last-child { border-right: none; }
+.progress-step.done { background: #1a2a1a; color: var(--green); }
+.progress-step.current { background: #2a1f0a; color: var(--accent); font-weight: 700; }
+
+/* TYPOGRAPHY */
+h2 { font-size: 1.12rem; color: var(--white); margin: 2.5rem 0 0.8rem; font-weight: 700; }
+h3 { font-size: 0.95rem; color: var(--text); margin: 1.5rem 0 0.5rem; font-weight: 600; }
+p { color: var(--text); margin-bottom: 0.9rem; }
+a { color: var(--muted); }
+code {
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.1em 0.45em;
+  font-size: 0.88em; color: #ffcc80;
+}
+
+/* CALLOUT */
+.callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 0.9rem 1.2rem; margin: 1.2rem 0; }
+.callout p { margin: 0; }
+.callout.green { border-left-color: var(--green); }
+.callout.yellow { border-left-color: var(--yellow); }
+
+/* ALGO */
+.algo { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 1rem 0; align-items: center; }
+.move {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.7rem; height: 2.9rem; padding: 0 0.5rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 1rem; font-weight: 700;
+}
+.move.r { border-color: #c04040; color: #f07070; }
+.move.f { border-color: #2a854a; color: #5ec87a; }
+.move.u { color: #bbb; border-color: #464646; }
+.algo-sep { color: #444; font-size: 1.3rem; line-height: 1; align-self: center; padding: 0 0.2rem; user-select: none; }
+
+/* CASES GRID */
+.cases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin: 1.2rem 0; }
+@media (max-width: 520px) { .cases { grid-template-columns: 1fr; } }
+.case-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 0.9rem; }
+.badge-pill { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 3px; margin-bottom: 0.5rem; letter-spacing: 0.04em; }
+.bp-solved { background: #1a3a1a; color: var(--green); }
+.bp-adj    { background: #2a1f0a; color: var(--accent); }
+.bp-diag   { background: #2a1a1a; color: var(--red); }
+.case-card h4 { font-size: 0.87rem; color: var(--white); margin-bottom: 0.35rem; font-weight: 700; }
+.case-card p  { font-size: 0.79rem; color: var(--muted); margin: 0; line-height: 1.5; }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.86rem; }
+th { text-align: left; padding: 0.5rem 0.8rem; background: var(--surface2); color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* HEADLIGHTS DEMO */
+.hl-demo { display: flex; gap: 1.2rem; flex-wrap: wrap; margin: 1.5rem 0; }
+.hl-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 1rem 1.2rem; flex: 1; min-width: 190px;
+}
+.hl-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.8rem; font-weight: 600; }
+.strip { display: flex; gap: 5px; align-items: stretch; justify-content: center; margin-bottom: 0.6rem; }
+.sticker {
+  width: 44px; height: 44px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.62rem; font-weight: 700; line-height: 1.2; text-align: center;
+  color: rgba(0,0,0,0.55);
+}
+.sticker.sep { background: transparent; color: var(--border); font-size: 1.3rem; font-weight: 300; width: 16px; }
+.hl-caption { font-size: 0.73rem; color: var(--muted); text-align: center; line-height: 1.4; }
+
+/* FACE DIAGRAM (top-down) */
+.cube-top { display: inline-grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--border); border-radius: 4px; padding: 3px; }
+.ct-cell { width: 28px; height: 28px; border-radius: 3px; }
+
+/* PROCEDURE */
+.procedure { padding-left: 1.4rem; display: flex; flex-direction: column; gap: 0.7rem; color: var(--text); list-style: decimal; }
+.procedure li strong { color: var(--white); }
+
+/* QUIZ */
+.quiz-q { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem; }
+.q-num  { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.q-text { font-size: 0.95rem; color: var(--white); font-weight: 600; margin-bottom: 0.9rem; line-height: 1.5; }
+.options { display: flex; flex-direction: column; gap: 0.4rem; }
+.opt {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.65rem 1rem;
+  font-size: 0.87rem; cursor: pointer; font-family: inherit;
+  text-align: left; width: 100%; color: var(--text);
+  transition: border-color 0.12s, background 0.12s;
+}
+.opt:hover:not([disabled]) { border-color: var(--accent); background: #221900; }
+.opt.correct { background: #0a2010; border-color: var(--green); color: #7ee89a; }
+.opt.wrong   { background: #200a0a; border-color: var(--red);   color: #ff8a80; }
+.feedback { margin-top: 0.7rem; font-size: 0.83rem; padding: 0.6rem 0.9rem; border-radius: 5px; line-height: 1.55; }
+.feedback.ok  { background: #0a2010; color: #7ee89a; }
+.feedback.bad { background: #200a0a; color: #ff8a80; }
+
+/* DONE CARD */
+.done-card {
+  display: none; margin-top: 1.2rem;
+  background: var(--surface); border: 1px solid var(--green);
+  border-radius: 8px; padding: 1.5rem 1.8rem; text-align: center;
+}
+.done-card .big-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.done-card h3 { color: var(--green); font-size: 1.05rem; margin-bottom: 0.3rem; }
+.done-card p  { color: var(--muted); font-size: 0.86rem; margin: 0; }
+
+/* TEACHER NOTE */
+.teacher-note { margin-top: 3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; text-align: center; }
+.teacher-note p { color: var(--muted); font-size: 0.87rem; margin: 0; }
+.teacher-note strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar">
+  <div class="progress-step done">1<br>Notation</div>
+  <div class="progress-step done">2<br>White ✕</div>
+  <div class="progress-step done">3<br>L1 Corners</div>
+  <div class="progress-step done">4<br>L2 Edges</div>
+  <div class="progress-step done">5<br>Yellow ✕</div>
+  <div class="progress-step done">6<br>OLL Corners</div>
+  <div class="progress-step current">7<br>PLL Corners</div>
+  <div class="progress-step">8<br>PLL Edges</div>
+</div>
+
+<!-- HEADER -->
+<header class="lesson-header">
+  <div class="lesson-num">Lesson 7 · Rubik's Cube</div>
+  <h1 class="lesson-title">Permuting Yellow Corners</h1>
+  <p class="lesson-sub">PLL Step 1 — one algorithm, three cases, corners locked into position.</p>
+</header>
+
+<!-- WHERE YOU ARE -->
+<h2>Where you are</h2>
+<p>Layers 1 and 2 are solved. Yellow cross formed. All four top-layer corners show yellow on top — OLL is complete.</p>
+<p>The problem: the corners may be in the <strong>wrong positions</strong>. A red corner sticker sitting next to the orange centre, a green corner next to blue. The orientation is right, the slot is wrong. This step fixes that.</p>
+
+<div class="callout yellow">
+  <p><strong>Corners only, edges later.</strong> The 4 top-layer edges will still look scrambled after this step — that's expected. Lesson 8 (the last step!) handles edges.</p>
+</div>
+
+<!-- SPOTTING HEADLIGHTS -->
+<h2>How to spot headlights</h2>
+<p>Hold the cube with <strong>yellow on top</strong>. Look at each side face. You're only interested in the <strong>top strip</strong> — the two corner sticker squares in the top-left and top-right of each face, right under the yellow layer.</p>
+<p>If both top-corner stickers on a face show the <strong>same colour</strong>, that's a <strong>headlights bar</strong>. It means those two corners are correctly paired for that face's column.</p>
+
+<div class="hl-demo">
+  <div class="hl-box">
+    <div class="hl-label">✅ Headlights — right face</div>
+    <div class="strip">
+      <div class="sticker" style="background:#e84040;">top-left<br>corner</div>
+      <div class="sticker sep">|</div>
+      <div class="sticker" style="background:#e84040;">top-right<br>corner</div>
+    </div>
+    <div class="hl-caption">Both stickers show red → headlights!<br>These two corners are in the right column.</div>
+  </div>
+  <div class="hl-box">
+    <div class="hl-label">❌ No headlights — all faces mixed</div>
+    <div class="strip">
+      <div class="sticker" style="background:#3ab54a;">top-left<br>corner</div>
+      <div class="sticker sep">|</div>
+      <div class="sticker" style="background:#2979ff;">top-right<br>corner</div>
+    </div>
+    <div class="hl-caption">Stickers are different on every face →<br>diagonal swap case (see below).</div>
+  </div>
+</div>
+
+<p>Scan all 4 side faces. You'll find one of three situations:</p>
+
+<!-- 3 CASES -->
+<div class="cases">
+  <div class="case-card">
+    <span class="badge-pill bp-solved">SOLVED</span>
+    <h4>Corners correct</h4>
+    <p>All corners already match their adjacent centre colours. Skip to Lesson 8 immediately.</p>
+  </div>
+  <div class="case-card">
+    <span class="badge-pill bp-adj">ADJACENT</span>
+    <h4>Headlights on 1 face</h4>
+    <p>Most common case. Place headlights at the <strong>back</strong>, then apply the algorithm once.</p>
+  </div>
+  <div class="case-card">
+    <span class="badge-pill bp-diag">DIAGONAL</span>
+    <h4>No headlights</h4>
+    <p>Apply the algorithm <strong>from any hold</strong> once. Headlights will appear. Then solve as adjacent.</p>
+  </div>
+</div>
+
+<div class="callout">
+  <p><strong>Maximum 2 applications</strong> of the algorithm, regardless of starting case. Diagonal → 1 blind + 1 with setup. Adjacent → 1 with setup.</p>
+</div>
+
+<!-- THE ALGORITHM -->
+<h2>The corner permutation algorithm</h2>
+
+<p>This performs a 3-cycle of the front-left, front-right, and back-left corners. The <strong>back-right corner is left untouched</strong> — that's where the headlights go.</p>
+<p><strong>Setup:</strong> rotate the whole cube (y rotation) so headlights face the <strong>back</strong>. Yellow on top. Then apply:</p>
+
+<div class="algo">
+  <span class="move r">R</span>
+  <span class="move u">U</span>
+  <span class="move r">R′</span>
+  <span class="move f">F′</span>
+  <span class="algo-sep">·</span>
+  <span class="move r">R</span>
+  <span class="move u">U</span>
+  <span class="move r">R′</span>
+  <span class="move u">U′</span>
+  <span class="algo-sep">·</span>
+  <span class="move r">R′</span>
+  <span class="move f">F</span>
+  <span class="algo-sep">·</span>
+  <span class="move r">R2</span>
+  <span class="move u">U′</span>
+  <span class="move r">R′</span>
+</div>
+
+<p style="font-size:0.82rem; color:var(--muted); margin-top:0.3rem;">
+  Source: <a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank" rel="noopener">Ruwix Beginner's Method</a> ·
+  <a href="https://jperm.net/3x3/beginner" target="_blank" rel="noopener">J Perm Beginner Tutorial</a>
+</p>
+
+<h3>Breaking it into groups</h3>
+
+<table>
+  <thead>
+    <tr><th>Group</th><th>Moves</th><th>What it does</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>R U R′ F′</code></td>
+      <td>Setup</td>
+      <td>Right Trigger + F′ opens the cycle, creates space to move corners</td>
+    </tr>
+    <tr>
+      <td><code>R U R′ U′</code></td>
+      <td><strong>Right Trigger</strong></td>
+      <td>The same move from Lesson 3. You already know this cold.</td>
+    </tr>
+    <tr>
+      <td><code>R′ F</code></td>
+      <td>Undo setup</td>
+      <td>Mirrors the F′ at the start — closes the bracket</td>
+    </tr>
+    <tr>
+      <td><code>R2 U′ R′</code></td>
+      <td>Close</td>
+      <td>Drops the cycled corners into their correct slots</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout green">
+  <p><strong>Memory hook:</strong> "Trigger-flip · Trigger-undo · Unflip · Close"</p>
+  <p style="margin-top:0.4rem; font-size:0.87rem;">The Right Trigger (<code>R U R′ U′</code>) from Lesson 3 sits right in the middle. If you can execute the trigger reliably, you already know half of this algorithm.</p>
+</div>
+
+<!-- FULL PROCEDURE -->
+<h2>Full procedure</h2>
+
+<ol class="procedure">
+  <li><strong>Hold: yellow up, white down.</strong> Layers 1 and 2 already solved.</li>
+  <li><strong>Scan all 4 side strips.</strong> Do all corners already match their adjacent centre? → Go to Lesson 8.</li>
+  <li><strong>No headlights on any face?</strong> Diagonal case. Apply the algorithm from any hold — don't worry about orientation yet. After one application, headlights will exist somewhere.</li>
+  <li><strong>Find headlights.</strong> Do a whole-cube y-rotation (or y2) to bring that headlight face to the <strong>back</strong>.</li>
+  <li><strong>Apply: </strong><code>R U R′ F′ · R U R′ U′ · R′ F · R2 U′ R′</code></li>
+  <li><strong>Check.</strong> Every top corner should now sit in its correct slot — matching the adjacent centre on each side. Corner permutation done.</li>
+</ol>
+
+<div class="callout yellow" style="margin-top:1.5rem;">
+  <p><strong>After this step:</strong> All 4 yellow corners are oriented <em>and</em> in the right position. One step remains — Lesson 8 permutes the last layer edges, and the cube is solved.</p>
+</div>
+
+<!-- QUIZ -->
+<h2 style="margin-top:3rem;">Quick check</h2>
+<p style="color:var(--muted); font-size:0.87rem; margin-bottom:1.5rem;">4 questions — instant feedback.</p>
+
+<!-- Q1 -->
+<div class="quiz-q" id="q1">
+  <div class="q-num">Question 1 / 4</div>
+  <div class="q-text">You finished OLL. Looking at the right face's top strip, both corner stickers are orange. The other 3 faces all show mixed colours. What case are you in?</div>
+  <div class="options">
+    <button class="opt" onclick="pick('q1',this,false)">Solved — no algorithm needed</button>
+    <button class="opt" onclick="pick('q1',this,true)">Adjacent — headlights on the right face</button>
+    <button class="opt" onclick="pick('q1',this,false)">Diagonal — no headlights anywhere</button>
+    <button class="opt" onclick="pick('q1',this,false)">OLL incomplete — corner orientation went wrong</button>
+  </div>
+  <div class="feedback" id="fb1" style="display:none;"></div>
+</div>
+
+<!-- Q2 -->
+<div class="quiz-q" id="q2">
+  <div class="q-num">Question 2 / 4</div>
+  <div class="q-text">You found headlights on the front face. What do you do before applying the algorithm?</div>
+  <div class="options">
+    <button class="opt" onclick="pick('q2',this,false)">Apply immediately from the front — the algorithm works from any direction</button>
+    <button class="opt" onclick="pick('q2',this,true)">Do a whole-cube y2 rotation so headlights face the back</button>
+    <button class="opt" onclick="pick('q2',this,false)">Use U moves to rotate the top layer until headlights face back</button>
+    <button class="opt" onclick="pick('q2',this,false)">Apply the algorithm twice — front headlights need a different count</button>
+  </div>
+  <div class="feedback" id="fb2" style="display:none;"></div>
+</div>
+
+<!-- Q3 -->
+<div class="quiz-q" id="q3">
+  <div class="q-num">Question 3 / 4</div>
+  <div class="q-text">You scan all 4 side strips after OLL and find zero headlights anywhere. What is the correct first move?</div>
+  <div class="options">
+    <button class="opt" onclick="pick('q3',this,false)">Go back and redo Lesson 6 — OLL must be wrong</button>
+    <button class="opt" onclick="pick('q3',this,false)">Apply the algorithm twice consecutively from the same hold</button>
+    <button class="opt" onclick="pick('q3',this,true)">Apply the algorithm once from any hold — headlights will appear after one application</button>
+    <button class="opt" onclick="pick('q3',this,false)">Spin the whole cube with y rotations until headlights show up</button>
+  </div>
+  <div class="feedback" id="fb3" style="display:none;"></div>
+</div>
+
+<!-- Q4 -->
+<div class="quiz-q" id="q4">
+  <div class="q-num">Question 4 / 4</div>
+  <div class="q-text">Which segment of <code>R U R′ F′ · R U R′ U′ · R′ F · R2 U′ R′</code> have you been drilling since Lesson 3?</div>
+  <div class="options">
+    <button class="opt" onclick="pick('q4',this,false)"><code>R U R′ F′</code> — the opening setup</button>
+    <button class="opt" onclick="pick('q4',this,true)"><code>R U R′ U′</code> — the Right Trigger</button>
+    <button class="opt" onclick="pick('q4',this,false)"><code>R2 U′ R′</code> — the closing</button>
+    <button class="opt" onclick="pick('q4',this,false)"><code>R′ F</code> — the unflip</button>
+  </div>
+  <div class="feedback" id="fb4" style="display:none;"></div>
+</div>
+
+<!-- DONE CARD -->
+<div class="done-card" id="done">
+  <div class="big-icon">🧊</div>
+  <h3>Corner permutation: ready to execute.</h3>
+  <p>One step left — Lesson 8 permutes the last-layer edges. After that, you can solve a fully scrambled Rubik's Cube from start to finish.</p>
+</div>
+
+<!-- TEACHER NOTE -->
+<div class="teacher-note">
+  <p>Confused about the diagonal case? Algorithm not clicking? <strong>Reply to this lesson</strong> with your question — your teacher will clear it up in the next session.</p>
+</div>
+
+<script>
+var answers = {
+  q1: {
+    yes: "Correct. Two matching corner stickers on one face = headlights. With the other three faces mixed, this is clearly the adjacent case — one headlight bar, three corners need to cycle.",
+    no:  "Look more carefully: two corner stickers of the same colour on one face = headlights. The other faces being mixed confirms adjacent case — not solved, not diagonal."
+  },
+  q2: {
+    yes: "Right. The algorithm is built for headlights at the BACK. A whole-cube y2 rotation puts the front headlights at the back without touching any pieces.",
+    no:  "The algorithm expects headlights at the back face. Use a whole-cube y rotation (not a U move — that would only spin the top layer) to get the headlights to face away from you."
+  },
+  q3: {
+    yes: "Exactly. No headlights = diagonal swap. OLL is fine. Apply once from any hold — the algorithm will cycle three corners and create a headlights bar somewhere. Then set up and apply a second time.",
+    no:  "No headlights is a valid state called a diagonal swap — OLL was correct. The fix is to apply the algorithm once blindly. This always produces headlights, which you then orient to the back for one final application."
+  },
+  q4: {
+    yes: "Right — R U R′ U′ is the Right Trigger from Lesson 3. It's appeared in white corner insertion (L3), second-layer edges (L4), and now PLL. The single most recycled move in beginner LBL.",
+    no:  "The familiar segment is R U R′ U′ — the Right Trigger you learned in Lesson 3. It sits in moves 5–8 of the full algorithm, right in the middle."
+  }
+};
+
+var done = {};
+
+function pick(id, btn, correct) {
+  if (done[id]) return;
+  done[id] = true;
+
+  var q = document.getElementById(id);
+  var btns = q.querySelectorAll('.opt');
+  for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; }
+  btn.classList.add(correct ? 'correct' : 'wrong');
+
+  var fb = document.getElementById('fb' + id.slice(1));
+  fb.style.display = 'block';
+  fb.className = 'feedback ' + (correct ? 'ok' : 'bad');
+  fb.textContent = (correct ? '✓ ' : '✗ ') + answers[id][correct ? 'yes' : 'no'];
+
+  if (Object.keys(done).length === 4) {
+    setTimeout(function() {
+      var dc = document.getElementById('done');
+      dc.style.display = 'block';
+      dc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 400);
+  }
+}
+</script>
+</body>
+</html>

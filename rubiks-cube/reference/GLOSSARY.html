@@ -122,6 +122,17 @@
   <dt>0-corner case</dt><dd>A starting state where no yellow corner sticker faces up. Apply Sune blindly (any hold) once; at least one yellow corner will appear. Then use the normal 3-step Sune loop.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 6 — Orienting Yellow Corners (2026-06-20)</p>
+
+<h2>Yellow Corner Permutation (PLL Step 1)</h2>
+<dl>
+  <dt>Headlights</dt><dd>Two corner stickers on the <strong>top strip</strong> of one face that share the same colour. Indicates those two corners are correctly paired. The setup cue for the corner permutation algorithm: rotate headlights to the back face before applying.</dd>
+  <dt>Top strip</dt><dd>The two corner-sticker squares in the top-left and top-right positions of a side face — the only stickers relevant during PLL Step 1.</dd>
+  <dt>Adjacent (case)</dt><dd>Headlights exist on exactly one face. Apply the corner permutation algorithm with headlights at the back. The most common PLL corner case.</dd>
+  <dt>Diagonal (case)</dt><dd>No headlights on any face. Apply the corner permutation algorithm from any hold once; headlights will appear, then solve the resulting adjacent case.</dd>
+  <dt>Corner permutation algorithm</dt><dd><code>R U R′ F′ · R U R′ U′ · R′ F · R2 U′ R′</code> — cycles FL, FR, and BL corners, leaving the BR corner fixed. Apply with headlights at the back.</dd>
+  <dt>PLL Step 1</dt><dd>Permuting the 4 top-layer corners after OLL is complete. Solved in at most 2 applications of the corner permutation algorithm.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 7 — Permuting Yellow Corners (2026-06-22)</p>
 </body>
 </html>
