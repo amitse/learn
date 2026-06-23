@@ -45,7 +45,51 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Integration Patterns (Lesson 7) <span class="new-badge">new</span></h2>
+<h2>Error Handling (Lesson 8) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>error</td>
+    <td>Error (throw/catch)</td>
+    <td>Built-in interface: <code>Error() string</code>. Returned as a second value from functions that can fail. If no error occurred, the value is <code>nil</code>.</td>
+  </tr>
+  <tr>
+    <td>errors.New("msg")</td>
+    <td>new Error("msg")</td>
+    <td>Creates a simple static error value. Use for sentinel errors and short messages with no runtime context.</td>
+  </tr>
+  <tr>
+    <td>fmt.Errorf("ctx: %w", err)</td>
+    <td>new Error(`ctx: ${err}`)</td>
+    <td>Creates a new error wrapping an existing one. <code>%w</code> preserves the original error inside the chain so <code>errors.Is</code>/<code>errors.As</code> can find it later. Using <code>%v</code> converts it to a string and loses the chain.</td>
+  </tr>
+  <tr>
+    <td>sentinel error</td>
+    <td>named error constant</td>
+    <td>Package-level <code>var ErrXxx = errors.New(...)</code>. Named with <code>Err</code> prefix. Callers compare against them with <code>errors.Is</code>.</td>
+  </tr>
+  <tr>
+    <td>errors.Is(err, target)</td>
+    <td>err === ERR_TARGET</td>
+    <td>Walks the full error chain looking for a value that matches <code>target</code>. Use instead of <code>==</code> when errors may be wrapped.</td>
+  </tr>
+  <tr>
+    <td>errors.As(err, &amp;target)</td>
+    <td>err instanceof SomeError</td>
+    <td>Walks the chain looking for an error matching the type of <code>target</code>. If found, fills <code>target</code> and returns <code>true</code>. Use to extract typed fields from custom errors.</td>
+  </tr>
+  <tr>
+    <td>custom error type</td>
+    <td>class extends Error</td>
+    <td>Any struct implementing <code>Error() string</code>. Lets you attach structured data (e.g. HTTP status codes) to errors. Extracted in handlers with <code>errors.As</code>.</td>
+  </tr>
+</table>
+
+<h2>Integration Patterns (Lesson 7)</h2>
 <table>
   <tr>
     <th>Term</th>

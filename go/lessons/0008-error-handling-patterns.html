@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 0008 — Error Handling Patterns in Go</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --green: #3ab54a;
+    --red: #e05252;
+    --yellow: #f5d600;
+    --white: #ffffff;
+    --ts: #3178c6;
+    --go: #00adb5;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+  h1 { font-size: 1.9rem; color: var(--white); margin-bottom: .25rem; }
+  h2 { font-size: 1.05rem; color: var(--accent); margin: 2.5rem 0 .75rem; text-transform: uppercase; letter-spacing: .07em; }
+  h3 { font-size: 1rem; color: var(--white); margin: 1.5rem 0 .5rem; }
+  p  { margin-bottom: .85rem; color: var(--text); }
+  a  { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul, ol { margin: .5rem 0 .9rem 1.5rem; }
+  li { margin-bottom: .3rem; }
+  .meta { color: var(--muted); font-size: .85rem; margin-bottom: 2rem; }
+  .tag {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .15rem .55rem;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-right: .3rem;
+  }
+
+  /* Code */
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    margin: .6rem 0 1.25rem;
+    font-size: .875rem;
+    line-height: 1.65;
+  }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }
+  p code, li code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: .1rem .35rem;
+    font-size: .85em;
+  }
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cmt { color: #546e7a; font-style: italic; }
+  .typ { color: #ffcb6b; }
+  .pkg { color: #f78c6c; }
+  .num { color: #f78c6c; }
+
+  /* Side-by-side comparison */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: .7rem 0 1.4rem;
+  }
+  .compare-side {
+    background: var(--surface);
+    padding: .7rem 1rem 1rem;
+  }
+  .compare-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-weight: 700;
+    margin-bottom: .4rem;
+    padding: .2rem .5rem;
+    display: inline-block;
+    border-radius: 3px;
+  }
+  .label-ts { background: #0d2140; color: #5ca8f5; }
+  .label-go { background: #0a2323; color: var(--accent); }
+  .compare-side pre { margin: 0; border: none; padding: .7rem .9rem; background: var(--surface2); }
+
+  /* Callout boxes */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: .85rem 1.1rem;
+    margin: 1rem 0 1.4rem;
+  }
+  .callout.warn { border-left-color: var(--yellow); }
+  .callout.tip  { border-left-color: var(--green); }
+  .callout strong { color: var(--white); display: block; margin-bottom: .3rem; }
+
+  /* Quiz */
+  .quiz-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-top: 2.5rem;
+  }
+  .quiz-section h2 { margin-top: 0; }
+  .quiz-q {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .quiz-q:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .quiz-q p { font-weight: 600; color: var(--white); margin-bottom: .7rem; }
+  .quiz-q .subtitle { font-weight: normal; font-size: .88rem; color: var(--muted); margin-top: -.4rem; margin-bottom: .7rem; }
+  .options { display: flex; flex-direction: column; gap: .4rem; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    cursor: pointer;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .65rem .9rem;
+    transition: border-color .15s, background .15s;
+    font-size: .9rem;
+  }
+  .option:hover { border-color: var(--accent); }
+  .option.correct { background: #0d2b12; border-color: var(--green); color: var(--green); }
+  .option.wrong   { background: #2b0d0d; border-color: var(--red);   color: var(--red);   }
+  .option.dimmed  { opacity: .35; pointer-events: none; }
+  .option input   { display: none; }
+  .feedback {
+    margin-top: .7rem;
+    font-size: .88rem;
+    padding: .55rem .85rem;
+    border-radius: 5px;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok  { background: #0d2b12; color: var(--green); }
+  .feedback.bad { background: #2b0d0d; color: var(--red); }
+
+  /* Progress */
+  .progress-bar { background: var(--border); border-radius: 4px; height: 6px; margin-bottom: 1.2rem; }
+  .progress-fill { background: var(--accent); height: 6px; border-radius: 4px; transition: width .4s; width: 0%; }
+  .score-msg { font-size: .9rem; color: var(--muted); margin-top: .5rem; }
+
+  /* Footer */
+  .footer-ask {
+    margin-top: 3rem;
+    padding: 1.1rem 1.3rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: .88rem;
+    color: var(--muted);
+  }
+  .footer-ask strong { color: var(--white); }
+  .nav-link {
+    display: inline-block;
+    margin-top: 2rem;
+    padding: .55rem 1.1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: .88rem;
+    color: var(--muted);
+  }
+  .nav-link:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+  @media(max-width:620px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<p class="meta">
+  <span class="tag">Go Track</span>
+  <span class="tag">Lesson 8 of 8+</span>
+  <span class="tag">~8 min</span>
+</p>
+
+<h1>Error Handling Patterns in Go</h1>
+<p class="meta">No exceptions. No <code>try/catch</code>. Just values.</p>
+
+<!-- ─── Why This Matters ─── -->
+<h2>The Big Shift</h2>
+<p>
+  In TypeScript, errors are <em>thrown</em> and <em>caught</em> — they travel invisibly up the call stack until something handles them.
+  In Go, errors are <strong>ordinary return values</strong>. A function that can fail returns two things: the result, and an <code>error</code>.
+  There's no try/catch, no implicit propagation. Every potential failure is visible right where it happens.
+</p>
+
+<div class="compare">
+  <div class="compare-side">
+    <span class="compare-label label-ts">TypeScript</span>
+    <pre><code><span class="cmt">// failure is invisible at call site</span>
+<span class="kw">try</span> {
+  <span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">fetchUser</span>(id);
+  console.<span class="fn">log</span>(user.name);
+} <span class="kw">catch</span> (err) {
+  console.<span class="fn">error</span>(err);
+}</code></pre>
+  </div>
+  <div class="compare-side">
+    <span class="compare-label label-go">Go</span>
+    <pre><code><span class="cmt">// failure is explicit at call site</span>
+user, err := <span class="fn">fetchUser</span>(id)
+<span class="kw">if</span> err != <span class="kw">nil</span> {
+    log.<span class="fn">Println</span>(err)
+    <span class="kw">return</span>
+}
+fmt.<span class="fn">Println</span>(user.Name)</code></pre>
+  </div>
+</div>
+
+<p>
+  The <code>error</code> type is a built-in interface with a single method: <code>Error() string</code>.
+  <a href="https://pkg.go.dev/builtin#error" target="_blank">Go spec ↗</a>
+</p>
+
+<pre><code><span class="cmt">// the error interface — built into Go</span>
+<span class="kw">type</span> <span class="typ">error</span> <span class="kw">interface</span> {
+    <span class="fn">Error</span>() <span class="typ">string</span>
+}</code></pre>
+
+<!-- ─── Creating Errors ─── -->
+<h2>Creating Errors</h2>
+
+<p>Two ways to create a simple error:</p>
+
+<pre><code><span class="kw">import</span> (
+    <span class="str">"errors"</span>
+    <span class="str">"fmt"</span>
+)
+
+<span class="cmt">// 1. Static message — use when the message never changes</span>
+<span class="kw">var</span> <span class="typ">ErrNotFound</span> = errors.<span class="fn">New</span>(<span class="str">"not found"</span>)
+
+<span class="cmt">// 2. Dynamic message — use when you need to include runtime context</span>
+err := fmt.<span class="fn">Errorf</span>(<span class="str">"user %d not found"</span>, userID)</code></pre>
+
+<div class="callout tip">
+  <strong>Convention</strong>
+  Error values starting with <code>Err</code> (e.g. <code>ErrNotFound</code>) are called <em>sentinel errors</em>.
+  They're package-level variables meant to be compared against — the Go equivalent of a known error code.
+</div>
+
+<!-- ─── Wrapping Errors ─── -->
+<h2>Wrapping Errors with <code>%w</code></h2>
+
+<p>
+  When a function calls another function that fails, it's good practice to <em>wrap</em> the original error with added context.
+  The <code>%w</code> verb in <code>fmt.Errorf</code> does this — it embeds the original error inside a new one,
+  preserving the chain. <a href="https://pkg.go.dev/fmt#Errorf" target="_blank">fmt.Errorf docs ↗</a>
+</p>
+
+<div class="compare">
+  <div class="compare-side">
+    <span class="compare-label label-ts">TypeScript (naive)</span>
+    <pre><code><span class="kw">catch</span> (err) {
+  <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">Error</span>(
+    <span class="str">`loadUser failed: </span><span class="kw">${</span>err<span class="kw">}</span><span class="str">`</span>
+  );
+  <span class="cmt">// original cause is lost</span>
+}</code></pre>
+  </div>
+  <div class="compare-side">
+    <span class="compare-label label-go">Go — wrap with <code>%w</code></span>
+    <pre><code>user, err := <span class="fn">loadUser</span>(id)
+<span class="kw">if</span> err != <span class="kw">nil</span> {
+    <span class="kw">return</span> fmt.<span class="fn">Errorf</span>(
+        <span class="str">"loadUser %d: %w"</span>, id, err,
+    )
+    <span class="cmt">// original error preserved</span>
+}</code></pre>
+  </div>
+</div>
+
+<p>Now the caller gets a message like <code>"loadUser 42: not found"</code> and can still inspect the root cause.</p>
+
+<!-- ─── Unwrapping: errors.Is / errors.As ─── -->
+<h2>Inspecting Wrapped Errors: <code>errors.Is</code> and <code>errors.As</code></h2>
+
+<p>
+  Because errors can be wrapped multiple layers deep, you can't use <code>==</code> to check the type or value.
+  Two standard library functions handle this:
+  <a href="https://pkg.go.dev/errors#Is" target="_blank">errors.Is ↗</a> /
+  <a href="https://pkg.go.dev/errors#As" target="_blank">errors.As ↗</a>
+</p>
+
+<div class="compare">
+  <div class="compare-side">
+    <span class="compare-label label-ts">TypeScript</span>
+    <pre><code><span class="cmt">// check type</span>
+<span class="kw">if</span> (err <span class="kw">instanceof</span> NotFoundError) { }
+
+<span class="cmt">// check value identity</span>
+<span class="kw">if</span> (err === ERR_NOT_FOUND) { }</code></pre>
+  </div>
+  <div class="compare-side">
+    <span class="compare-label label-go">Go</span>
+    <pre><code><span class="cmt">// check value (sentinel)</span>
+<span class="kw">if</span> errors.<span class="fn">Is</span>(err, <span class="typ">ErrNotFound</span>) { }
+
+<span class="cmt">// check type (custom error)</span>
+<span class="kw">var</span> notFound <span class="typ">*NotFoundError</span>
+<span class="kw">if</span> errors.<span class="fn">As</span>(err, &amp;notFound) { }</code></pre>
+  </div>
+</div>
+
+<p>
+  <strong><code>errors.Is</code></strong> — walks the error chain looking for an exact match against a target value. Use it with sentinel errors.<br>
+  <strong><code>errors.As</code></strong> — walks the chain looking for a specific type, and fills in the pointer if found. Use it with custom error types.
+</p>
+
+<!-- ─── Custom Error Types ─── -->
+<h2>Custom Error Types</h2>
+
+<p>
+  Any struct that implements <code>Error() string</code> is an <code>error</code>. 
+  This lets you attach structured data to errors — useful for HTTP handlers that need to map errors to status codes.
+</p>
+
+<pre><code><span class="cmt">// Define a custom error that carries an HTTP status code</span>
+<span class="kw">type</span> <span class="typ">AppError</span> <span class="kw">struct</span> {
+    Code    <span class="typ">int</span>
+    Message <span class="typ">string</span>
+}
+
+<span class="kw">func</span> (e *<span class="typ">AppError</span>) <span class="fn">Error</span>() <span class="typ">string</span> {
+    <span class="kw">return</span> fmt.<span class="fn">Sprintf</span>(<span class="str">"[%d] %s"</span>, e.Code, e.Message)
+}
+
+<span class="cmt">// Constructor helpers</span>
+<span class="kw">func</span> <span class="fn">NotFound</span>(msg <span class="typ">string</span>) *<span class="typ">AppError</span> {
+    <span class="kw">return</span> &amp;<span class="typ">AppError</span>{Code: <span class="num">404</span>, Message: msg}
+}
+<span class="kw">func</span> <span class="fn">BadRequest</span>(msg <span class="typ">string</span>) *<span class="typ">AppError</span> {
+    <span class="kw">return</span> &amp;<span class="typ">AppError</span>{Code: <span class="num">400</span>, Message: msg}
+}</code></pre>
+
+<!-- ─── HTTP Server Pattern ─── -->
+<h2>Putting It Together: Errors in HTTP Handlers</h2>
+
+<p>
+  This is where it all pays off. In your HTTP server (from lesson 7), you can now let service functions return typed errors,
+  and translate them into the right HTTP status codes in one place:
+</p>
+
+<pre><code><span class="kw">func</span> <span class="fn">handleGetUser</span>(w <span class="typ">http.ResponseWriter</span>, r *<span class="typ">http.Request</span>) {
+    id := r.PathValue(<span class="str">"id"</span>)
+
+    user, err := <span class="fn">getUser</span>(id)
+    <span class="kw">if</span> err != <span class="kw">nil</span> {
+        <span class="kw">var</span> appErr *<span class="typ">AppError</span>
+        <span class="kw">if</span> errors.<span class="fn">As</span>(err, &amp;appErr) {
+            <span class="cmt">// typed error — use its HTTP code</span>
+            <span class="fn">writeError</span>(w, appErr.Code, appErr.Message)
+        } <span class="kw">else</span> {
+            <span class="cmt">// unknown error — generic 500</span>
+            <span class="fn">writeError</span>(w, <span class="num">500</span>, <span class="str">"internal server error"</span>)
+        }
+        <span class="kw">return</span>
+    }
+
+    <span class="fn">writeJSON</span>(w, <span class="num">200</span>, user)
+}
+
+<span class="kw">func</span> <span class="fn">getUser</span>(id <span class="typ">string</span>) (*<span class="typ">User</span>, <span class="typ">error</span>) {
+    <span class="kw">if</span> id == <span class="str">"99"</span> {
+        <span class="kw">return</span> <span class="kw">nil</span>, <span class="fn">NotFound</span>(<span class="str">"user not found"</span>)
+    }
+    <span class="kw">return</span> &amp;<span class="typ">User</span>{Name: <span class="str">"Amit"</span>}, <span class="kw">nil</span>
+}</code></pre>
+
+<div class="callout tip">
+  <strong>The pattern:</strong>
+  Service functions return typed errors with semantic meaning. Handlers translate errors to HTTP responses.
+  This separates business logic from HTTP concerns — the same pattern as Express middleware in TS.
+</div>
+
+<!-- ─── Quick Reference ─── -->
+<h2>Quick Reference</h2>
+
+<table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left;color:var(--muted);font-size:.75rem;padding:.35rem .7rem;">Task</th>
+    <th style="text-align:left;color:var(--muted);font-size:.75rem;padding:.35rem .7rem;">Go idiom</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td style="padding:.5rem .7rem;color:var(--muted);">Simple static error</td>
+    <td style="padding:.5rem .7rem;"><code>errors.New("message")</code></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td style="padding:.5rem .7rem;color:var(--muted);">Error with context</td>
+    <td style="padding:.5rem .7rem;"><code>fmt.Errorf("context: %w", err)</code></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td style="padding:.5rem .7rem;color:var(--muted);">Check for specific value</td>
+    <td style="padding:.5rem .7rem;"><code>errors.Is(err, ErrSomething)</code></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td style="padding:.5rem .7rem;color:var(--muted);">Check for specific type</td>
+    <td style="padding:.5rem .7rem;"><code>errors.As(err, &amp;target)</code></td>
+  </tr>
+  <tr>
+    <td style="padding:.5rem .7rem;color:var(--muted);">Custom error type</td>
+    <td style="padding:.5rem .7rem;">Struct with <code>Error() string</code> method</td>
+  </tr>
+</table>
+
+<!-- ─── Quiz ─── -->
+<div class="quiz-section">
+  <h2>Quiz — Check Your Understanding</h2>
+  <div class="progress-bar"><div class="progress-fill" id="pbar"></div></div>
+  <p class="score-msg" id="score-msg"></p>
+
+  <!-- Q1 -->
+  <div class="quiz-q" id="q1">
+    <p>Q1. A function <code>readFile(path string)</code> can fail. What is the correct Go signature?</p>
+    <div class="options" data-correct="b">
+      <label class="option" data-val="a">
+        <input type="radio" name="q1">
+        <span><code>func readFile(path string) string</code> — just return an empty string on failure</span>
+      </label>
+      <label class="option" data-val="b">
+        <input type="radio" name="q1">
+        <span><code>func readFile(path string) (string, error)</code></span>
+      </label>
+      <label class="option" data-val="c">
+        <input type="radio" name="q1">
+        <span><code>func readFile(path string) throws error</code></span>
+      </label>
+      <label class="option" data-val="d">
+        <input type="radio" name="q1">
+        <span><code>func readFile(path string) error | string</code></span>
+      </label>
+    </div>
+    <div class="feedback" id="fb1"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quiz-q" id="q2">
+    <p>Q2. What does <code>%w</code> do in <code>fmt.Errorf("load: %w", err)</code>?</p>
+    <div class="options" data-correct="c">
+      <label class="option" data-val="a">
+        <input type="radio" name="q2">
+        <span>It prints the error in bold in terminal output</span>
+      </label>
+      <label class="option" data-val="b">
+        <input type="radio" name="q2">
+        <span>It converts the error to a warning instead</span>
+      </label>
+      <label class="option" data-val="c">
+        <input type="radio" name="q2">
+        <span>It wraps <code>err</code> inside the new error so it can be unwrapped later with <code>errors.Is</code> / <code>errors.As</code></span>
+      </label>
+      <label class="option" data-val="d">
+        <input type="radio" name="q2">
+        <span>It's the same as <code>%v</code> — just formats the error as a string</span>
+      </label>
+    </div>
+    <div class="feedback" id="fb2"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quiz-q" id="q3">
+    <p>Q3. You have a sentinel error <code>var ErrNotFound = errors.New("not found")</code>. A function wraps it three levels deep. Which call correctly detects it?</p>
+    <div class="options" data-correct="b">
+      <label class="option" data-val="a">
+        <input type="radio" name="q3">
+        <span><code>err == ErrNotFound</code></span>
+      </label>
+      <label class="option" data-val="b">
+        <input type="radio" name="q3">
+        <span><code>errors.Is(err, ErrNotFound)</code></span>
+      </label>
+      <label class="option" data-val="c">
+        <input type="radio" name="q3">
+        <span><code>errors.As(err, ErrNotFound)</code></span>
+      </label>
+      <label class="option" data-val="d">
+        <input type="radio" name="q3">
+        <span><code>err.Is(ErrNotFound)</code></span>
+      </label>
+    </div>
+    <div class="feedback" id="fb3"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="quiz-q" id="q4">
+    <p>Q4. You want to attach an HTTP status code to an error so handlers can use it. Which approach is idiomatic Go?</p>
+    <div class="options" data-correct="d">
+      <label class="option" data-val="a">
+        <input type="radio" name="q4">
+        <span>Return an integer status code alongside the error: <code>return nil, 404, errors.New("not found")</code></span>
+      </label>
+      <label class="option" data-val="b">
+        <input type="radio" name="q4">
+        <span>Set a global variable with the status code before returning the error</span>
+      </label>
+      <label class="option" data-val="c">
+        <input type="radio" name="q4">
+        <span>Encode the status in the error message string: <code>"404: not found"</code> and parse it in the handler</span>
+      </label>
+      <label class="option" data-val="d">
+        <input type="radio" name="q4">
+        <span>Define a custom struct with a <code>Code int</code> field that implements <code>Error() string</code>, then use <code>errors.As</code> in the handler</span>
+      </label>
+    </div>
+    <div class="feedback" id="fb4"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="quiz-q" id="q5">
+    <p>Q5. What is wrong with this handler code?</p>
+    <p class="subtitle"><code>writeError(w, 400, "bad request") // missing something</code><br><code>writeJSON(w, 200, result)</code></p>
+    <div class="options" data-correct="a">
+      <label class="option" data-val="a">
+        <input type="radio" name="q5">
+        <span>There's no <code>return</code> after <code>writeError</code> — execution continues to <code>writeJSON</code>, causing a double-write</span>
+      </label>
+      <label class="option" data-val="b">
+        <input type="radio" name="q5">
+        <span><code>writeError</code> should be called <code>sendError</code></span>
+      </label>
+      <label class="option" data-val="c">
+        <input type="radio" name="q5">
+        <span>The status code 400 should be passed as a string, not an integer</span>
+      </label>
+      <label class="option" data-val="d">
+        <input type="radio" name="q5">
+        <span>Nothing — this is valid Go and will send the error response only</span>
+      </label>
+    </div>
+    <div class="feedback" id="fb5"></div>
+  </div>
+</div>
+
+<!-- Footer ask -->
+<div class="footer-ask">
+  <strong>Got questions?</strong> Ask your agent anything that's unclear — why <code>%w</code> instead of <code>%v</code>,
+  when to use sentinel vs custom errors, how to test error paths, or anything else. That's what it's there for.
+</div>
+
+<a href="../../index.html" class="nav-link">← Back to all lessons</a>
+
+<script>
+  const FEEDBACK = {
+    q1: {
+      b: "✓ Correct! Go functions signal failure via a second return value of type <code>error</code>. If there's no error, it's <code>nil</code>.",
+      wrong: "✗ Go doesn't use exceptions — there's no <code>throws</code> keyword, and returning an empty string hides errors. The idiomatic pattern is <code>(T, error)</code>."
+    },
+    q2: {
+      c: "✓ Correct! <code>%w</code> wraps the original error so the full chain can be walked later by <code>errors.Is</code> and <code>errors.As</code>. If you used <code>%v</code>, the original error would be converted to a string and lost.",
+      wrong: "✗ <code>%w</code> wraps the original error inside the new one, preserving it for later inspection. It has nothing to do with display formatting."
+    },
+    q3: {
+      b: "✓ Correct! <code>errors.Is</code> walks the entire error chain, unwrapping at each level, until it finds a match. Plain <code>==</code> only checks the outermost error.",
+      wrong: "✗ Once an error is wrapped, <code>==</code> won't match. <code>errors.Is</code> is the right tool — it unwraps recursively. <code>errors.As</code> is for matching types, not values."
+    },
+    q4: {
+      d: "✓ Correct! A custom struct with typed fields is the Go-idiomatic way to carry structured data on errors. <code>errors.As</code> in the handler extracts it without losing the error chain.",
+      wrong: "✗ Extra return values, globals, and string parsing are all brittle. A custom error struct is clean, type-safe, and inspectable anywhere in the call chain."
+    },
+    q5: {
+      a: "✓ Correct! This is one of the most common bugs for developers coming from Express. In Go, writing to <code>w</code> doesn't stop the function — you must <code>return</code> explicitly after <code>writeError</code>.",
+      wrong: "✗ The problem is a missing <code>return</code>. Without it, Go continues executing and calls <code>writeJSON</code> after <code>writeError</code> — resulting in a 'superfluous response.WriteHeader' warning and a corrupted response."
+    }
+  };
+
+  let answered = 0;
+  const total = 5;
+
+  function updateProgress() {
+    document.getElementById('pbar').style.width = (answered / total * 100) + '%';
+    if (answered === total) {
+      document.getElementById('score-msg').textContent = '🎉 All done! Great work.';
+    } else {
+      document.getElementById('score-msg').textContent = `${answered} / ${total} answered`;
+    }
+  }
+
+  document.querySelectorAll('.quiz-q').forEach((qEl, idx) => {
+    const qNum = idx + 1;
+    const correct = qEl.querySelector('.options').dataset.correct;
+    const fbEl = document.getElementById('fb' + qNum);
+    let done = false;
+
+    qEl.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        if (done) return;
+        done = true;
+        answered++;
+
+        const chosen = opt.dataset.val;
+        const isCorrect = chosen === correct;
+
+        qEl.querySelectorAll('.option').forEach(o => {
+          if (o.dataset.val === correct) {
+            o.classList.add('correct');
+          } else if (o.dataset.val === chosen && !isCorrect) {
+            o.classList.add('wrong');
+          } else {
+            o.classList.add('dimmed');
+          }
+        });
+
+        const msg = FEEDBACK['q' + qNum][chosen] || FEEDBACK['q' + qNum].wrong;
+        fbEl.innerHTML = msg;
+        fbEl.className = 'feedback show ' + (isCorrect ? 'ok' : 'bad');
+
+        updateProgress();
+      });
+    });
+  });
+
+  updateProgress();
+</script>
+</body>
+</html>
