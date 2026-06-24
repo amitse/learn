@@ -133,6 +133,17 @@
   <dt>PLL Step 1</dt><dd>Permuting the 4 top-layer corners after OLL is complete. Solved in at most 2 applications of the corner permutation algorithm.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 7 — Permuting Yellow Corners (2026-06-22)</p>
+
+<h2>Last Layer Edge Permutation (PLL Step 2)</h2>
+<dl>
+  <dt>Ua perm</dt><dd><code>R U' R U R U R U' R' U' R2</code> — cycles three last-layer edges counter-clockwise (viewed from above): front→left, left→right (via back arc), right→front. The back edge is unchanged. Applied when the front edge belongs in the left slot.</dd>
+  <dt>Ub perm</dt><dd><code>R2 U R U R' U' R' U' R' U R'</code> — the exact inverse of Ua; cycles edges clockwise: front→right, right→left (via back arc), left→front. Applied when the front edge belongs in the right slot.</dd>
+  <dt>3-cycle (edge)</dt><dd>The case where exactly 1 last-layer edge is correctly placed. The other three form a 3-piece cycle. Solved with one application of Ua or Ub (back edge = anchor).</dd>
+  <dt>0-correct (edge)</dt><dd>A last-layer state where no edge sticker matches the centre below it. Apply Ua once from any hold — this converts the state into a 3-cycle which is then solved normally. Never indicates a mis-scrambled cube.</dd>
+  <dt>PLL Step 2</dt><dd>Permuting the 4 last-layer edges after PLL Step 1 (corner permutation) is complete. The final step of the beginner layer-by-layer method. Solved in at most 2 algorithm applications using Ua or Ub.</dd>
+  <dt>Anchor edge</dt><dd>The one correctly placed last-layer edge used as a reference point in the 3-cycle case. Hold yellow up and rotate the whole cube (y / y') until the anchor edge is at the back before applying Ua or Ub.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 8 — Permuting Last Layer Edges (2026-06-24)</p>
 </body>
 </html>
