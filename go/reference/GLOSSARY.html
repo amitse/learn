@@ -45,7 +45,56 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Error Handling (Lesson 8) <span class="new-badge">new</span></h2>
+<h2>Testing (Lesson 9) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>_test.go</td>
+    <td>.test.ts / .spec.ts</td>
+    <td>File naming convention for test files. The Go toolchain discovers them automatically — no config needed. Test functions begin with <code>Test</code> and accept <code>*testing.T</code>.</td>
+  </tr>
+  <tr>
+    <td>httptest.NewRecorder()</td>
+    <td>supertest response mock</td>
+    <td>Creates a fake <code>http.ResponseWriter</code> that buffers the status code, headers, and body your handler writes. Read results via <code>.Code</code> and <code>.Body.String()</code>.</td>
+  </tr>
+  <tr>
+    <td>httptest.NewRequest()</td>
+    <td>supertest request builder</td>
+    <td>Creates a fake <code>*http.Request</code> — no network connection. Pass method, URL, and optional body. Set headers with <code>.Header.Set(...)</code>.</td>
+  </tr>
+  <tr>
+    <td>t.Errorf(...)</td>
+    <td>expect(...).toBe(...) (soft fail)</td>
+    <td>Marks the test as failed and logs a message, but continues running the rest of the test function. Use when you want to collect all failures.</td>
+  </tr>
+  <tr>
+    <td>t.Fatal(...) / t.Fatalf</td>
+    <td>throw / test.fail() (hard fail)</td>
+    <td>Marks failure and stops the test immediately (<code>FailNow</code>). Use when further assertions are meaningless (e.g., bad JSON decode).</td>
+  </tr>
+  <tr>
+    <td>t.Run(name, func)</td>
+    <td>it('name', fn) in describe</td>
+    <td>Runs a named sub-test. On failure, Go prints <code>TestFoo/name</code>. Used in table-driven tests to give each case a readable label.</td>
+  </tr>
+  <tr>
+    <td>table-driven test</td>
+    <td>test.each / describe+it matrix</td>
+    <td>Go idiom: define a slice of anonymous structs (each row = one case with inputs + expected outputs), loop over them, call <code>t.Run</code> per case. No extra library needed.</td>
+  </tr>
+  <tr>
+    <td>go test -cover ./...</td>
+    <td>jest --coverage</td>
+    <td>Runs all tests and prints per-package statement coverage %. Add <code>-coverprofile=c.out</code> then <code>go tool cover -html=c.out</code> for an annotated HTML report.</td>
+  </tr>
+</table>
+
+<h2>Error Handling (Lesson 8)</h2>
 <table>
   <tr>
     <th>Term</th>

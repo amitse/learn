@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 0009 — Testing HTTP Handlers in Go</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --green: #3ab54a;
+    --red: #e05252;
+    --yellow: #f5d600;
+    --white: #ffffff;
+    --ts: #3178c6;
+    --go: #00adb5;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+  h1 { font-size: 1.9rem; color: var(--white); margin-bottom: .25rem; }
+  h2 { font-size: 1.05rem; color: var(--accent); margin: 2.5rem 0 .75rem; text-transform: uppercase; letter-spacing: .07em; }
+  h3 { font-size: 1rem; color: var(--white); margin: 1.5rem 0 .5rem; }
+  p  { margin-bottom: .85rem; color: var(--text); }
+  a  { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul, ol { margin: .5rem 0 .9rem 1.5rem; }
+  li { margin-bottom: .3rem; }
+  .meta { color: var(--muted); font-size: .85rem; margin-bottom: 2rem; }
+  .tag {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .15rem .55rem;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-right: .3rem;
+  }
+
+  /* Code */
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    margin: .6rem 0 1.25rem;
+    font-size: .875rem;
+    line-height: 1.65;
+  }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }
+  p code, li code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: .1rem .35rem;
+    font-size: .85em;
+  }
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cmt { color: #546e7a; font-style: italic; }
+  .typ { color: #ffcb6b; }
+  .pkg { color: #f78c6c; }
+  .num { color: #f78c6c; }
+
+  /* Side-by-side comparison */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin: .6rem 0 1.4rem;
+  }
+  @media (max-width: 620px) { .compare { grid-template-columns: 1fr; } }
+  .compare-col { }
+  .lang-label {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .3rem .7rem;
+    border-radius: var(--radius) var(--radius) 0 0;
+    display: inline-block;
+    margin-bottom: -1px;
+  }
+  .lang-ts   { background: var(--ts);   color: #fff; }
+  .lang-go   { background: var(--go);   color: #0f1117; }
+  .compare-col pre { border-top-left-radius: 0; }
+
+  /* Callout boxes */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: .9rem 1.1rem;
+    margin: 1rem 0 1.4rem;
+  }
+  .callout.warn  { border-color: var(--yellow); }
+  .callout.tip   { border-color: var(--green); }
+  .callout strong { color: var(--white); display: block; margin-bottom: .3rem; }
+
+  /* Quiz */
+  .quiz-section { margin-top: 3rem; }
+  .quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+  .quiz-card p.question { color: var(--white); font-weight: 600; margin-bottom: 1rem; }
+  .quiz-card label {
+    display: block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .6rem .9rem;
+    margin-bottom: .5rem;
+    cursor: pointer;
+    transition: border-color .15s;
+    font-size: .92rem;
+  }
+  .quiz-card label:hover { border-color: var(--accent); }
+  .quiz-card input[type=radio] { margin-right: .55rem; accent-color: var(--accent); }
+  .check-btn {
+    margin-top: .8rem;
+    background: var(--accent);
+    color: #0f1117;
+    border: none;
+    border-radius: 6px;
+    padding: .5rem 1.3rem;
+    font-weight: 700;
+    font-size: .9rem;
+    cursor: pointer;
+  }
+  .check-btn:hover { opacity: .88; }
+  .feedback {
+    margin-top: .7rem;
+    padding: .65rem 1rem;
+    border-radius: 6px;
+    font-size: .9rem;
+    display: none;
+  }
+  .feedback.correct { background: #0d2b12; border: 1px solid var(--green); color: var(--green); display: block; }
+  .feedback.wrong   { background: #2b0d0d; border: 1px solid var(--red);   color: var(--red);   display: block; }
+
+  /* Progress bar */
+  .progress-wrap { background: var(--surface2); border-radius: 99px; height: 6px; margin-bottom: 2.5rem; }
+  .progress-bar  { background: var(--accent); height: 6px; border-radius: 99px; width: 0; transition: width .4s; }
+  .progress-label { font-size: .8rem; color: var(--muted); margin-bottom: .5rem; }
+
+  /* Citation */
+  .cite { font-size: .8rem; color: var(--muted); }
+  .cite a { color: var(--muted); text-decoration: underline; }
+
+  /* Score banner */
+  #score-banner {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.5rem;
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+  #score-banner h3 { color: var(--white); margin-bottom: .4rem; }
+  #score-banner p  { color: var(--muted); margin: 0; }
+
+  /* Three-col table */
+  table { width: 100%; border-collapse: collapse; margin: .6rem 0 1.3rem; font-size: .88rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: .78rem; padding: .4rem .7rem; border-bottom: 1px solid var(--border); }
+  td { padding: .55rem .7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: .82em; }
+</style>
+</head>
+<body>
+
+<!-- Progress -->
+<p class="progress-label" id="prog-label">Question 0 / 6</p>
+<div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+
+<h1>Testing HTTP Handlers in Go</h1>
+<p class="meta">
+  <span class="tag">Lesson 9</span>
+  <span class="tag">net/http/httptest</span>
+  <span class="tag">table-driven tests</span>
+  <span class="tag">~10 min</span>
+</p>
+
+<p>
+  You have a working HTTP server with routing, JSON, middleware, and error handling.
+  The final missing piece: <strong>how do you verify it actually works?</strong>
+  Go ships a built-in package — <code>net/http/httptest</code> — that lets you fire
+  real HTTP requests at your handlers <em>without</em> binding a network port.
+  No Jest, no supertest, no framework needed.
+</p>
+
+<!-- ── SECTION 1: Test files in Go ──────────────────────────────────────── -->
+<h2>1 — Test files &amp; the testing package</h2>
+
+<p>
+  Go tests live in files ending in <code>_test.go</code>, right next to the code
+  they test. The <code>testing</code> package is part of the standard library —
+  no install required.
+  <span class="cite">(<a href="https://pkg.go.dev/testing" target="_blank">pkg.go.dev/testing</a>)</span>
+</p>
+
+<div class="compare">
+  <div class="compare-col">
+    <span class="lang-label lang-ts">TypeScript (Jest)</span>
+    <pre><code><span class="cmt">// handlers.test.ts</span>
+<span class="kw">import</span> { describe, it, expect } <span class="kw">from</span> <span class="str">'vitest'</span>
+
+describe(<span class="str">'GET /hello'</span>, () => {
+  it(<span class="str">'returns 200'</span>, <span class="kw">async</span> () => {
+    <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'http://localhost:3000/hello'</span>)
+    <span class="fn">expect</span>(res.status).toBe(<span class="num">200</span>)
+  })
+})</code></pre>
+  </div>
+  <div class="compare-col">
+    <span class="lang-label lang-go">Go</span>
+    <pre><code><span class="cmt">// handlers_test.go</span>
+<span class="kw">package</span> main
+
+<span class="kw">import</span> (
+  <span class="str">"net/http"</span>
+  <span class="str">"net/http/httptest"</span>
+  <span class="str">"testing"</span>
+)
+
+<span class="kw">func</span> <span class="fn">TestHelloHandler</span>(t *<span class="typ">testing.T</span>) {
+  req := <span class="fn">httptest.NewRequest</span>(<span class="str">"GET"</span>, <span class="str">"/hello"</span>, <span class="kw">nil</span>)
+  w   := <span class="fn">httptest.NewRecorder</span>()
+  <span class="fn">helloHandler</span>(w, req)
+
+  <span class="kw">if</span> w.<span class="fn">Code</span> != http.<span class="typ">StatusOK</span> {
+    t.<span class="fn">Errorf</span>(<span class="str">"expected 200, got %d"</span>, w.Code)
+  }
+}</code></pre>
+  </div>
+</div>
+
+<p>Run all tests from your module root:</p>
+<pre><code>go test ./...</code></pre>
+
+<div class="callout tip">
+  <strong>Key difference from TS</strong>
+  In Jest you need a running server or a mock. In Go, <code>httptest.NewRecorder()</code>
+  is a fake <code>http.ResponseWriter</code> — you call your handler function directly,
+  passing the recorder instead of a real connection. No server, no network.
+</div>
+
+<!-- ── SECTION 2: httptest primitives ──────────────────────────────────── -->
+<h2>2 — The two httptest primitives</h2>
+
+<table>
+  <tr><th>Type / Function</th><th>What it is</th><th>Key fields/methods</th></tr>
+  <tr>
+    <td><code>httptest.NewRequest(method, url, body)</code></td>
+    <td>Creates a fake <code>*http.Request</code> (no network involved)</td>
+    <td><code>.Header.Set(...)</code>, <code>.Body</code></td>
+  </tr>
+  <tr>
+    <td><code>httptest.NewRecorder()</code></td>
+    <td>Fake <code>http.ResponseWriter</code> that records what your handler writes</td>
+    <td><code>.Code</code> (status), <code>.Body</code> (buffer), <code>.Header()</code></td>
+  </tr>
+  <tr>
+    <td><code>w.Result()</code></td>
+    <td>Convert recorder to a real <code>*http.Response</code></td>
+    <td>Useful if you want <code>json.Decode</code> on the response body</td>
+  </tr>
+</table>
+
+<p class="cite">
+  <a href="https://pkg.go.dev/net/http/httptest#ResponseRecorder" target="_blank">pkg.go.dev/net/http/httptest#ResponseRecorder</a>
+</p>
+
+<!-- ── SECTION 3: Table-driven tests ──────────────────────────────────── -->
+<h2>3 — Table-driven tests: Go's idiom</h2>
+
+<p>
+  Go codebases almost universally use <strong>table-driven tests</strong> — one slice of
+  test cases, iterated in a loop. No describe/it nesting needed; the table is the
+  documentation.
+  <span class="cite">(<a href="https://go.dev/wiki/TableDrivenTests" target="_blank">go.dev/wiki/TableDrivenTests</a>)</span>
+</p>
+
+<pre><code><span class="kw">func</span> <span class="fn">TestGreetHandler</span>(t *<span class="typ">testing.T</span>) {
+  tests := []<span class="kw">struct</span> {
+    name       <span class="typ">string</span>
+    url        <span class="typ">string</span>
+    wantStatus <span class="typ">int</span>
+    wantBody   <span class="typ">string</span>
+  }{
+    {<span class="str">"valid name"</span>,    <span class="str">"/greet/amit"</span>, <span class="num">200</span>, <span class="str">"Hello, Amit"</span>},
+    {<span class="str">"empty name"</span>,    <span class="str">"/greet/"</span>,     <span class="num">400</span>, <span class="str">"name required"</span>},
+    {<span class="str">"unknown route"</span>, <span class="str">"/nope"</span>,       <span class="num">404</span>, <span class="str">""</span>},
+  }
+
+  <span class="kw">for</span> _, tt := <span class="kw">range</span> tests {
+    t.<span class="fn">Run</span>(tt.name, <span class="kw">func</span>(t *<span class="typ">testing.T</span>) {
+      req := <span class="fn">httptest.NewRequest</span>(<span class="str">"GET"</span>, tt.url, <span class="kw">nil</span>)
+      w   := <span class="fn">httptest.NewRecorder</span>()
+      <span class="fn">greetHandler</span>(w, req)
+
+      <span class="kw">if</span> w.Code != tt.wantStatus {
+        t.<span class="fn">Errorf</span>(<span class="str">"status: got %d, want %d"</span>, w.Code, tt.wantStatus)
+      }
+      <span class="kw">if</span> tt.wantBody != <span class="str">""</span> &amp;&amp; !<span class="fn">strings.Contains</span>(w.Body.<span class="fn">String</span>(), tt.wantBody) {
+        t.<span class="fn">Errorf</span>(<span class="str">"body: %q not in %q"</span>, tt.wantBody, w.Body.String())
+      }
+    })
+  }
+}</code></pre>
+
+<div class="callout">
+  <strong>t.Run(name, func)</strong>
+  Each case runs as a named sub-test. On failure, Go prints <code>TestGreetHandler/valid_name</code>
+  — instantly tells you which case failed. Equivalent to Jest's <code>it('valid name', ...)</code>.
+</div>
+
+<!-- ── SECTION 4: Testing JSON endpoints ─────────────────────────────── -->
+<h2>4 — Testing a JSON response</h2>
+
+<p>
+  When your handler writes JSON, decode the recorder body with <code>json.Decoder</code>
+  and assert field values directly — no string matching required.
+</p>
+
+<pre><code><span class="kw">func</span> <span class="fn">TestCreateUser</span>(t *<span class="typ">testing.T</span>) {
+  body := <span class="fn">strings.NewReader</span>(<span class="str">`{"name":"Amit","email":"amit@example.com"}`</span>)
+  req  := <span class="fn">httptest.NewRequest</span>(<span class="str">"POST"</span>, <span class="str">"/users"</span>, body)
+  req.Header.<span class="fn">Set</span>(<span class="str">"Content-Type"</span>, <span class="str">"application/json"</span>)
+  w := <span class="fn">httptest.NewRecorder</span>()
+  <span class="fn">createUserHandler</span>(w, req)
+
+  <span class="kw">if</span> w.Code != http.<span class="typ">StatusCreated</span> {
+    t.<span class="fn">Fatalf</span>(<span class="str">"expected 201, got %d — body: %s"</span>, w.Code, w.Body.String())
+  }
+
+  <span class="kw">var</span> resp <span class="kw">struct</span> {
+    ID   <span class="typ">int</span>    <span class="str">`json:"id"`</span>
+    Name <span class="typ">string</span> <span class="str">`json:"name"`</span>
+  }
+  <span class="kw">if</span> err := <span class="fn">json.NewDecoder</span>(w.Body).<span class="fn">Decode</span>(&amp;resp); err != <span class="kw">nil</span> {
+    t.<span class="fn">Fatal</span>(<span class="str">"invalid JSON in response:"</span>, err)
+  }
+  <span class="kw">if</span> resp.Name != <span class="str">"Amit"</span> {
+    t.<span class="fn">Errorf</span>(<span class="str">"name: got %q, want %q"</span>, resp.Name, <span class="str">"Amit"</span>)
+  }
+}</code></pre>
+
+<div class="callout warn">
+  <strong>t.Fatal vs t.Errorf</strong>
+  Use <code>t.Fatal</code> / <code>t.Fatalf</code> when you want to stop the test immediately
+  (e.g., bad JSON means the field assertions below are meaningless).
+  Use <code>t.Errorf</code> when you want to keep running and collect all failures.
+</div>
+
+<!-- ── SECTION 5: Running tests ──────────────────────────────────────── -->
+<h2>5 — Useful go test flags</h2>
+
+<table>
+  <tr><th>Command</th><th>What it does</th></tr>
+  <tr><td><code>go test ./...</code></td><td>Run all tests in all packages</td></tr>
+  <tr><td><code>go test -v ./...</code></td><td>Verbose — print each t.Run name</td></tr>
+  <tr><td><code>go test -run TestGreet</code></td><td>Run only tests matching the regex</td></tr>
+  <tr><td><code>go test -count=1 ./...</code></td><td>Disable test result caching (always re-run)</td></tr>
+  <tr><td><code>go test -cover ./...</code></td><td>Show per-package statement coverage %</td></tr>
+</table>
+
+<div class="callout tip">
+  <strong>No separate test runner to install</strong>
+  Unlike TS where you pick Jest vs Vitest vs Mocha, Go's test runner is built into the
+  toolchain. <code>go test</code> is the only command you'll ever need.
+</div>
+
+<!-- ── QUIZ ─────────────────────────────────────────────────────────── -->
+<div class="quiz-section">
+  <h2>Quiz — check your understanding</h2>
+
+  <!-- Q1 -->
+  <div class="quiz-card" id="q1">
+    <p class="question">1. What does <code>httptest.NewRecorder()</code> return?</p>
+    <label><input type="radio" name="q1" value="a"> A real HTTP connection bound to a random port</label>
+    <label><input type="radio" name="q1" value="b"> A fake <code>http.ResponseWriter</code> that records status, headers, and body</label>
+    <label><input type="radio" name="q1" value="c"> A mock for <code>http.Client</code> (outgoing requests)</label>
+    <label><input type="radio" name="q1" value="d"> An in-memory HTTP server you <code>Listen</code> against</label>
+    <button class="check-btn" onclick="check('q1','b','✓ Correct. It\'s a fake ResponseWriter — no port, no network. Your handler writes to it; you read .Code and .Body to assert.')">Check</button>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quiz-card" id="q2">
+    <p class="question">2. Go test files must be named with which suffix?</p>
+    <label><input type="radio" name="q2" value="a"> <code>.spec.go</code></label>
+    <label><input type="radio" name="q2" value="b"> <code>.test.go</code></label>
+    <label><input type="radio" name="q2" value="c"> <code>_test.go</code></label>
+    <label><input type="radio" name="q2" value="d"> <code>test_.go</code></label>
+    <button class="check-btn" onclick="check('q2','c','✓ Correct. The Go toolchain automatically discovers any file ending in _test.go — no config needed.')">Check</button>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quiz-card" id="q3">
+    <p class="question">3. In a table-driven test, each case is run with <code>t.Run(name, func)</code>. What is the main benefit?</p>
+    <label><input type="radio" name="q3" value="a"> Tests run in parallel automatically</label>
+    <label><input type="radio" name="q3" value="b"> Failures include the case name, making it easy to identify which case broke</label>
+    <label><input type="radio" name="q3" value="c"> The test runner skips passing cases to save time</label>
+    <label><input type="radio" name="q3" value="d"> It replaces the need for <code>t.Errorf</code></label>
+    <button class="check-btn" onclick="check('q3','b','✓ Correct. Go prints TestFoo/case_name on failure — you know exactly which table row failed without reading logs carefully.')">Check</button>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="quiz-card" id="q4">
+    <p class="question">4. You want to stop a test immediately after a bad JSON decode (no point asserting fields). Which call do you use?</p>
+    <label><input type="radio" name="q4" value="a"> <code>t.Errorf(...)</code> — it always continues</label>
+    <label><input type="radio" name="q4" value="b"> <code>t.Skip(...)</code> — marks the test as skipped</label>
+    <label><input type="radio" name="q4" value="c"> <code>t.Fatal(...)</code> — logs and stops the test immediately</label>
+    <label><input type="radio" name="q4" value="d"> <code>panic(...)</code> — standard Go idiom for test failures</label>
+    <button class="check-btn" onclick="check('q4','c','✓ Correct. t.Fatal (or t.Fatalf) calls t.FailNow() internally — the test function stops. t.Errorf just marks a failure and continues.')">Check</button>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="quiz-card" id="q5">
+    <p class="question">5. After calling your handler with a recorder <code>w</code>, how do you read the HTTP status code?</p>
+    <label><input type="radio" name="q5" value="a"> <code>w.StatusCode</code></label>
+    <label><input type="radio" name="q5" value="b"> <code>w.Status</code></label>
+    <label><input type="radio" name="q5" value="c"> <code>w.Code</code></label>
+    <label><input type="radio" name="q5" value="d"> <code>w.Result().StatusCode</code> — you must call Result() first</label>
+    <button class="check-btn" onclick="check('q5','c','✓ Correct. ResponseRecorder exposes .Code directly. You can also call w.Result().StatusCode, but .Code is simpler for most cases.')">Check</button>
+    <div class="feedback" id="q5-fb"></div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="quiz-card" id="q6">
+    <p class="question">6. Which command runs all tests AND shows statement coverage percentage?</p>
+    <label><input type="radio" name="q6" value="a"> <code>go test ./...</code></label>
+    <label><input type="radio" name="q6" value="b"> <code>go test -v ./...</code></label>
+    <label><input type="radio" name="q6" value="c"> <code>go test -cover ./...</code></label>
+    <label><input type="radio" name="q6" value="d"> <code>go coverage ./...</code></label>
+    <button class="check-btn" onclick="check('q6','c','✓ Correct. -cover adds a coverage summary per package. Add -coverprofile=cover.out then go tool cover -html=cover.out for an annotated HTML report.')">Check</button>
+    <div class="feedback" id="q6-fb"></div>
+  </div>
+
+  <div id="score-banner">
+    <h3 id="score-text"></h3>
+    <p id="score-sub"></p>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="margin-top:3.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+  <p style="color:var(--muted); font-size:.85rem;">
+    <strong style="color:var(--white);">References:</strong>
+    <a href="https://pkg.go.dev/testing" target="_blank">pkg.go.dev/testing</a> ·
+    <a href="https://pkg.go.dev/net/http/httptest" target="_blank">pkg.go.dev/net/http/httptest</a> ·
+    <a href="https://go.dev/wiki/TableDrivenTests" target="_blank">go.dev/wiki/TableDrivenTests</a> ·
+    <a href="https://pkg.go.dev/net/http/httptest#ResponseRecorder" target="_blank">ResponseRecorder docs</a>
+  </p>
+  <p style="color:var(--muted); font-size:.85rem; margin-top:.5rem;">
+    Questions? Ask your AI teacher — it can walk you through any concept, review your test code, or suggest what to test next.
+  </p>
+</div>
+
+<script>
+  const TOTAL = 6;
+  let answered = 0;
+  let correct = 0;
+
+  function updateProgress() {
+    const pct = (answered / TOTAL) * 100;
+    document.getElementById('prog-bar').style.width = pct + '%';
+    document.getElementById('prog-label').textContent = `Question ${answered} / ${TOTAL}`;
+  }
+
+  function check(qId, correctVal, correctMsg) {
+    const selected = document.querySelector(`input[name="${qId}"]:checked`);
+    const fb = document.getElementById(`${qId}-fb`);
+    const btn = document.querySelector(`#${qId} .check-btn`);
+
+    if (!selected) {
+      fb.className = 'feedback wrong';
+      fb.textContent = 'Pick an answer first.';
+      return;
+    }
+    if (btn.disabled) return;
+
+    btn.disabled = true;
+    answered++;
+
+    // Disable all radio inputs for this question
+    document.querySelectorAll(`input[name="${qId}"]`).forEach(r => r.disabled = true);
+
+    if (selected.value === correctVal) {
+      correct++;
+      fb.className = 'feedback correct';
+      fb.textContent = correctMsg;
+    } else {
+      fb.className = 'feedback wrong';
+      // Find the correct label text
+      const correctLabel = document.querySelector(`#${qId} input[value="${correctVal}"]`).parentElement.textContent.trim();
+      fb.textContent = '✗ Not quite. Correct answer: ' + correctLabel;
+    }
+
+    updateProgress();
+
+    if (answered === TOTAL) {
+      const banner = document.getElementById('score-banner');
+      const pct = Math.round((correct / TOTAL) * 100);
+      banner.style.display = 'block';
+      document.getElementById('score-text').textContent = `${correct} / ${TOTAL} correct (${pct}%)`;
+      let msg;
+      if (pct === 100) msg = 'Perfect. You\'ve fully internalized Go\'s testing model.';
+      else if (pct >= 66) msg = 'Solid. Review the questions you missed, then write a real test for one of your existing handlers.';
+      else msg = 'Review the lesson sections above and try again — the httptest model is small but precise.';
+      document.getElementById('score-sub').textContent = msg;
+    }
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
