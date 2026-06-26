@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 9 — Common Mistakes &amp; Practice Tips · Rubik's Cube</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #21253a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #f57c00;
+    --accent2: #ffb74d;
+    --green: #43a047;
+    --green-bg: #0d2011;
+    --red: #e53935;
+    --red-bg: #2a0a0a;
+    --yellow: #ffd54f;
+    --tip-bg: #1e1a0a;
+    --tip-border: #5a4a00;
+    --warn-bg: #1e0e0a;
+    --warn-border: #6a2a00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    max-width: 740px; margin: 0 auto; padding: 3rem 1.5rem;
+    line-height: 1.65;
+  }
+  .eyebrow { font-size: 0.78rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; font-weight: 600; }
+  h1 { font-size: 2rem; color: #fff; margin-bottom: 0.4rem; line-height: 1.2; }
+  .intro { color: var(--muted); font-size: 0.95rem; margin-bottom: 2.5rem; }
+  h2 { font-size: 1.15rem; color: #fff; margin: 2.5rem 0 0.8rem; }
+  h3 { font-size: 0.95rem; color: var(--accent2); margin: 1.5rem 0 0.5rem; font-weight: 600; }
+  p { margin-bottom: 0.9rem; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.25rem 1.4rem; margin-bottom: 1rem;
+  }
+  .card-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+  .stage-badge {
+    display: inline-block; font-size: 0.7rem; font-weight: 700;
+    padding: 0.15rem 0.5rem; border-radius: 4px;
+    background: #2a1a00; color: var(--accent2);
+  }
+  .mistake { color: var(--red); font-size: 0.88rem; margin-bottom: 0.3rem; }
+  .fix { color: #8bc34a; font-size: 0.88rem; }
+  .mistake::before { content: "✗ "; }
+  .fix::before { content: "✓ "; }
+
+  /* Tip / warning boxes */
+  .tip {
+    background: var(--tip-bg); border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0; padding: 0.9rem 1.1rem; margin-bottom: 1.2rem;
+    font-size: 0.9rem; color: #d4b896;
+  }
+  .tip strong { color: var(--accent2); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--red);
+    border-radius: 0 8px 8px 0; padding: 0.9rem 1.1rem; margin-bottom: 1.2rem;
+    font-size: 0.9rem; color: #d4a0a0;
+  }
+  .warn strong { color: #ef9a9a; }
+
+  /* Practice plan table */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.2rem; font-size: 0.88rem; }
+  th { background: var(--surface2); color: var(--muted); text-align: left; padding: 0.5rem 0.7rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 0.55rem 0.7rem; border-top: 1px solid var(--border); vertical-align: top; }
+  tr:hover td { background: var(--surface2); }
+
+  /* Quiz */
+  .quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+  .quiz-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
+  .quiz-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+  .q-block { margin-bottom: 1.8rem; }
+  .q-text { font-size: 0.93rem; color: var(--text); margin-bottom: 0.8rem; font-weight: 600; }
+  .q-num { font-size: 0.72rem; color: var(--muted); font-weight: 400; display: block; margin-bottom: 0.3rem; }
+  .options { display: flex; flex-direction: column; gap: 0.45rem; }
+  .option {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 0.6rem 0.9rem; cursor: pointer;
+    font-size: 0.88rem; text-align: left; color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .option:hover { border-color: var(--accent); background: #1e1800; }
+  .option.correct { background: var(--green-bg); border-color: var(--green); color: #a5d6a7; }
+  .option.wrong { background: var(--red-bg); border-color: var(--red); color: #ef9a9a; }
+  .option:disabled, .option.disabled { cursor: default; opacity: 0.8; }
+  .q-feedback { font-size: 0.84rem; margin-top: 0.6rem; min-height: 1.2em; }
+  .q-feedback.ok { color: #66bb6a; }
+  .q-feedback.no { color: #ef9a9a; }
+  .score-bar { display: none; background: var(--surface2); border-radius: 8px; padding: 1rem 1.2rem; margin-top: 1rem; text-align: center; }
+  .score-bar.show { display: block; }
+  .score-big { font-size: 1.6rem; font-weight: 800; color: var(--accent2); }
+  .score-msg { font-size: 0.88rem; color: var(--muted); margin-top: 0.25rem; }
+
+  /* Solve checklist */
+  .checklist { list-style: none; }
+  .checklist li { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .checklist li:last-child { border-bottom: none; }
+  .step-num { flex-shrink: 0; width: 1.4rem; height: 1.4rem; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: #000; margin-top: 0.1rem; }
+
+  .cite { font-size: 0.78rem; color: var(--muted); }
+  .cite a { color: var(--muted); }
+  .cite a:hover { color: var(--accent2); }
+
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.83rem; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .back { display: inline-block; margin-bottom: 2rem; font-size: 0.85rem; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--accent2); }
+
+  .alg { font-family: 'Courier New', monospace; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.15rem 0.4rem; font-size: 0.88em; color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<a href="../../index.html" class="back">← All lessons</a>
+
+<p class="eyebrow">Rubik's Cube · Lesson 9</p>
+<h1>Common Mistakes &amp; How to Practice</h1>
+<p class="intro">You know every algorithm. Now make the solve stick — by learning what goes wrong and how to build reliable muscle memory.</p>
+
+<!-- ============================================================ -->
+<h2>Why solves fall apart</h2>
+<p>Most failed solves aren't caused by forgetting an algorithm. They're caused by misreading the cube before applying an algorithm — wrong orientation, wrong face held front, wrong case diagnosed. This lesson maps out those traps.</p>
+
+<!-- Stage-by-stage mistakes -->
+<h2>Mistakes by stage</h2>
+
+<div class="card">
+  <div class="card-title"><span class="stage-badge">Stage 1</span> White Cross</div>
+  <p class="mistake">Solving each white edge in isolation, then accidentally knocking solved edges out of place when inserting the next.</p>
+  <p class="fix">Plan 2–3 edges before touching the cube. Check what moves will preserve already-solved edges.</p>
+  <p class="mistake">Misidentifying the centre colours — rotating the whole cube and losing track of which centre is which.</p>
+  <p class="fix">Pick one face as "your" white face at the start and never flip the cube until the white cross is done.</p>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="stage-badge">Stage 2</span> White Corners</div>
+  <p class="mistake">Applying the trigger <span class="alg">R U R′ U′</span> more than 5 times because the corner never seems to land right — it's actually in the wrong starting spot.</p>
+  <p class="fix">Before triggering: check that the corner is in the bottom-right slot directly below its target. Move it there first if needed.</p>
+  <p class="mistake">Holding the wrong face as "front" — the target corner must be in the front-right column, not the back-right.</p>
+  <p class="fix">Rotate the cube (not a U move) to bring the target slot to front-right before every corner insertion.</p>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="stage-badge">Stage 3</span> Second Layer Edges</div>
+  <p class="mistake">Forgetting to flip the cube white-side down before this step — attempting F2L edges with white on top.</p>
+  <p class="fix">Flip the cube as the first act of Stage 3. Build the habit; it must become automatic.</p>
+  <p class="mistake">Inserting an edge only to disturb another already-solved edge — this means the edge was inserted from the wrong face.</p>
+  <p class="fix">Rotate the top layer (<span class="alg">U</span>) to align the edge with the correct face before applying Right Insert or Left Insert.</p>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="stage-badge">Stage 4</span> Yellow Cross</div>
+  <p class="mistake">Applying <span class="alg">F R U R′ U′ F′</span> to the wrong case — the edge-only shapes (dot, L, line) have specific hold orientations.</p>
+  <p class="fix">For the L-shape, hold so the "L" is in the top-left corner of the top face (two yellow edges at back and left). For the line, hold it horizontally.</p>
+  <p class="mistake">Not counting yellow edges before starting — applying the algorithm when already solved.</p>
+  <p class="fix">Always count yellow edges on top before deciding how many times to apply the algorithm.</p>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="stage-badge">Stage 5</span> Orient Yellow Corners</div>
+  <p class="mistake">Moving the cube between Sune applications — each application must start from exactly the same orientation (yellow up, same face front) or the case changes unpredictably.</p>
+  <p class="fix">Hold the cube still after each Sune. Just look at the top to re-assess — never reposition between applications.</p>
+  <p class="mistake">Stopping when one corner is yellow-up and assuming it's solved — other corners may still need orienting.</p>
+  <p class="fix">Check all 4 top-layer corners before stopping. All must be yellow-up.</p>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="stage-badge">Stage 6</span> Permute Yellow Corners</div>
+  <p class="mistake">Using <span class="alg">U</span> to bring headlights to the back instead of a whole-cube <span class="alg">y</span> rotation — this scrambles top-layer edges.</p>
+  <p class="fix">Always rotate the whole cube to orient headlights. Never use U during this stage until all 4 corners match.</p>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="stage-badge">Stage 7</span> Permute Last Layer Edges</div>
+  <p class="mistake">Diagnosing 0 correct edges as an error state, then restarting the entire last layer.</p>
+  <p class="fix">0 correct edges is legal. Apply <span class="alg">Ua</span> once from any hold — it will become a 3-cycle case (1 correct edge).</p>
+  <p class="mistake">Placing the correct anchor edge at front instead of back.</p>
+  <p class="fix">The anchor edge goes at the BACK. Hold the cube so the already-correct edge faces away from you, then choose Ua or Ub.</p>
+</div>
+
+<div class="warn">
+  <strong>The #1 recovery rule:</strong> If the cube looks wrong after any algorithm, check that the algorithm was applied with the correct face as "front." Orientation mistakes are nearly always the cause — and they can often be undone by applying the same algorithm in reverse.
+</div>
+
+<!-- ============================================================ -->
+<h2>A practice routine that builds real speed</h2>
+
+<div class="tip">
+  <strong>Goal:</strong> Not to rush — to get clean, consistent solves. Time only when you feel stable at each stage.
+</div>
+
+<table>
+  <thead>
+    <tr><th>Session type</th><th>How to do it</th><th>When to move on</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Stage drill</strong></td>
+      <td>Scramble the full cube, but only solve one stage repeatedly. Example: get the white cross 10 times in a row without errors.</td>
+      <td>When that stage requires no thought about which algorithm to use.</td>
+    </tr>
+    <tr>
+      <td><strong>Full slow solve</strong></td>
+      <td>Do the whole solve, pausing 5–10 seconds before each algorithm to confirm orientation. Say the stage name aloud before each step.</td>
+      <td>When all 7 stages feel individually comfortable.</td>
+    </tr>
+    <tr>
+      <td><strong>Timed solve</strong></td>
+      <td>Use a phone timer. Do 5 solves. Note the stage where you always pause longest — that's your bottleneck to drill.</td>
+      <td>No specific threshold — times will naturally shrink as recognition becomes automatic.</td>
+    </tr>
+    <tr>
+      <td><strong>Algorithm recall</strong></td>
+      <td>Without the cube, write out or say aloud all algorithms for each stage from memory. Check against your reference sheet.</td>
+      <td>When you can reproduce them all accurately without prompting.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>The "dirty dozen" drill</h3>
+<p>Do 12 full solves in one sitting. After each, note which stage took the most time or caused the most hesitation. After the 12th solve, drill only that stage for 5 minutes. This immediately targets the weakest link.</p>
+
+<ul class="checklist" style="margin-bottom:1.5rem;">
+  <li><span class="step-num">1</span><span>Scramble the cube properly — at least 20 random moves, no patterns.</span></li>
+  <li><span class="step-num">2</span><span>State the current stage aloud before each algorithm. Builds conscious process.</span></li>
+  <li><span class="step-num">3</span><span>If you make an error, <em>do not restart</em>. Try to identify what went wrong and recover within the stage.</span></li>
+  <li><span class="step-num">4</span><span>After the solve: note the one stage that felt least automatic.</span></li>
+  <li><span class="step-num">5</span><span>Drill that stage in isolation for 3–5 minutes before the next full solve.</span></li>
+</ul>
+
+<p class="cite">Practice methodology adapted from: <a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank">Ruwix Beginners Guide</a> · <a href="https://www.speedsolving.com/wiki/index.php/Beginner_method" target="_blank">SpeedSolving Wiki: Beginner Method</a></p>
+
+<!-- ============================================================ -->
+<h2>Recovery: don't restart from scratch</h2>
+<p>A scrambled last layer does <em>not</em> mean you need to rebuild from Stage 1. The stages are independent — if the first two layers are solved, they stay solved unless you accidentally break them (which Stage 3–7 algorithms will not do if applied correctly). When a stage produces an unexpected result:</p>
+
+<ol style="padding-left:1.2rem; margin-bottom:1.2rem; font-size:0.9rem;">
+  <li style="margin-bottom:0.5rem;">Identify what is actually true about the cube right now (count correct pieces in the current stage).</li>
+  <li style="margin-bottom:0.5rem;">Map that to one of the known cases for this stage.</li>
+  <li style="margin-bottom:0.5rem;">Apply the algorithm for that case — don't guess or try a "fix."</li>
+</ol>
+
+<div class="tip">
+  <strong>Trust the method.</strong> The algorithms have no exceptions. If an algorithm produced an unexpected result, the initial hold orientation was wrong — not the algorithm. Back up to the diagnosis step.
+</div>
+
+<!-- ============================================================ -->
+<!-- QUIZ -->
+<div class="quiz">
+  <p class="quiz-title">Quick check — Mistakes &amp; Recovery</p>
+  <p class="quiz-sub">5 questions · instant feedback · completable in 3 minutes</p>
+
+  <!-- Q1 -->
+  <div class="q-block" id="q1">
+    <p class="q-text"><span class="q-num">Question 1 of 5</span>You just finished Stage 5 (Sune). You check the top and notice 3 corners are yellow-up, but 1 is still orange. What do you do?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q1',false)">Restart the cube — something went wrong.</button>
+      <button class="option" onclick="answer(this,'q1',true)">Hold the cube in the same orientation (yellow up, same face front) and apply Sune again.</button>
+      <button class="option" onclick="answer(this,'q1',false)">Move the non-yellow corner to a different position using U moves, then apply Sune.</button>
+      <button class="option" onclick="answer(this,'q1',false)">Proceed to Stage 6 — one bad corner is acceptable.</button>
+    </div>
+    <p class="q-feedback" id="q1-fb"></p>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-block" id="q2">
+    <p class="q-text"><span class="q-num">Question 2 of 5</span>When diagnosing last-layer edges (Stage 7), you count 0 correct edges. You should:</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q2',false)">Assume the cube is defective and check the last layer algorithms were applied correctly.</button>
+      <button class="option" onclick="answer(this,'q2',false)">Apply Ub — the 0-correct case always requires Ub.</button>
+      <button class="option" onclick="answer(this,'q2',true)">Apply Ua once from any hold — this converts it to a 3-cycle case (1 correct edge).</button>
+      <button class="option" onclick="answer(this,'q2',false)">Back up to Stage 6 and redo corner permutation.</button>
+    </div>
+    <p class="q-feedback" id="q2-fb"></p>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-block" id="q3">
+    <p class="q-text"><span class="q-num">Question 3 of 5</span>You're inserting a second-layer edge but keep knocking out an already-solved edge. The most likely cause is:</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q3',false)">You applied Right Insert instead of Left Insert.</button>
+      <button class="option" onclick="answer(this,'q3',true)">You started the insert from the wrong face — the edge wasn't aligned with its target face using a U move first.</button>
+      <button class="option" onclick="answer(this,'q3',false)">The cube was not flipped white-down before starting Stage 3.</button>
+      <button class="option" onclick="answer(this,'q3',false)">You need to do Stage 3 before Stage 2.</button>
+    </div>
+    <p class="q-feedback" id="q3-fb"></p>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-block" id="q4">
+    <p class="q-text"><span class="q-num">Question 4 of 5</span>You see "headlights" (two matching corner stickers on the same face's top strip) on the front face during Stage 6. What is your next move before applying the algorithm?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q4',false)">Apply the algorithm immediately — headlights in front means you are ready.</button>
+      <button class="option" onclick="answer(this,'q4',false)">Spin the top layer (U or U′) to move the headlights to the back.</button>
+      <button class="option" onclick="answer(this,'q4',true)">Rotate the whole cube (y or y′) to place the headlights at the back, then apply the algorithm.</button>
+      <button class="option" onclick="answer(this,'q4',false)">Look for headlights on a different face — front headlights mean a diagonal case.</button>
+    </div>
+    <p class="q-feedback" id="q4-fb"></p>
+  </div>
+
+  <!-- Q5 -->
+  <div class="q-block" id="q5">
+    <p class="q-text"><span class="q-num">Question 5 of 5</span>After a full solve, you find one stage always takes the most time. The best next action is:</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q5',false)">Immediately do another full timed solve to build overall speed.</button>
+      <button class="option" onclick="answer(this,'q5',true)">Drill that specific stage in isolation — scramble into that stage's start state and repeat it 10+ times.</button>
+      <button class="option" onclick="answer(this,'q5',false)">Skip that stage for now and focus on stages that feel comfortable.</button>
+      <button class="option" onclick="answer(this,'q5',false)">Move on to learning CFOP to bypass the slow stage.</button>
+    </div>
+    <p class="q-feedback" id="q5-fb"></p>
+  </div>
+
+  <div class="score-bar" id="score-bar">
+    <div class="score-big" id="score-text"></div>
+    <div class="score-msg" id="score-msg"></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>What's next</h2>
+<p>You now have everything needed for a reliable, unaided solve. The natural next arc is:</p>
+<ul style="padding-left:1.2rem; font-size:0.9rem; margin-bottom:1.2rem;">
+  <li style="margin-bottom:0.4rem;"><strong>Finger tricks</strong> — physical techniques that make common moves (R U R′) faster without learning new algorithms.</li>
+  <li style="margin-bottom:0.4rem;"><strong>Look-ahead</strong> — planning the next stage while executing the current one, which dramatically reduces pause time.</li>
+  <li style="margin-bottom:0.4rem;"><strong>Intro to CFOP</strong> — once consistent unaided solves feel easy, the CFOP (Fridrich) method collapses Stages 1–3 into a faster approach called F2L.</li>
+</ul>
+
+<div class="tip">
+  <strong>Your immediate challenge:</strong> Do 5 full solves today without stopping. Any solve that completes counts — even if slow. The first 5 solves are the hardest milestone.
+</div>
+
+<footer>
+  <p>Have a question? Ask your agent — it can walk through any stuck stage with you.</p>
+  <p style="margin-top:0.5rem;">Part of <a href="../../index.html">Amit's daily learning workspace</a> · Lesson 9 of the Rubik's Cube series</p>
+</footer>
+
+<script>
+  const feedback = {
+    q1: "Correct. After any Sune application, keep orientation locked and re-assess. Sune can require up to 3 applications.",
+    q2: "Correct. 0 correct edges is a valid parity state. Ua once converts it to the 3-cycle case.",
+    q3: "Correct. The U alignment move is the most commonly skipped step in Stage 3 — always bring the edge to align with its target face first.",
+    q4: "Correct. Whole-cube rotations (y) preserve the top-layer state. U moves during Stage 6 scramble the edge positions.",
+    q5: "Correct. Isolated stage drilling is the fastest path to fixing a bottleneck — full solves spread attention across all 7 stages."
+  };
+  const wrongs = {
+    q1: "Sune may need up to 3 applications — and the hold must stay identical between each. Don't restart.",
+    q2: "0 correct edges is a legal state. Apply Ua once from any hold — it always converts to 3-cycle.",
+    q3: "While that matters too, the most common cause of disruption is starting the insert with the edge un-aligned to its face.",
+    q4: "Never use U during Stage 6 to reposition — it would shuffle the edge positions you'll need in Stage 7.",
+    q5: "Full solves average attention across 7 stages. Drilling isolates and eliminates the specific weak link."
+  };
+
+  let answered = {};
+  let score = 0;
+  const total = 5;
+
+  function answer(btn, qid, correct) {
+    if (answered[qid]) return;
+    answered[qid] = true;
+    score += correct ? 1 : 0;
+
+    const block = document.getElementById(qid);
+    const options = block.querySelectorAll('.option');
+    const fb = document.getElementById(qid + '-fb');
+
+    options.forEach(o => { o.classList.add('disabled'); o.disabled = true; });
+
+    if (correct) {
+      btn.classList.add('correct');
+      fb.textContent = '✓ ' + feedback[qid];
+      fb.className = 'q-feedback ok';
+    } else {
+      btn.classList.add('wrong');
+      fb.textContent = '✗ ' + wrongs[qid];
+      fb.className = 'q-feedback no';
+      // highlight correct
+      options.forEach(o => {
+        if (o.onclick.toString().includes('true')) o.classList.add('correct');
+      });
+    }
+
+    if (Object.keys(answered).length === total) showScore();
+  }
+
+  function showScore() {
+    const bar = document.getElementById('score-bar');
+    const txt = document.getElementById('score-text');
+    const msg = document.getElementById('score-msg');
+    txt.textContent = score + ' / ' + total;
+    const pct = score / total;
+    if (pct === 1) msg.textContent = 'Perfect. You have a solid mental model — now go get that first solve.';
+    else if (pct >= 0.6) msg.textContent = 'Good. Review any questions you missed, then run through 5 full solves.';
+    else msg.textContent = 'A few gaps — re-read the common mistakes section above, then retry.';
+    bar.classList.add('show');
+  }
+</script>
+
+</body>
+</html>
