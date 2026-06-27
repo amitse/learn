@@ -45,7 +45,46 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Testing (Lesson 9) <span class="new-badge">new</span></h2>
+<h2>Project Layout (Lesson 10) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>package</td>
+    <td>module / directory</td>
+    <td>A directory of <code>.go</code> files that share a package declaration. The unit of encapsulation in Go. All files in the same directory are in the same package and can see each other's unexported identifiers.</td>
+  </tr>
+  <tr>
+    <td>internal/</td>
+    <td>(no direct equiv.)</td>
+    <td>A special directory enforced by the Go compiler. Only code within the same module (rooted at the parent of <code>internal/</code>) may import packages from it. Used to keep packages private to your project.</td>
+  </tr>
+  <tr>
+    <td>cmd/</td>
+    <td>src/index.ts (entry)</td>
+    <td>Convention for placing binary entry points. <code>cmd/server/main.go</code> is the HTTP server entry point. Multiple binaries can coexist under <code>cmd/</code>.</td>
+  </tr>
+  <tr>
+    <td>pkg/</td>
+    <td>published npm package</td>
+    <td>Convention for packages intended to be imported by <em>other</em> modules (libraries). For application servers, prefer <code>internal/</code> unless you intend to publish.</td>
+  </tr>
+  <tr>
+    <td>module path</td>
+    <td>@/ path alias</td>
+    <td>The string declared in <code>go.mod</code> (e.g. <code>github.com/amit/myserver</code>). Serves as the root for all import paths within the module. Sub-packages are imported as <code>"module-path/internal/handlers"</code>.</td>
+  </tr>
+  <tr>
+    <td>go build ./...</td>
+    <td>tsc --build / pnpm build</td>
+    <td>Builds all packages in the module. The <code>./...</code> wildcard means "this directory and all sub-directories". <code>go test ./...</code> runs all tests likewise.</td>
+  </tr>
+</table>
+
+<h2>Testing (Lesson 9)</h2>
 <table>
   <tr>
     <th>Term</th>
