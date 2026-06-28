@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 10 — Finger Tricks · Rubik's Cube</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #21253a;
+    --border: #2a2d3a; --text: #e8eaf0; --muted: #7a7f99;
+    --accent: #f57c00; --accent2: #ffb74d;
+    --green: #43a047; --green-bg: #0d2011;
+    --red: #e53935; --red-bg: #2a0a0a;
+    --yellow: #ffd54f; --tip-bg: #1e1a0a; --tip-border: #5a4a00;
+    --face-U: #e8e8e8; --face-F: #3ab54a; --face-R: #e84040; --face-L: #f57c00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    max-width: 740px; margin: 0 auto; padding: 3rem 1.5rem;
+    line-height: 1.65;
+  }
+  .eyebrow { font-size: 0.78rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; font-weight: 600; }
+  h1 { font-size: 2rem; color: #fff; margin-bottom: 0.4rem; line-height: 1.2; }
+  .intro { color: var(--muted); font-size: 0.95rem; margin-bottom: 2.5rem; }
+  h2 { font-size: 1.15rem; color: #fff; margin: 2.5rem 0 0.8rem; }
+  p { margin-bottom: 0.9rem; }
+  strong { color: var(--accent2); }
+
+  .tip {
+    background: var(--tip-bg); border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0; padding: 0.9rem 1.1rem; margin-bottom: 1.2rem;
+    font-size: 0.9rem; color: #d4b896;
+  }
+  .tip strong { color: var(--accent2); }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.2rem; font-size: 0.88rem; }
+  th { background: var(--surface2); color: var(--muted); text-align: left; padding: 0.5rem 0.7rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 0.55rem 0.7rem; border-top: 1px solid var(--border); vertical-align: top; }
+  tr:hover td { background: var(--surface2); }
+
+  .alg {
+    font-family: 'Courier New', monospace; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 0.15rem 0.4rem; font-size: 0.88em; color: var(--yellow);
+  }
+
+  /* Grip diagram */
+  .grip-wrap { display: flex; gap: 2rem; align-items: flex-start; margin: 1.2rem 0; flex-wrap: wrap; }
+  .cube-sketch {
+    flex-shrink: 0; width: 150px; height: 145px; position: relative;
+  }
+  .cs-top {
+    position: absolute; top: 0; left: 32px;
+    width: 95px; height: 44px;
+    background: var(--face-U); border: 2px solid rgba(0,0,0,0.4);
+    border-radius: 3px 3px 0 0;
+    transform: skewX(-18deg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 800; color: rgba(0,0,0,0.65);
+    letter-spacing: 0.05em;
+  }
+  .cs-front {
+    position: absolute; top: 38px; left: 0;
+    width: 98px; height: 86px;
+    background: var(--face-F); border: 2px solid rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 800; color: rgba(0,0,0,0.65);
+    letter-spacing: 0.05em;
+  }
+  .cs-right {
+    position: absolute; top: 38px; left: 100px;
+    width: 48px; height: 86px;
+    background: var(--face-R); border: 2px solid rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 800; color: rgba(0,0,0,0.65);
+    letter-spacing: 0.05em;
+  }
+  .finger-rows { flex: 1; min-width: 210px; }
+  .finger-row {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    padding: 0.55rem 0; border-bottom: 1px solid var(--border);
+    font-size: 0.87rem;
+  }
+  .finger-row:last-child { border-bottom: none; }
+  .face-chip {
+    flex-shrink: 0; width: 2rem; height: 1.5rem; border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 800; color: rgba(0,0,0,0.75);
+    margin-top: 1px;
+  }
+  .fU { background: var(--face-U); }
+  .fF { background: var(--face-F); }
+  .fR { background: var(--face-R); }
+  .fL { background: var(--face-L); }
+
+  /* Sequence stepper */
+  .seq-player {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.4rem; margin: 1.2rem 0;
+  }
+  .seq-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 0.9rem; }
+  .seq-moves { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .move-step {
+    display: inline-flex; flex-direction: column; align-items: center;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 0.45rem 0.75rem; min-width: 3.2rem;
+    text-align: center; transition: border-color 0.18s, background 0.18s;
+  }
+  .move-step .ml { font-size: 1.1rem; font-weight: 700; color: var(--yellow); font-family: monospace; line-height: 1.1; }
+  .move-step .mf { font-size: 0.62rem; color: var(--muted); margin-top: 0.3rem; white-space: nowrap; }
+  .move-step.active { border-color: var(--accent); background: #1f1800; }
+  .move-step.active .ml { color: var(--accent2); }
+  .move-step.active .mf { color: #c68a3a; }
+  .seq-controls { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: 0.4rem 0.9rem;
+    font-size: 0.82rem; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); background: #1e1800; color: var(--accent2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+  .btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+  .seq-tip { font-size: 0.85rem; color: #bdbdbd; min-height: 1.4em; line-height: 1.5; }
+
+  /* Timer */
+  .timer-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.3rem; text-align: center; margin: 1rem 0;
+  }
+  .timer-label-sm { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+  .timer-display { font-size: 3.2rem; font-weight: 800; color: #fff; font-family: 'Courier New', monospace; letter-spacing: 0.04em; margin: 0.3rem 0 0.8rem; }
+  .timer-controls { display: flex; gap: 0.6rem; justify-content: center; }
+
+  /* Quiz */
+  .quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+  .quiz-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
+  .quiz-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+  .q-block { margin-bottom: 1.8rem; }
+  .q-text { font-size: 0.93rem; color: var(--text); margin-bottom: 0.8rem; font-weight: 600; }
+  .q-num { font-size: 0.72rem; color: var(--muted); font-weight: 400; display: block; margin-bottom: 0.3rem; }
+  .options { display: flex; flex-direction: column; gap: 0.45rem; }
+  .option {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 0.6rem 0.9rem; cursor: pointer;
+    font-size: 0.88rem; text-align: left; color: var(--text);
+    transition: border-color 0.15s, background 0.15s; width: 100%;
+  }
+  .option:hover { border-color: var(--accent); background: #1e1800; }
+  .option.correct { background: var(--green-bg); border-color: var(--green); color: #a5d6a7; }
+  .option.wrong { background: var(--red-bg); border-color: var(--red); color: #ef9a9a; }
+  .option:disabled, .option.disabled { cursor: default; opacity: 0.85; }
+  .q-feedback { font-size: 0.84rem; margin-top: 0.6rem; min-height: 1.2em; }
+  .q-feedback.ok { color: #66bb6a; }
+  .q-feedback.no { color: #ef9a9a; }
+  .score-bar { display: none; background: var(--surface2); border-radius: 8px; padding: 1rem 1.2rem; margin-top: 1rem; text-align: center; }
+  .score-bar.show { display: block; }
+  .score-big { font-size: 1.6rem; font-weight: 800; color: var(--accent2); }
+  .score-msg { font-size: 0.88rem; color: var(--muted); margin-top: 0.25rem; }
+
+  .cite { font-size: 0.78rem; color: var(--muted); }
+  .cite a { color: var(--muted); }
+  .cite a:hover { color: var(--accent2); }
+
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.83rem; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .back { display: inline-block; margin-bottom: 2rem; font-size: 0.85rem; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<a href="../../index.html" class="back">← All lessons</a>
+
+<p class="eyebrow">Rubik's Cube · Lesson 10</p>
+<h1>Finger Tricks</h1>
+<p class="intro">You know every algorithm. This lesson removes the pauses between moves — so each algorithm executes as one fluid motion, not a sequence of individually-placed turns.</p>
+
+<h2>Why Bother?</h2>
+<p>After your first few full solves, the bottleneck isn't the algorithms — it's the <strong>pauses</strong>. You finish R, stop, readjust your grip, then do U. Each pause costs 1–2 seconds. A solve with 50+ moves can lose 30 seconds to regripping alone.</p>
+<p>Finger tricks assign specific fingers to specific moves. Your hand stays on the cube. Each move flows directly into the next without letting go.</p>
+<p>This is <strong>not speed-cubing</strong>. The goal matches your mission: a reliable, repeatable solve that doesn't stall mid-algorithm.</p>
+
+<div class="tip"><strong>When to use this:</strong> Once you've done at least one unaided full solve. If you're still shaky on any algorithm, review its lesson first — finger tricks only help when the sequence itself is solid.</div>
+
+<h2>The Standard Grip</h2>
+<p>Almost every beginner algorithm uses only three faces: <strong>R</strong>, <strong>U</strong>, and <strong>F</strong>. Your hands should always be positioned to reach all three without moving your whole hand away from the cube.</p>
+
+<div class="grip-wrap">
+  <div class="cube-sketch" aria-label="Cube showing U (top), F (front), R (right) faces">
+    <div class="cs-top">U</div>
+    <div class="cs-front">F</div>
+    <div class="cs-right">R</div>
+  </div>
+  <div class="finger-rows">
+    <div class="finger-row">
+      <span class="face-chip fU">U</span>
+      <span><strong>Right middle</strong> rests on top face. Pushes left for U moves (clockwise from above).</span>
+    </div>
+    <div class="finger-row">
+      <span class="face-chip fF">F</span>
+      <span><strong>Right thumb</strong> against front face. Pushes down/clockwise for F moves.</span>
+    </div>
+    <div class="finger-row">
+      <span class="face-chip fR">R</span>
+      <span><strong>Right ring + pinky</strong> on right face. Push the top edge forward for R moves.</span>
+    </div>
+    <div class="finger-row">
+      <span class="face-chip fU">U</span>
+      <span><strong>Left thumb</strong> also on top face — sweeps right for U′ moves.</span>
+    </div>
+    <div class="finger-row">
+      <span class="face-chip fL">L</span>
+      <span><strong>Left ring + pinky</strong> on left face (for L moves in second-layer and Sune).</span>
+    </div>
+  </div>
+</div>
+
+<h2>Move Assignments</h2>
+<p>Memorise <strong>R, U, R′, U′</strong> first. These four appear in every single algorithm you know.</p>
+<table>
+  <thead>
+    <tr><th>Move</th><th>Finger</th><th>Motion</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="alg">R</span></td><td>Right ring + pinky</td><td>Push top edge of right face forward (away from you)</td></tr>
+    <tr><td><span class="alg">R′</span></td><td>Right thumb</td><td>Pull front edge of right face toward you (downward)</td></tr>
+    <tr><td><span class="alg">U</span></td><td>Right middle</td><td>Sweep top face to the left</td></tr>
+    <tr><td><span class="alg">U′</span></td><td>Left thumb</td><td>Sweep top face to the right</td></tr>
+    <tr><td><span class="alg">U2</span></td><td>Right middle × 2</td><td>Two consecutive sweeps left — keep finger on face</td></tr>
+    <tr><td><span class="alg">F</span></td><td>Right thumb</td><td>Push front face downward (clockwise)</td></tr>
+    <tr><td><span class="alg">F′</span></td><td>Right index</td><td>Lift front face upward (counter-clockwise)</td></tr>
+  </tbody>
+</table>
+
+<h2>Sequence 1 — R U R′</h2>
+<p>This 3-move fragment is the most common in the entire beginner method. It appears in white corners, second layer, yellow cross, Sune, and the corner permutation algorithm. <strong>Master this before anything else.</strong></p>
+<p>The goal: R flows directly into U (middle finger takes over), and U flows directly into R′ (thumb comes forward). Three moves, one gesture.</p>
+
+<div class="seq-player" id="sp1">
+  <div class="seq-label">R U R′ — step through with a cube in your hands</div>
+  <div class="seq-moves">
+    <div class="move-step" id="sp1-m0"><span class="ml">R</span><span class="mf">ring+pinky →</span></div>
+    <div class="move-step" id="sp1-m1"><span class="ml">U</span><span class="mf">middle →</span></div>
+    <div class="move-step" id="sp1-m2"><span class="ml">R′</span><span class="mf">thumb ←</span></div>
+  </div>
+  <div class="seq-controls">
+    <button class="btn" onclick="step('sp1',-1)">← Back</button>
+    <button class="btn primary" onclick="step('sp1',1)">Next →</button>
+    <button class="btn" onclick="reset('sp1')">Reset</button>
+  </div>
+  <div class="seq-tip" id="sp1-tip">Pick up your cube and click Next to begin.</div>
+</div>
+
+<h2>Sequence 2 — R U R′ U′ (Right Trigger)</h2>
+<p>The full Right Trigger. The first three moves are what you just practised. The <span class="alg">U′</span> is the tricky fourth move — your left thumb sweeps in from the left side of the top face.</p>
+<p>After R′, your thumb is near the front-right corner of the cube. Your left thumb simultaneously arrives on the top face. The handoff should be seamless — not a pause-and-reposition.</p>
+
+<div class="seq-player" id="sp2">
+  <div class="seq-label">R U R′ U′ — the Right Trigger</div>
+  <div class="seq-moves">
+    <div class="move-step" id="sp2-m0"><span class="ml">R</span><span class="mf">ring+pinky →</span></div>
+    <div class="move-step" id="sp2-m1"><span class="ml">U</span><span class="mf">middle →</span></div>
+    <div class="move-step" id="sp2-m2"><span class="ml">R′</span><span class="mf">thumb ←</span></div>
+    <div class="move-step" id="sp2-m3"><span class="ml">U′</span><span class="mf">L.thumb →</span></div>
+  </div>
+  <div class="seq-controls">
+    <button class="btn" onclick="step('sp2',-1)">← Back</button>
+    <button class="btn primary" onclick="step('sp2',1)">Next →</button>
+    <button class="btn" onclick="reset('sp2')">Reset</button>
+  </div>
+  <div class="seq-tip" id="sp2-tip">Pick up your cube and click Next to begin.</div>
+</div>
+
+<div class="tip"><strong>Common error:</strong> Letting go of the cube between R′ and U′ to reposition. Don't. Let your left thumb arrive on top <em>during</em> the R′ motion — both hands active simultaneously.</div>
+
+<h2>Sequence 3 — F R U R′ U′ F′ (Yellow Cross)</h2>
+<p>The F-wrap is the hardest part. <span class="alg">F</span> uses your right thumb pushing down; <span class="alg">F′</span> uses your right index lifting up. The 4 middle moves are your Right Trigger — which you just practised.</p>
+
+<div class="seq-player" id="sp3">
+  <div class="seq-label">F R U R′ U′ F′ — Yellow Cross algorithm</div>
+  <div class="seq-moves">
+    <div class="move-step" id="sp3-m0"><span class="ml">F</span><span class="mf">R.thumb ↓</span></div>
+    <div class="move-step" id="sp3-m1"><span class="ml">R</span><span class="mf">ring+pinky →</span></div>
+    <div class="move-step" id="sp3-m2"><span class="ml">U</span><span class="mf">middle →</span></div>
+    <div class="move-step" id="sp3-m3"><span class="ml">R′</span><span class="mf">thumb ←</span></div>
+    <div class="move-step" id="sp3-m4"><span class="ml">U′</span><span class="mf">L.thumb →</span></div>
+    <div class="move-step" id="sp3-m5"><span class="ml">F′</span><span class="mf">R.index ↑</span></div>
+  </div>
+  <div class="seq-controls">
+    <button class="btn" onclick="step('sp3',-1)">← Back</button>
+    <button class="btn primary" onclick="step('sp3',1)">Next →</button>
+    <button class="btn" onclick="reset('sp3')">Reset</button>
+  </div>
+  <div class="seq-tip" id="sp3-tip">Pick up your cube and click Next to begin.</div>
+</div>
+
+<h2>Practice Drill — 20 Right Triggers</h2>
+<p>Execute <span class="alg">R U R′ U′</span> twenty times in a row, without stopping. Use the timer. A comfortable pace is 12–15 seconds for 20 reps (roughly 0.6–0.75s per trigger). Don't rush — smooth and uninterrupted beats fast.</p>
+<p>After 10–15 reps you should feel the sequence become automatic. That's muscle memory forming. The fingers know where to go before your brain explicitly tells them.</p>
+
+<div class="timer-box">
+  <div class="timer-label-sm">Stopwatch</div>
+  <div class="timer-display" id="tdisplay">00:00.0</div>
+  <div class="timer-controls">
+    <button class="btn primary" id="tbtn" onclick="toggleTimer()">Start</button>
+    <button class="btn" onclick="resetTimer()">Reset</button>
+  </div>
+</div>
+
+<div class="tip">
+  <strong>What to notice:</strong> Which move causes you to hesitate? If it's U′, practise the last two moves of the trigger (R′ U′) in isolation — just those two, 20 times fast — until the left thumb arrives automatically.
+</div>
+
+<!-- QUIZ -->
+<div class="quiz">
+  <div class="quiz-title">Quick Check — 5 Questions</div>
+  <div class="quiz-sub">Test your understanding before drilling on a real cube.</div>
+
+  <div class="q-block" id="q1">
+    <span class="q-num">Question 1 of 5</span>
+    <div class="q-text">Which fingers are used for the R move?</div>
+    <div class="options">
+      <button class="option" onclick="answer('q1',this,false)">Right thumb — strongest finger</button>
+      <button class="option" onclick="answer('q1',this,true)">Right ring + pinky — already resting on the right face</button>
+      <button class="option" onclick="answer('q1',this,false)">Left index — reaching over the top</button>
+      <button class="option" onclick="answer('q1',this,false)">Right wrist rotation only</button>
+    </div>
+    <div class="q-feedback" id="q1-fb"></div>
+  </div>
+
+  <div class="q-block" id="q2">
+    <span class="q-num">Question 2 of 5</span>
+    <div class="q-text">For U′ (counter-clockwise top face), the standard finger trick uses:</div>
+    <div class="options">
+      <button class="option" onclick="answer('q2',this,false)">Right ring finger — same as R</button>
+      <button class="option" onclick="answer('q2',this,false)">Right thumb — it's already there after R′</button>
+      <button class="option" onclick="answer('q2',this,true)">Left thumb — sweeps the top face to the right</button>
+      <button class="option" onclick="answer('q2',this,false)">Right middle finger reversed</button>
+    </div>
+    <div class="q-feedback" id="q2-fb"></div>
+  </div>
+
+  <div class="q-block" id="q3">
+    <span class="q-num">Question 3 of 5</span>
+    <div class="q-text">In the Right Trigger (R U R′ U′), which transition is hardest and why?</div>
+    <div class="options">
+      <button class="option" onclick="answer('q3',this,false)">R → U, because you have to swap from pinky to middle finger</button>
+      <button class="option" onclick="answer('q3',this,true)">R′ → U′, because it requires the left hand to arrive after three consecutive right-hand moves</button>
+      <button class="option" onclick="answer('q3',this,false)">U → R′, because the thumb has to reverse</button>
+      <button class="option" onclick="answer('q3',this,false)">There's no hard transition — all four moves are equally easy</button>
+    </div>
+    <div class="q-feedback" id="q3-fb"></div>
+  </div>
+
+  <div class="q-block" id="q4">
+    <span class="q-num">Question 4 of 5</span>
+    <div class="q-text">The F′ move at the end of the Yellow Cross algorithm is executed with:</div>
+    <div class="options">
+      <button class="option" onclick="answer('q4',this,false)">Right thumb — same as F</button>
+      <button class="option" onclick="answer('q4',this,true)">Right index finger — lifts the front face upward</button>
+      <button class="option" onclick="answer('q4',this,false)">Left middle finger</button>
+      <button class="option" onclick="answer('q4',this,false)">Whole-hand rotation</button>
+    </div>
+    <div class="q-feedback" id="q4-fb"></div>
+  </div>
+
+  <div class="q-block" id="q5">
+    <span class="q-num">Question 5 of 5</span>
+    <div class="q-text">Which sequence should be mastered before moving to the full Right Trigger?</div>
+    <div class="options">
+      <button class="option" onclick="answer('q5',this,false)">F R U R′ U′ F′ (Yellow Cross)</button>
+      <button class="option" onclick="answer('q5',this,false)">R U R′ U R U2 R′ (Sune)</button>
+      <button class="option" onclick="answer('q5',this,true)">R U R′ (the 3-move fragment)</button>
+      <button class="option" onclick="answer('q5',this,false)">U R U′ R′ (second layer variant)</button>
+    </div>
+    <div class="q-feedback" id="q5-fb"></div>
+  </div>
+
+  <div class="score-bar" id="score-bar">
+    <div class="score-big" id="score-big"></div>
+    <div class="score-msg" id="score-msg"></div>
+  </div>
+</div>
+
+<h2>What's Next</h2>
+<p>You now have every algorithm <em>and</em> the physical technique to execute them smoothly. The natural next step is <strong>look-ahead</strong> — planning the next stage while you're still executing the current one, so there's no pause between stages. That's the first step toward CFOP-style efficiency.</p>
+<p>Before that: do 5 full solves applying finger tricks throughout. After each solve, note which stage still causes a hesitation — that's the one to drill in isolation.</p>
+
+<p class="cite">References: <a href="https://ruwix.com/the-rubiks-cube/fingertricks/" target="_blank">Ruwix — Finger Tricks Guide</a> · <a href="https://www.speedsolving.com/wiki/index.php/Finger_tricks" target="_blank">SpeedSolving Wiki — Finger Tricks</a> · <a href="https://cubeskills.com/tutorials/finger-tricks" target="_blank">CubeSkills (Feliks Zemdegs) — Beginner Finger Tricks</a></p>
+
+<footer>
+  <p>Questions about any move, transition, or finger position? Ask your agent directly — that's what it's for.</p>
+  <p style="margin-top:0.5rem;"><a href="../../index.html">← All lessons</a></p>
+</footer>
+
+<script>
+// --- Sequence stepper ---
+const seqData = {
+  sp1: {
+    count: 3,
+    tips: [
+      'Pick up your cube and click Next to begin.',
+      'R — right ring + pinky push the top edge of the right face forward (away from you). Stay gripped.',
+      'U — right middle finger sweeps the top face to the left. Your ring+pinky can stay on the right face.',
+      'R′ — right thumb comes forward and pulls the front edge of the right face toward you (downward). All three moves = one gesture.'
+    ]
+  },
+  sp2: {
+    count: 4,
+    tips: [
+      'Pick up your cube and click Next to begin.',
+      'R — ring + pinky push right face forward.',
+      'U — middle finger sweeps top left.',
+      'R′ — thumb pulls right face back. Here your left thumb should already be approaching the top face.',
+      'U′ — left thumb sweeps top face to the right. The handoff should be seamless — no full stop between R′ and U′.'
+    ]
+  },
+  sp3: {
+    count: 6,
+    tips: [
+      'Hold cube — white layer down, one face toward you as front.',
+      'F — right thumb pushes front face downward (clockwise). Keep grip steady.',
+      'R — right ring + pinky push right face forward.',
+      'U — right middle sweeps top left.',
+      'R′ — right thumb pulls right face back.',
+      'U′ — left thumb sweeps top right.',
+      'F′ — right index finger lifts front face upward (counter-clockwise). Sequence complete.'
+    ]
+  }
+};
+
+const seqState = { sp1: -1, sp2: -1, sp3: -1 };
+
+function step(id, dir) {
+  const d = seqData[id];
+  let c = seqState[id];
+  c = Math.max(-1, Math.min(d.count - 1, c + dir));
+  seqState[id] = c;
+  for (let i = 0; i < d.count; i++) {
+    const el = document.getElementById(id + '-m' + i);
+    if (el) el.classList.toggle('active', i === c);
+  }
+  const tip = document.getElementById(id + '-tip');
+  if (tip) tip.textContent = d.tips[c + 1] || d.tips[0];
+}
+
+function reset(id) {
+  seqState[id] = -1;
+  const d = seqData[id];
+  for (let i = 0; i < d.count; i++) {
+    const el = document.getElementById(id + '-m' + i);
+    if (el) el.classList.remove('active');
+  }
+  const tip = document.getElementById(id + '-tip');
+  if (tip) tip.textContent = d.tips[0];
+}
+
+// --- Timer ---
+let running = false, startTs = 0, elapsed = 0, ival = null;
+
+function toggleTimer() {
+  const btn = document.getElementById('tbtn');
+  if (!running) {
+    running = true;
+    btn.textContent = 'Stop';
+    startTs = Date.now() - elapsed;
+    ival = setInterval(tick, 83);
+  } else {
+    running = false;
+    btn.textContent = 'Resume';
+    elapsed = Date.now() - startTs;
+    clearInterval(ival);
+  }
+}
+
+function resetTimer() {
+  running = false; elapsed = 0;
+  clearInterval(ival);
+  document.getElementById('tbtn').textContent = 'Start';
+  document.getElementById('tdisplay').textContent = '00:00.0';
+}
+
+function tick() {
+  const e = Date.now() - startTs;
+  const ms = Math.floor((e % 1000) / 100);
+  const s = Math.floor(e / 1000) % 60;
+  const m = Math.floor(e / 60000);
+  document.getElementById('tdisplay').textContent =
+    pad(m) + ':' + pad(s) + '.' + ms;
+}
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+// --- Quiz ---
+const scores = {}, total = 5;
+let answered = 0;
+
+const fb = {
+  q1: { ok: 'Correct. Ring + pinky are already resting on the right face in the standard grip — a natural push forward.', no: 'Ring + pinky are correct. They\'re already on the right face in the standard grip, making R a natural push.' },
+  q2: { ok: 'Right. Left thumb sweeps the top face to the right — bridging the gap after the right-hand R′.', no: 'Left thumb is the standard choice for U′ — it comes in from the left side of the top face after R′.' },
+  q3: { ok: 'Correct. The R′→U′ handoff requires coordinating both hands. Left thumb must arrive during R′, not after.', no: 'R′→U′ is the hardest — it\'s the point where the right hand finishes and the left thumb must arrive seamlessly.' },
+  q4: { ok: 'Exactly. Right index lifts the front face counter-clockwise — the mirror of the right-thumb F push.', no: 'Right index is correct for F′ — it lifts the front face upward, opposite to the thumb pushing it down for F.' },
+  q5: { ok: 'Right. R U R′ is the simpler 3-move fragment. Once it\'s one gesture, adding U′ (the left-thumb step) is a small addition.', no: 'R U R′ is the correct foundation. Master the 3-move fragment as one gesture before adding U′.' }
+};
+
+function answer(qId, btn, correct) {
+  if (scores[qId] !== undefined) return;
+  scores[qId] = correct; answered++;
+  btn.parentElement.querySelectorAll('.option').forEach(o => { o.disabled = true; o.classList.add('disabled'); });
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  const el = document.getElementById(qId + '-fb');
+  if (el) { el.textContent = fb[qId][correct ? 'ok' : 'no']; el.className = 'q-feedback ' + (correct ? 'ok' : 'no'); }
+  if (answered === total) {
+    const n = Object.values(scores).filter(Boolean).length;
+    document.getElementById('score-big').textContent = n + ' / ' + total;
+    const msgs = ['Go back through the lesson carefully.', 'Re-read the move assignments table.', 'Re-read the move assignments table.', 'Solid — one miss. Check the feedback above.', 'Near-perfect.', 'Perfect. You\'re ready to drill.'];
+    document.getElementById('score-msg').textContent = msgs[n];
+    document.getElementById('score-bar').classList.add('show');
+  }
+}
+</script>
+</body>
+</html>
