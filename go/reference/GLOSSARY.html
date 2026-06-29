@@ -45,7 +45,46 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Project Layout (Lesson 10) <span class="new-badge">new</span></h2>
+<h2>Concurrency (Lesson 11) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>goroutine</td>
+    <td>async task / Promise chain</td>
+    <td>Go's lightweight unit of concurrent execution. Starts at ~2 KB of stack (vs ~1 MB for an OS thread). Launched with <code>go fn()</code>. The Go runtime scheduler maps goroutines to OS threads across all CPU cores — true parallelism.</td>
+  </tr>
+  <tr>
+    <td>go</td>
+    <td>(no direct equiv.)</td>
+    <td>Keyword that launches a goroutine: <code>go fn()</code>. Returns immediately; the function runs concurrently.</td>
+  </tr>
+  <tr>
+    <td>sync.Mutex</td>
+    <td>(rarely needed in Node.js)</td>
+    <td>A mutual-exclusion lock. <code>mu.Lock()</code> acquires the lock; <code>mu.Unlock()</code> releases it. Use to protect shared state accessed by multiple goroutines (e.g. package-level variables written from HTTP handlers).</td>
+  </tr>
+  <tr>
+    <td>data race</td>
+    <td>(rare in single-threaded JS)</td>
+    <td>When two goroutines read and write the same memory location simultaneously without synchronisation. Causes unpredictable results. Detected at runtime with <code>go run -race</code> or <code>go test -race</code>.</td>
+  </tr>
+  <tr>
+    <td>channel (chan)</td>
+    <td>EventEmitter / MessageChannel</td>
+    <td>A typed pipe for sending values between goroutines. Created with <code>make(chan T)</code>. Send: <code>ch &lt;- v</code>. Receive (blocks until value arrives): <code>v := &lt;-ch</code>.</td>
+  </tr>
+  <tr>
+    <td>-race flag</td>
+    <td>no equivalent</td>
+    <td>Build/test flag that instruments the binary with the race detector. Reports concurrent memory accesses at runtime. Use in development; omit in production builds for performance.</td>
+  </tr>
+</table>
+
+<h2>Project Layout (Lesson 10)</h2>
 <table>
   <tr>
     <th>Term</th>

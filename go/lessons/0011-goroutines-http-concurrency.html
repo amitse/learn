@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 11 — Goroutines & the HTTP Server's Concurrency Model</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #20243a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --ts: #3178c6;
+    --go: #00adb5;
+    --green: #3ab54a;
+    --green-bg: #0d2b12;
+    --red: #e05c5c;
+    --red-bg: #2b0d0d;
+    --yellow: #f5d600;
+    --yellow-bg: #2b2600;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+  /* ── Header ── */
+  .lesson-meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  h1 { font-size: 1.9rem; color: var(--white); line-height: 1.2; margin-bottom: 0.4rem; }
+  .mission-pill {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 0.25rem 0.75rem;
+    font-size: 0.78rem; color: var(--muted); margin-bottom: 2rem;
+  }
+  .mission-pill span { color: var(--accent); font-weight: 600; }
+  /* ── Section titles ── */
+  h2 {
+    font-size: 1rem; color: var(--white); font-weight: 600;
+    margin: 2.5rem 0 0.8rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 0.92rem; color: var(--accent); font-weight: 600; margin: 1.6rem 0 0.5rem; }
+  p { margin-bottom: 0.9rem; }
+  /* ── Code blocks ── */
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.2rem;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    margin: 0.6rem 0 1rem;
+  }
+  code { font-family: 'Cascadia Code', 'Fira Code', monospace; }
+  p code, li code {
+    background: #22263a;
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+    font-size: 0.84em;
+  }
+  .lang-label {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em;
+    font-weight: 700; margin-bottom: 0.2rem;
+  }
+  .lang-go   { color: var(--go); }
+  .lang-ts   { color: var(--ts); }
+  /* ── Side-by-side comparison ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 0.6rem 0 1.2rem;
+  }
+  @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+  .compare pre { margin: 0; }
+  /* ── Callout boxes ── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 8px 8px 0;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0 1.2rem;
+    font-size: 0.88rem;
+  }
+  .callout.warning { border-color: var(--yellow); }
+  .callout.insight { border-color: var(--green); }
+  .callout strong { color: var(--white); }
+  /* ── Key-point highlight ── */
+  .key-point {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    font-size: 0.9rem;
+  }
+  .key-point .kp-title {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--accent); font-weight: 700; margin-bottom: 0.4rem;
+  }
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 0.5rem 0 1.2rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 0.78rem; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--accent); font-family: 'Cascadia Code', monospace; }
+  /* ── Quiz ── */
+  #quiz { margin-top: 3rem; }
+  .quiz-q {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.3rem;
+    margin-bottom: 1.2rem;
+  }
+  .quiz-q .q-text { font-size: 0.93rem; color: var(--white); margin-bottom: 0.9rem; font-weight: 500; }
+  .quiz-q pre { margin-bottom: 0.9rem; }
+  .options { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+  .options li button {
+    width: 100%; text-align: left; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: 0.86rem; padding: 0.55rem 0.9rem;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    font-family: inherit;
+  }
+  .options li button:hover:not(:disabled) { border-color: var(--accent); background: #1d2235; }
+  .options li button.correct { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .options li button.wrong   { background: var(--red-bg);   border-color: var(--red);   color: var(--red); }
+  .feedback {
+    font-size: 0.82rem; margin-top: 0.7rem; padding: 0.5rem 0.75rem;
+    border-radius: 5px; display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok   { background: var(--green-bg); color: var(--green); }
+  .feedback.err  { background: var(--red-bg);   color: var(--red); }
+  /* ── Score bar ── */
+  #score-box {
+    display: none; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.2rem 1.4rem; text-align: center; margin-top: 1.5rem;
+  }
+  #score-box .score-num { font-size: 2rem; color: var(--white); font-weight: 700; }
+  #score-box .score-label { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+  /* ── Citation links ── */
+  .cite {
+    font-size: 0.78rem; color: var(--muted);
+    text-decoration: none; border-bottom: 1px dashed var(--border);
+  }
+  .cite:hover { color: var(--accent); border-color: var(--accent); }
+  /* ── Footer ── */
+  .footer {
+    margin-top: 3rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.83rem; color: var(--muted);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+  /* ── Syntax colours in pre ── */
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cmt { color: #546e7a; font-style: italic; }
+  .num { color: #f78c6c; }
+  .typ { color: #ffcb6b; }
+</style>
+</head>
+<body>
+
+<p class="lesson-meta">Go for TypeScript Devs · Lesson 11</p>
+<h1>Goroutines &amp; the HTTP Server's Concurrency Model</h1>
+<div class="mission-pill">🎯 Mission: <span>ship an HTTP server in Go</span></div>
+
+<!-- ── WHY THIS MATTERS ───────────────────────────────── -->
+<h2>Why you need to know this</h2>
+<p>
+  Your HTTP server is already running. But every time a request hits it, Go does
+  something invisible that makes the whole thing work at scale:
+  it spawns a <strong>goroutine</strong>. Understanding goroutines takes you from
+  "my server works" to "I know what my server is doing and why it doesn't fall over
+  under load." This lesson is mission-critical, not optional.
+</p>
+
+<div class="key-point">
+  <div class="kp-title">⚡ The one thing to remember</div>
+  <code>net/http</code> calls your handler in its own goroutine — one per request,
+  automatically, for free. You didn't write <code>go</code> anywhere, but concurrency
+  is already happening in every server you've built so far.
+</div>
+
+<!-- ── WHAT IS A GOROUTINE ─────────────────────────────── -->
+<h2>What is a goroutine?</h2>
+<p>
+  A goroutine is Go's unit of concurrent execution — lighter than an OS thread,
+  managed by the Go runtime scheduler.
+  <a class="cite" href="https://go.dev/tour/concurrency/1" target="_blank">
+    [go.dev/tour: goroutines]
+  </a>
+</p>
+
+<div class="compare">
+  <div>
+    <p class="lang-label lang-ts">TypeScript async</p>
+    <pre><span class="cmt">// async/await: one event loop thread,</span>
+<span class="cmt">// work pauses at 'await'</span>
+<span class="kw">async function</span> <span class="fn">handleRequest</span>() {
+  <span class="kw">const</span> data = <span class="kw">await</span> fetchDB();
+  <span class="kw">return</span> data;
+}
+<span class="cmt">// Node.js processes one request at a time</span>
+<span class="cmt">// but yields at I/O — single-threaded</span></pre>
+  </div>
+  <div>
+    <p class="lang-label lang-go">Go goroutines</p>
+    <pre><span class="cmt">// goroutines: truly concurrent,</span>
+<span class="cmt">// OS-level parallelism on multi-core</span>
+<span class="kw">func</span> <span class="fn">handleRequest</span>(w, r) {
+  data := fetchDB()  <span class="cmt">// blocks this goroutine</span>
+  <span class="cmt">// other goroutines run freely meanwhile</span>
+}
+<span class="cmt">// net/http runs each request in its own goroutine</span></pre>
+  </div>
+</div>
+
+<h3>Spawning a goroutine</h3>
+<p>You launch one with the <code>go</code> keyword in front of a function call:</p>
+
+<pre><span class="kw">go</span> <span class="fn">someFunction</span>()          <span class="cmt">// fire and forget — runs concurrently</span>
+<span class="kw">go</span> <span class="fn">func</span>() {
+    fmt.<span class="fn">Println</span>(<span class="str">"I run concurrently"</span>)
+}()</pre>
+
+<div class="callout">
+  <strong>Cost:</strong> A goroutine starts with a ~2 KB stack (grows as needed).
+  An OS thread starts with ~1 MB. Go easily runs millions of goroutines on modest
+  hardware. A busy HTTP server might have thousands in flight at once — that's fine.
+  <a class="cite" href="https://go.dev/doc/faq#goroutines" target="_blank">
+    [go.dev/faq: goroutines]
+  </a>
+</div>
+
+<!-- ── NET/HTTP AND GOROUTINES ─────────────────────────── -->
+<h2>How <code>net/http</code> uses goroutines</h2>
+<p>
+  When you call <code>http.ListenAndServe</code>, the standard library's server loop
+  does something like this under the hood:
+  <a class="cite" href="https://cs.opensource.google/go/go/+/refs/tags/go1.22.4:src/net/http/server.go" target="_blank">
+    [src/net/http/server.go]
+  </a>
+</p>
+
+<pre><span class="cmt">// Simplified from net/http/server.go</span>
+<span class="kw">for</span> {
+    conn, _ := listener.<span class="fn">Accept</span>()  <span class="cmt">// wait for next connection</span>
+    <span class="kw">go</span> <span class="fn">handleConn</span>(conn)           <span class="cmt">// ← each connection gets its own goroutine</span>
+}</pre>
+
+<p>
+  And inside <code>handleConn</code>, each HTTP request in a keep-alive connection
+  also runs in a goroutine. Your handler is always called from a goroutine —
+  you never need to manage this yourself.
+</p>
+
+<div class="key-point">
+  <div class="kp-title">📌 What this means for your code</div>
+  Your handlers <strong>run concurrently</strong>. Two requests can execute the same
+  handler at the same time, in different goroutines. Any <strong>shared state</strong>
+  you read/write from a handler must be protected — or you have a race condition.
+</div>
+
+<!-- ── RACE CONDITIONS ─────────────────────────────────── -->
+<h2>Race conditions: the one gotcha</h2>
+<p>
+  If two goroutines read <em>and</em> write the same variable without synchronisation,
+  you have a data race. Go has a built-in race detector to catch this:
+</p>
+
+<pre><span class="cmt">// BAD — shared counter without protection</span>
+<span class="kw">var</span> count <span class="typ">int</span>  <span class="cmt">// package-level variable</span>
+
+<span class="kw">func</span> <span class="fn">CountHandler</span>(w http.ResponseWriter, r *http.Request) {
+    count++  <span class="cmt">// 🚨 RACE: two requests can do this simultaneously</span>
+    fmt.<span class="fn">Fprintf</span>(w, <span class="str">"count: %d"</span>, count)
+}</pre>
+
+<pre><span class="cmt">// GOOD — protect with sync.Mutex</span>
+<span class="kw">import</span> <span class="str">"sync"</span>
+
+<span class="kw">var</span> (
+    count <span class="typ">int</span>
+    mu    sync.Mutex
+)
+
+<span class="kw">func</span> <span class="fn">CountHandler</span>(w http.ResponseWriter, r *http.Request) {
+    mu.<span class="fn">Lock</span>()
+    count++
+    mu.<span class="fn">Unlock</span>()
+    fmt.<span class="fn">Fprintf</span>(w, <span class="str">"count: %d"</span>, count)
+}</pre>
+
+<div class="callout warning">
+  <strong>Run the race detector</strong> while developing: <code>go run -race main.go</code>
+  or <code>go test -race ./...</code>. It instruments your binary to detect concurrent
+  access violations at runtime. No performance cost in production — just leave
+  <code>-race</code> off in your release builds.
+  <a class="cite" href="https://go.dev/doc/articles/race_detector" target="_blank">
+    [go.dev: race detector]
+  </a>
+</div>
+
+<!-- ── PRACTICAL PATTERN ───────────────────────────────── -->
+<h2>Practical pattern: background work in a handler</h2>
+<p>
+  Sometimes you want to fire off work (e.g. logging, sending an email) without
+  making the user wait. Use a goroutine — but be careful about closures:
+</p>
+
+<pre><span class="kw">func</span> <span class="fn">CreateUserHandler</span>(w http.ResponseWriter, r *http.Request) {
+    user := <span class="fn">parseUser</span>(r)
+
+    <span class="cmt">// Respond immediately</span>
+    w.<span class="fn">WriteHeader</span>(http.StatusAccepted)
+
+    <span class="cmt">// Do slow work in the background — don't block the response</span>
+    <span class="kw">go</span> <span class="fn">func</span>(u User) {
+        <span class="fn">sendWelcomeEmail</span>(u)      <span class="cmt">// could take seconds</span>
+        <span class="fn">logUserCreation</span>(u)
+    }(user)               <span class="cmt">// pass user as arg — avoid closure capture bug</span>
+}</pre>
+
+<div class="callout insight">
+  <strong>Closure capture gotcha:</strong> If you write <code>go func() { use(user) }()</code>
+  instead of passing <code>user</code> as an argument, and <code>user</code> gets
+  reassigned later in the same scope, your goroutine will see the updated value —
+  not what you intended. Always pass loop variables and mutating locals as arguments.
+</div>
+
+<!-- ── COMPARISON TABLE ───────────────────────────────── -->
+<h2>TS async vs Go goroutines — mental model</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept</th>
+      <th>TypeScript</th>
+      <th>Go</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>concurrency unit</td>
+      <td>Promise / async task</td>
+      <td><code>goroutine</code></td>
+    </tr>
+    <tr>
+      <td>parallelism</td>
+      <td>single-threaded (Node.js); multi-thread via workers</td>
+      <td>multi-core by default, via runtime scheduler</td>
+    </tr>
+    <tr>
+      <td>start async work</td>
+      <td><code>someAsync().then(...)</code></td>
+      <td><code>go someFunc()</code></td>
+    </tr>
+    <tr>
+      <td>wait for result</td>
+      <td><code>await</code></td>
+      <td>channel receive: <code>result := &lt;-ch</code></td>
+    </tr>
+    <tr>
+      <td>shared state protection</td>
+      <td>usually not needed (single-thread)</td>
+      <td><code>sync.Mutex</code> or channels</td>
+    </tr>
+    <tr>
+      <td>HTTP handler concurrency</td>
+      <td>event loop, one at a time at CPU level</td>
+      <td>each request = own goroutine, truly parallel</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ── CHANNELS TEASER ────────────────────────────────── -->
+<h2>Channels — quick teaser</h2>
+<p>
+  Goroutines communicate via <strong>channels</strong> — typed pipes you can send
+  values into and receive from. You don't need them for the HTTP server mission,
+  but they're how Go coordinates concurrent work:
+  <a class="cite" href="https://go.dev/tour/concurrency/2" target="_blank">
+    [go.dev/tour: channels]
+  </a>
+</p>
+
+<pre><span class="cmt">// Create a channel of ints</span>
+ch := <span class="fn">make</span>(<span class="kw">chan</span> <span class="typ">int</span>)
+
+<span class="cmt">// Send in a goroutine</span>
+<span class="kw">go</span> <span class="fn">func</span>() { ch <- <span class="num">42</span> }()
+
+<span class="cmt">// Receive — blocks until the value arrives</span>
+result := <-ch
+fmt.<span class="fn">Println</span>(result) <span class="cmt">// 42</span></pre>
+
+<p>
+  Channels are covered in depth beyond the HTTP server scope — but now you know
+  they exist and what they're for.
+</p>
+
+<!-- ── QUIZ ───────────────────────────────────────────── -->
+<section id="quiz">
+  <h2>Quiz — check your understanding</h2>
+
+  <!-- Q1 -->
+  <div class="quiz-q" id="q1">
+    <p class="q-text">1. When your Go HTTP server receives 10 simultaneous requests, how does <code>net/http</code> handle them?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q1',false)">It processes them one at a time in a queue</button></li>
+      <li><button onclick="answer(this,'q1',true)">It runs each request in its own goroutine, concurrently</button></li>
+      <li><button onclick="answer(this,'q1',false)">It creates one OS thread per request</button></li>
+      <li><button onclick="answer(this,'q1',false)">It uses async/await under the hood, like Node.js</button></li>
+    </ul>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quiz-q" id="q2">
+    <p class="q-text">2. This handler has a data race. What's the problem?</p>
+    <pre><span class="kw">var</span> visitors <span class="typ">int</span>
+
+<span class="kw">func</span> <span class="fn">HomeHandler</span>(w http.ResponseWriter, r *http.Request) {
+    visitors++
+    fmt.<span class="fn">Fprintf</span>(w, <span class="str">"Visitor #%d"</span>, visitors)
+}</pre>
+    <ul class="options">
+      <li><button onclick="answer(this,'q2',false)">The handler doesn't return an error</button></li>
+      <li><button onclick="answer(this,'q2',false)"><code>visitors</code> is a package-level variable and should be in a struct</button></li>
+      <li><button onclick="answer(this,'q2',true)">Two goroutines can increment <code>visitors</code> at the same time — unsynchronised shared write</button></li>
+      <li><button onclick="answer(this,'q2',false)"><code>fmt.Fprintf</code> is not goroutine-safe</button></li>
+    </ul>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quiz-q" id="q3">
+    <p class="q-text">3. How do you detect a data race during development?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q3',false)">Add <code>-check-race</code> to your import block</button></li>
+      <li><button onclick="answer(this,'q3',true)">Run <code>go run -race main.go</code> or <code>go test -race ./...</code></button></li>
+      <li><button onclick="answer(this,'q3',false)">Use <code>sync.CheckRace()</code> in your main function</button></li>
+      <li><button onclick="answer(this,'q3',false)">Races are caught automatically at compile time</button></li>
+    </ul>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="quiz-q" id="q4">
+    <p class="q-text">4. You want to send a welcome email without making the user wait for the HTTP response. Which pattern is correct?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q4',false)">Call <code>await sendWelcomeEmail(user)</code> before writing the response</button></li>
+      <li><button onclick="answer(this,'q4',false)">Create an OS thread with <code>os.NewThread()</code></button></li>
+      <li><button onclick="answer(this,'q4',true)">Write the response first, then launch <code>go func(u User) { sendWelcomeEmail(u) }(user)</code></button></li>
+      <li><button onclick="answer(this,'q4',false)">Use a Promise and <code>.then()</code> from the <code>js</code> package</button></li>
+    </ul>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="quiz-q" id="q5">
+    <p class="q-text">5. What is the approximate starting stack size of a goroutine vs an OS thread?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q5',false)">Goroutine: 8 MB / OS thread: 2 KB</button></li>
+      <li><button onclick="answer(this,'q5',false)">They're the same — goroutines are just OS threads with a different name</button></li>
+      <li><button onclick="answer(this,'q5',true)">Goroutine: ~2 KB / OS thread: ~1 MB</button></li>
+      <li><button onclick="answer(this,'q5',false)">Goroutine: ~64 KB / OS thread: ~64 KB</button></li>
+    </ul>
+    <div class="feedback" id="q5-fb"></div>
+  </div>
+
+  <div id="score-box">
+    <div class="score-num" id="score-num"></div>
+    <div class="score-label" id="score-label"></div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────── -->
+<div class="footer">
+  <p style="margin-bottom:0.5rem">
+    <strong style="color:var(--white)">Ask your teacher anything.</strong>
+    Unclear on goroutines vs OS threads? Confused about when to use a mutex vs a channel?
+    Just ask — the agent can clarify, give more examples, or go deeper on any concept here.
+  </p>
+  <p>
+    ← <a href="0010-project-layout-at-scale.html">Lesson 10 — Project Layout at Scale</a>
+    &nbsp;·&nbsp;
+    <a href="../reference/GLOSSARY.html">Go Glossary</a>
+    &nbsp;·&nbsp;
+    <a href="../../index.html">All Lessons</a>
+  </p>
+  <p style="margin-top:0.6rem; font-size:0.75rem;">
+    Sources:
+    <a class="cite" href="https://go.dev/tour/concurrency/1" target="_blank">go.dev/tour — goroutines</a> ·
+    <a class="cite" href="https://go.dev/doc/faq#goroutines" target="_blank">go.dev/faq — goroutines</a> ·
+    <a class="cite" href="https://go.dev/doc/articles/race_detector" target="_blank">go.dev — race detector</a> ·
+    <a class="cite" href="https://go.dev/tour/concurrency/2" target="_blank">go.dev/tour — channels</a>
+  </p>
+</div>
+
+<script>
+  const EXPLANATIONS = {
+    q1: {
+      ok: "✓ Correct. <code>net/http</code>'s internal loop calls <code>go handleConn(conn)</code> for each connection — your handler always runs in a goroutine.",
+      err: "Not quite. <code>net/http</code> launches a new goroutine for each connection (and each request in a keep-alive connection). Requests are handled concurrently."
+    },
+    q2: {
+      ok: "✓ Correct. Two goroutines can reach <code>visitors++</code> at the same time. <code>visitors++</code> is not atomic — it's a read + increment + write that can interleave. Fix: wrap in <code>sync.Mutex</code> or use <code>sync/atomic</code>.",
+      err: "Not quite. The bug is the unprotected <code>visitors++</code>: two concurrent goroutines can both read the same value, both increment it, and both write back — giving a wrong total."
+    },
+    q3: {
+      ok: "✓ Correct. The <code>-race</code> flag instruments your binary. Run your server or tests with it and Go will print a detailed report the moment a race is detected.",
+      err: "Not quite. Go has a built-in race detector enabled by the <code>-race</code> flag: <code>go run -race main.go</code> or <code>go test -race ./...</code>."
+    },
+    q4: {
+      ok: "✓ Correct. Write the response first (so the user isn't waiting), then launch a goroutine for the slow work. Pass <code>user</code> as an argument to avoid a closure-capture bug.",
+      err: "Not quite. The pattern is: respond immediately, then <code>go func(u User) { sendWelcomeEmail(u) }(user)</code>. Pass the variable as an argument, not via closure."
+    },
+    q5: {
+      ok: "✓ Correct. Goroutines start at ~2 KB and grow as needed. OS threads start at ~1 MB (often 8 MB on Linux by default). This 500× size advantage lets Go run millions of goroutines on a single machine.",
+      err: "Not quite. Goroutines start at approximately 2 KB (growing as needed); OS threads typically start at ~1 MB. That difference is why you can have millions of goroutines but only thousands of OS threads."
+    }
+  };
+
+  let answered = {};
+  const total = 5;
+
+  function answer(btn, qid, correct) {
+    if (answered[qid]) return;
+    answered[qid] = true;
+
+    const qEl  = document.getElementById(qid);
+    const fbEl = document.getElementById(qid + '-fb');
+    const btns = qEl.querySelectorAll('button');
+
+    btns.forEach(b => b.disabled = true);
+    btn.classList.add(correct ? 'correct' : 'wrong');
+
+    fbEl.innerHTML = correct ? EXPLANATIONS[qid].ok : EXPLANATIONS[qid].err;
+    fbEl.className = 'feedback show ' + (correct ? 'ok' : 'err');
+
+    if (Object.keys(answered).length === total) showScore();
+  }
+
+  function showScore() {
+    const correct = Object.keys(answered).filter(qid => {
+      const qEl = document.getElementById(qid);
+      return qEl.querySelector('button.correct') !== null;
+    }).length;
+
+    const box = document.getElementById('score-box');
+    const num = document.getElementById('score-num');
+    const lbl = document.getElementById('score-label');
+
+    num.textContent = correct + ' / ' + total;
+    lbl.textContent = correct === total
+      ? '🎉 Perfect — goroutines are yours to command.'
+      : correct >= 3
+      ? '👍 Solid grasp. Review any wrong answers above.'
+      : '📖 Re-read the sections above, then try again.';
+    box.style.display = 'block';
+  }
+</script>
+</body>
+</html>
