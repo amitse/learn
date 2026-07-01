@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 11 — Look-Ahead Practice · Rubik's Cube</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #21253a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #f57c00;
+    --accent-dim: #3a2200;
+    --green: #3ab54a;
+    --green-dim: #1a3a1a;
+    --red: #e05050;
+    --red-dim: #3a1a1a;
+    --yellow: #f5c842;
+    --blue: #4a9eff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+    line-height: 1.65;
+  }
+
+  .badge-lesson {
+    display: inline-block;
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+    color: var(--accent);
+    margin: 2.5rem 0 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  h2 .num {
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+  }
+
+  p { margin-bottom: 1rem; color: var(--text); }
+
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1.5rem 0;
+    font-size: 0.93rem;
+  }
+
+  .callout strong { color: var(--accent); }
+
+  /* Transition table */
+  .transition-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.2rem 0 1.5rem;
+    font-size: 0.88rem;
+  }
+
+  .transition-table th {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .transition-table td {
+    padding: 0.75rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .transition-table tr:last-child td { border-bottom: none; }
+
+  .transition-table tr:hover td { background: var(--surface); }
+
+  .stage-tag {
+    display: inline-block;
+    background: var(--surface2);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .window-tag {
+    display: inline-block;
+    background: #1a2a3a;
+    color: var(--blue);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  /* Pause audit */
+  .audit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.2rem 0;
+  }
+
+  @media (max-width: 520px) {
+    .audit-grid { grid-template-columns: 1fr; }
+  }
+
+  .audit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  .audit-card h3 {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .audit-card p {
+    font-size: 0.88rem;
+    margin: 0;
+    color: var(--text);
+  }
+
+  /* Quiz */
+  #quiz-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2.5rem;
+  }
+
+  #quiz-section h2 {
+    color: var(--yellow);
+    margin: 0 0 0.4rem;
+  }
+
+  .quiz-meta {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .question-block {
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .question-block.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-counter {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .question-text {
+    font-size: 1rem;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+  }
+
+  .option-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.9rem;
+    padding: 0.7rem 1rem;
+    border-radius: 7px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .option-btn.correct {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .option-btn.wrong {
+    background: var(--red-dim);
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .option-btn:disabled { cursor: default; }
+
+  .feedback {
+    margin-top: 0.8rem;
+    padding: 0.75rem 1rem;
+    border-radius: 7px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    display: none;
+  }
+
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: var(--green-dim); color: var(--green); border-left: 3px solid var(--green); }
+  .feedback.wrong-fb   { background: var(--red-dim);   color: var(--red);   border-left: 3px solid var(--red); }
+
+  .next-btn {
+    margin-top: 1rem;
+    background: var(--accent);
+    color: #0f1117;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.6rem 1.4rem;
+    border-radius: 7px;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.15s;
+  }
+
+  .next-btn:hover { opacity: 0.85; }
+  .next-btn.show { display: inline-block; }
+
+  /* Score */
+  #score-block {
+    display: none;
+    text-align: center;
+    padding: 1rem 0 0.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  #score-block .score-num {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--yellow);
+  }
+
+  #score-block .score-label {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    margin-bottom: 1rem;
+  }
+
+  #score-block .score-msg {
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 1.2rem;
+  }
+
+  .retry-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.5rem 1.2rem;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .retry-btn:hover { background: var(--accent-dim); }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 4px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  /* Drill box */
+  .drill-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem;
+    margin-top: 2rem;
+  }
+
+  .drill-box h3 {
+    font-size: 0.95rem;
+    color: var(--yellow);
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .drill-steps {
+    list-style: none;
+    counter-reset: drill-counter;
+  }
+
+  .drill-steps li {
+    counter-increment: drill-counter;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+    font-size: 0.9rem;
+  }
+
+  .drill-steps li::before {
+    content: counter(drill-counter);
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  code {
+    background: var(--surface2);
+    color: var(--yellow);
+    font-size: 0.85em;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-family: 'Cascadia Code', 'Fira Mono', monospace;
+  }
+
+  .citation {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .citation a { color: var(--muted); text-decoration: underline dotted; }
+  .citation a:hover { color: var(--text); }
+
+  .ask-agent {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    margin-top: 2rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .ask-agent strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="badge-lesson">Rubik's Cube · Lesson 11</div>
+<h1>Look-Ahead Practice</h1>
+<p class="subtitle">Stop pausing between stages. Start planning ahead — and cut your solve time without learning a single new algorithm.</p>
+
+<h2><span class="num">01</span> What Look-Ahead Is</h2>
+
+<p>Right now, your solve probably looks like this: finish a stage → pause → inspect → figure out the next stage → execute. That pause is the bottleneck. Look-ahead is the skill of <strong>planning the next stage while your hands are still finishing the current one</strong>.</p>
+
+<p>The key insight is that algorithms are largely mechanical — once learned, they don't require your full attention to execute. That freed-up mental bandwidth is exactly what look-ahead uses. While your hands run <code>R U R' U'</code> on autopilot, your eyes should already be scanning the cube for what comes next.</p>
+
+<div class="callout">
+  <strong>Core principle:</strong> Look-ahead doesn't require any new algorithms. It's a mental habit — redirecting your attention slightly ahead of where your hands are.
+</div>
+
+<h2><span class="num">02</span> The 5 Transition Windows</h2>
+
+<p>There are five natural moments where you can begin look-ahead. Each window tells you exactly <em>what to look for</em> while your hands are still busy.</p>
+
+<table class="transition-table">
+  <thead>
+    <tr>
+      <th>Finishing…</th>
+      <th>Look for…</th>
+      <th>Why now</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="stage-tag">White Cross</span></td>
+      <td>Which of the 4 white corners is easiest to slot? Find one that's already in the top layer near its home slot.</td>
+      <td>While inserting the last cross edge, U-layer corners haven't moved yet — easy to read.</td>
+    </tr>
+    <tr>
+      <td><span class="stage-tag">White Corners</span></td>
+      <td>After flipping, scan the top layer for second-layer edges. Find one that matches a centre colour on the side.</td>
+      <td>Flipping the cube reveals the top layer — this is the ideal scan moment.</td>
+    </tr>
+    <tr>
+      <td><span class="stage-tag">2nd Layer Edges</span></td>
+      <td>How many yellow cross "petals" are already showing? Count while inserting the last edge.</td>
+      <td>The yellow face is visible during insertion. Count so you walk in knowing your OLL case.</td>
+    </tr>
+    <tr>
+      <td><span class="stage-tag">Yellow Cross</span></td>
+      <td>Count oriented yellow corners (yellow sticker facing up). You need to know: 0, 1, or 2.</td>
+      <td>Cross is done — no algorithm needed yet. The yellow face is right in front of you.</td>
+    </tr>
+    <tr>
+      <td><span class="stage-tag">Sune / Corners</span></td>
+      <td>During your last Sune, glance for headlights. Position yourself before the algorithm ends.</td>
+      <td>You know approximately how many Sune cycles remain — use the last one to pre-check.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="num">03</span> The Pause Audit</h2>
+
+<p>The most direct way to improve is to count your pauses. Do one slow solve and tick a counter every time you freeze and inspect. Your goal is simple: <strong>reduce that number by 1 each session</strong>.</p>
+
+<div class="audit-grid">
+  <div class="audit-card">
+    <h3>Session 1</h3>
+    <p>Do a full slow solve. Count pauses. Don't rush — accurate counting matters more than time here.</p>
+  </div>
+  <div class="audit-card">
+    <h3>Session 2</h3>
+    <p>Pick the <em>longest</em> pause from last session. Focus only on eliminating that one. Repeat the transition 10 times in isolation.</p>
+  </div>
+  <div class="audit-card">
+    <h3>Session 3+</h3>
+    <p>Full solve again. Pause count should be one lower. Find the next longest pause, drill it.</p>
+  </div>
+  <div class="audit-card">
+    <h3>Goal</h3>
+    <p>Zero unplanned pauses. A brief glance (under 1 second) is fine — a full stop while you think is the target.</p>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Practical tip:</strong> If you use a virtual cube (e.g. <a href="https://ruwix.com/the-rubiks-cube/online-rubiks-cube-solver-program/" style="color:var(--accent);" target="_blank">Ruwix</a> or <a href="https://cuber.github.io" style="color:var(--accent);" target="_blank">cuber.github.io</a>), you can replay solves and spot exactly where you hesitated. A physical cube + phone camera works just as well.
+</div>
+
+<!-- ─── QUIZ ─── -->
+
+<div id="quiz-section">
+  <h2>⚡ Quiz</h2>
+  <p class="quiz-meta">5 questions · instant feedback · tests all 5 transition windows</p>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <!-- Q1 -->
+  <div class="question-block active" data-q="0">
+    <div class="question-counter">Question 1 of 5</div>
+    <div class="question-text">While inserting your last White Cross edge, what should you be scanning for?</div>
+    <button class="option-btn" data-correct="false">The orientation of the yellow face corners.</button>
+    <button class="option-btn" data-correct="true">Which white corner is already in the top layer closest to its home slot.</button>
+    <button class="option-btn" data-correct="false">Whether any second-layer edges are already in place.</button>
+    <button class="option-btn" data-correct="false">The bottom layer to verify the cross stickers are aligned.</button>
+    <div class="feedback"></div>
+    <button class="next-btn">Next →</button>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question-block" data-q="1">
+    <div class="question-counter">Question 2 of 5</div>
+    <div class="question-text">You've just flipped the cube white-down after completing the white layer. What's your look-ahead target right now?</div>
+    <button class="option-btn" data-correct="false">Count how many yellow cross petals are visible on the new top face.</button>
+    <button class="option-btn" data-correct="false">Identify whether "headlights" are present on the last layer.</button>
+    <button class="option-btn" data-correct="true">Find a second-layer edge in the top layer whose colour matches a side centre.</button>
+    <button class="option-btn" data-correct="false">Check the middle layer to see if any edges are already correct.</button>
+    <div class="feedback"></div>
+    <button class="next-btn">Next →</button>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question-block" data-q="2">
+    <div class="question-counter">Question 3 of 5</div>
+    <div class="question-text">As you execute the <em>last</em> second-layer edge insertion, what should you be doing simultaneously?</div>
+    <button class="option-btn" data-correct="false">Mentally rehearsing the Sune algorithm ready for Stage 5.</button>
+    <button class="option-btn" data-correct="true">Counting the number of yellow cross "petals" already on top to pre-diagnose the OLL case.</button>
+    <button class="option-btn" data-correct="false">Verifying the white face is fully correct before flipping.</button>
+    <button class="option-btn" data-correct="false">Deciding which direction to rotate the whole cube for the next stage.</button>
+    <div class="feedback"></div>
+    <button class="next-btn">Next →</button>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question-block" data-q="3">
+    <div class="question-counter">Question 4 of 5</div>
+    <div class="question-text">You've just completed the Yellow Cross. Before applying any Sune, what should you check immediately?</div>
+    <button class="option-btn" data-correct="false">Whether the Ua or Ub edge permutation will be needed.</button>
+    <button class="option-btn" data-correct="false">The number of correctly placed last-layer edges.</button>
+    <button class="option-btn" data-correct="true">How many yellow corner stickers are already facing up (0, 1, or 2 adjacent/diagonal).</button>
+    <button class="option-btn" data-correct="false">Which side colour appears most in the top layer to determine cube orientation.</button>
+    <div class="feedback"></div>
+    <button class="next-btn">Next →</button>
+  </div>
+
+  <!-- Q5 -->
+  <div class="question-block" data-q="4">
+    <div class="question-counter">Question 5 of 5</div>
+    <div class="question-text">Which description best captures the <em>purpose</em> of look-ahead?</div>
+    <button class="option-btn" data-correct="false">Executing algorithms faster by reducing finger movement.</button>
+    <button class="option-btn" data-correct="false">Memorising more algorithms so fewer pauses are needed.</button>
+    <button class="option-btn" data-correct="true">Using the mental bandwidth freed by automatic algorithm execution to plan the next stage in advance, eliminating inspection pauses.</button>
+    <button class="option-btn" data-correct="false">Skipping stages of the solve that aren't strictly necessary.</button>
+    <div class="feedback"></div>
+    <button class="next-btn">Finish →</button>
+  </div>
+
+  <!-- Score -->
+  <div id="score-block">
+    <div class="score-num" id="score-num"></div>
+    <div class="score-label" id="score-label"></div>
+    <div class="score-msg" id="score-msg"></div>
+    <button class="retry-btn" onclick="resetQuiz()">Try Again</button>
+  </div>
+</div>
+
+<!-- ─── DRILL ─── -->
+
+<div class="drill-box">
+  <h3>🎯 Today's Drill</h3>
+  <ul class="drill-steps">
+    <li>Scramble your cube (or open a virtual one).</li>
+    <li>Do one complete solve at <em>half speed</em>. Focus on just one transition: White Cross → White Corners. Actively scan for the easiest corner <em>while</em> your hands are still inserting the last cross edge.</li>
+    <li>After the solve, count how many times you paused. Write the number down.</li>
+    <li>Do 3 more solves applying the same single look-ahead. Track whether the pause count drops.</li>
+    <li>Optional: extend look-ahead to the 2nd Layer stage in subsequent solves.</li>
+  </ul>
+</div>
+
+<div class="ask-agent">
+  <strong>Questions?</strong> Ask your agent anything about this lesson — why a transition window works, what to do if you can't keep up, or how to extend look-ahead to faster solve methods. Your teacher is a message away.
+</div>
+
+<div class="citation">
+  <p>Sources &amp; further reading:</p>
+  <ul style="list-style:none; margin-top:0.5rem; line-height:2;">
+    <li>· <a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank">ruwix.com — Beginner's Layer-by-Layer Method</a></li>
+    <li>· <a href="https://www.speedsolving.com/wiki/index.php/Lookahead" target="_blank">speedsolving.com wiki — Look-Ahead</a></li>
+    <li>· <a href="https://www.youtube.com/watch?v=0pUl_nMJvXw" target="_blank">J Perm: "Look-Ahead Practice Guide" (YouTube)</a></li>
+  </ul>
+</div>
+
+<script>
+(function () {
+  const questions = document.querySelectorAll('.question-block');
+  const progressFill = document.getElementById('progress-fill');
+  const scoreBlock = document.getElementById('score-block');
+  const scoreNum = document.getElementById('score-num');
+  const scoreLabel = document.getElementById('score-label');
+  const scoreMsg = document.getElementById('score-msg');
+  const totalQ = questions.length;
+  let current = 0;
+  let score = 0;
+
+  const feedbacks = [
+    {
+      correct: "✓ Exactly. The top layer hasn't been touched yet while you're inserting the last cross edge — it's the ideal moment to scout corners.",
+      wrong: "Not quite. During the last cross edge insertion, your eyes should be on the <em>top-layer white corners</em>, finding the easiest one to slot next."
+    },
+    {
+      correct: "✓ Right. Flipping reveals the new top layer for the first time. Immediately scan for a second-layer edge that matches a side centre colour.",
+      wrong: "Not quite. After flipping, you're entering Stage 3 (second-layer edges). Look for an edge in the top layer whose colours match a side centre."
+    },
+    {
+      correct: "✓ Correct. The yellow face is visible the whole time you're inserting that last edge — use it to count cross petals so you enter Stage 4 already diagnosed.",
+      wrong: "Not quite. While inserting the last 2nd-layer edge, glance at the yellow face and <em>count cross petals</em> so you already know your OLL case before Stage 3 ends."
+    },
+    {
+      correct: "✓ Correct. You need the oriented-corner count before choosing how many Sune applications to apply. 0, 1 (adjacent), or 1 (diagonal) each require a different starting hold.",
+      wrong: "Not quite. After the yellow cross is done, count yellow corners with stickers facing up. This tells you how many Sune applications you'll need and how to hold the cube."
+    },
+    {
+      correct: "✓ That's the core of it. Algorithms become mechanical with practice. Look-ahead recycles that freed attention into forward planning.",
+      wrong: "Not quite. Look-ahead is about using freed mental bandwidth — once algorithms are automatic, your mind can plan <em>ahead</em> of your hands, eliminating inspection pauses."
+    }
+  ];
+
+  function updateProgress(qIndex) {
+    progressFill.style.width = (qIndex / totalQ * 100) + '%';
+  }
+
+  questions.forEach((block, idx) => {
+    const options = block.querySelectorAll('.option-btn');
+    const feedback = block.querySelector('.feedback');
+    const nextBtn = block.querySelector('.next-btn');
+
+    options.forEach(btn => {
+      btn.addEventListener('click', function () {
+        if (this.disabled) return;
+        options.forEach(b => b.disabled = true);
+
+        const isCorrect = this.dataset.correct === 'true';
+        if (isCorrect) {
+          this.classList.add('correct');
+          score++;
+          feedback.className = 'feedback show correct-fb';
+          feedback.innerHTML = feedbacks[idx].correct;
+        } else {
+          this.classList.add('wrong');
+          feedback.className = 'feedback show wrong-fb';
+          feedback.innerHTML = feedbacks[idx].wrong;
+          // Highlight correct answer
+          options.forEach(b => {
+            if (b.dataset.correct === 'true') b.classList.add('correct');
+          });
+        }
+        nextBtn.classList.add('show');
+      });
+    });
+
+    nextBtn.addEventListener('click', function () {
+      current++;
+      updateProgress(current);
+      if (current < totalQ) {
+        block.classList.remove('active');
+        questions[current].classList.add('active');
+      } else {
+        block.classList.remove('active');
+        showScore();
+      }
+    });
+  });
+
+  function showScore() {
+    progressFill.style.width = '100%';
+    scoreBlock.style.display = 'block';
+    scoreNum.textContent = score + '/' + totalQ;
+
+    const pct = score / totalQ;
+    if (pct === 1) {
+      scoreLabel.textContent = 'Perfect score!';
+      scoreMsg.textContent = "You've nailed all 5 transition windows. Do today's drill and you'll feel the difference in your next full solve.";
+    } else if (pct >= 0.6) {
+      scoreLabel.textContent = 'Good — a couple to revisit.';
+      scoreMsg.textContent = "Re-read the transition windows you missed, then try the drill. The quiz will be here when you want to retest.";
+    } else {
+      scoreLabel.textContent = 'Worth reviewing the table above.';
+      scoreMsg.textContent = "Scroll back to the Transition Windows table, read through each window once more, then retry. This is the core of the lesson.";
+    }
+  }
+
+  window.resetQuiz = function () {
+    current = 0;
+    score = 0;
+    updateProgress(0);
+    scoreBlock.style.display = 'none';
+    questions.forEach((block, idx) => {
+      block.classList.remove('active');
+      const opts = block.querySelectorAll('.option-btn');
+      opts.forEach(b => {
+        b.disabled = false;
+        b.classList.remove('correct', 'wrong');
+      });
+      const fb = block.querySelector('.feedback');
+      fb.className = 'feedback';
+      fb.innerHTML = '';
+      block.querySelector('.next-btn').classList.remove('show');
+    });
+    questions[0].classList.add('active');
+  };
+
+  updateProgress(0);
+})();
+</script>
+</body>
+</html>
