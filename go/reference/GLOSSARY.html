@@ -524,5 +524,54 @@
   </tr>
 </table>
 
+<h2>context.Context (Lesson 12)</h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>context.Context</td>
+    <td>AbortSignal</td>
+    <td>An interface carrying cancellation signals, deadlines, and key/value pairs. Passed as the first argument to any function doing I/O.</td>
+  </tr>
+  <tr>
+    <td>r.Context()</td>
+    <td>req.signal (Fetch API)</td>
+    <td>Returns the context attached to an HTTP request. Cancelled automatically when the client disconnects.</td>
+  </tr>
+  <tr>
+    <td>context.WithTimeout(ctx, d)</td>
+    <td>AbortSignal.timeout(ms)</td>
+    <td>Returns a derived context that cancels after duration <code>d</code>. Also cancels early if parent is cancelled. Always pair with <code>defer cancel()</code>.</td>
+  </tr>
+  <tr>
+    <td>context.WithCancel(ctx)</td>
+    <td>new AbortController()</td>
+    <td>Returns a derived context and a <code>cancel()</code> function. Call <code>cancel()</code> to cancel. Always <code>defer cancel()</code>.</td>
+  </tr>
+  <tr>
+    <td>ctx.Done()</td>
+    <td>signal.addEventListener("abort", …)</td>
+    <td>A channel that is closed when the context is cancelled. Use in a <code>select</code> to react to cancellation.</td>
+  </tr>
+  <tr>
+    <td>ctx.Err()</td>
+    <td>signal.reason</td>
+    <td>Returns the cancellation reason: <code>context.Canceled</code> or <code>context.DeadlineExceeded</code>. Non-nil only after <code>Done()</code> is closed.</td>
+  </tr>
+  <tr>
+    <td>context.WithValue(ctx, key, val)</td>
+    <td>No direct equivalent</td>
+    <td>Attaches a key/value pair to a context. Used in middleware to pass request-scoped data (e.g. user ID) to downstream handlers. Always use a private named type as the key to avoid collisions.</td>
+  </tr>
+  <tr>
+    <td>http.NewRequestWithContext(ctx, …)</td>
+    <td>fetch(url, { signal: ctx })</td>
+    <td>Creates an outbound HTTP request that respects the given context. If the context is cancelled, the request is aborted.</td>
+  </tr>
+</table>
+
 </body>
 </html>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 12 — context.Context in HTTP Handlers · Go for TS Devs</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --accent2: #7c6af7;
+    --green: #3ab54a;
+    --red: #e05c5c;
+    --yellow: #f5c842;
+    --ts: #3178c6;
+    --go: #00adb5;
+    --code-bg: #0a0d14;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    line-height: 1.65;
+    font-size: 1rem;
+  }
+  /* ── Typography ── */
+  h1 { font-size: 2rem; color: #fff; margin-bottom: 0.3rem; }
+  h2 { font-size: 1.2rem; color: #fff; margin: 2.5rem 0 0.8rem; }
+  h3 { font-size: 1rem; color: var(--accent); margin: 1.5rem 0 0.5rem; letter-spacing: 0.03em; text-transform: uppercase; font-size: 0.82rem; }
+  p  { color: var(--text); margin-bottom: 0.9rem; }
+  ul { padding-left: 1.4rem; margin-bottom: 0.9rem; }
+  li { margin-bottom: 0.35rem; color: var(--text); }
+  a  { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { background: var(--code-bg); color: #a9d9e8; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.9em; padding: 0.1em 0.35em; border-radius: 3px; }
+  strong { color: #fff; }
+
+  /* ── Lesson header ── */
+  .meta { color: var(--muted); font-size: 0.88rem; margin-bottom: 2.5rem; }
+  .meta span { margin-right: 1.2rem; }
+  .tag { background: var(--surface); border: 1px solid var(--border); padding: 0.1em 0.5em; border-radius: 4px; font-size: 0.78rem; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    margin: 0.8rem 0 1.2rem;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  pre .kw  { color: #c792ea; }
+  pre .fn  { color: #82aaff; }
+  pre .str { color: #c3e88d; }
+  pre .cmt { color: #546e7a; font-style: italic; }
+  pre .ty  { color: #ffcb6b; }
+  pre .num { color: #f78c6c; }
+  pre .rx  { color: var(--accent); }
+
+  /* ── Side-by-side ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1rem 0 1.5rem;
+  }
+  @media (max-width: 620px) { .compare { grid-template-columns: 1fr; } }
+  .compare-block { border-radius: 8px; overflow: hidden; }
+  .compare-block .label {
+    padding: 0.35rem 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .lang-ts .label { background: #0d2044; color: #5ba3e8; }
+  .lang-go .label { background: #003035; color: var(--accent); }
+  .compare-block pre { margin: 0; border-top: none; border-radius: 0 0 8px 8px; border-color: transparent; }
+
+  /* ── Callouts ── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 8px 8px 0;
+    padding: 0.8rem 1.1rem;
+    margin: 1rem 0 1.4rem;
+    font-size: 0.93rem;
+  }
+  .callout.warn { border-color: var(--yellow); }
+  .callout.tip  { border-color: var(--green); }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; margin: 1rem 0 1.5rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.89rem; }
+  th { background: var(--surface2); color: var(--muted); font-weight: 600; padding: 0.55rem 0.9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .ts-col { color: #5ba3e8; font-family: monospace; }
+  .go-col { color: var(--accent); font-family: monospace; }
+
+  /* ── Section divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  /* ── Quiz ── */
+  #quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-top: 2.5rem; }
+  #quiz h2 { margin-top: 0; margin-bottom: 1.2rem; }
+  .q-block { margin-bottom: 1.8rem; }
+  .q-block p { font-weight: 600; color: #fff; margin-bottom: 0.7rem; }
+  .q-block .hint { font-size: 0.83rem; color: var(--muted); font-weight: 400; }
+  .options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    font-size: 0.92rem;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: left;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .option:hover:not(:disabled) { border-color: var(--accent); background: #1f2435; }
+  .option.correct  { border-color: var(--green); background: #0e2411; color: #6ddb7e; }
+  .option.wrong    { border-color: var(--red);   background: #2a0f0f; color: #d97070; }
+  .option:disabled { cursor: default; }
+  .feedback { margin-top: 0.5rem; font-size: 0.85rem; min-height: 1.2em; }
+  .feedback.ok  { color: var(--green); }
+  .feedback.bad { color: var(--red); }
+
+  /* Score */
+  #score-block { display: none; margin-top: 1.5rem; padding: 1.1rem 1.3rem; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
+  #score-block p { margin: 0; font-size: 1.05rem; color: #fff; }
+  #score-block span { color: var(--accent); font-weight: 700; font-size: 1.3rem; }
+
+  /* ── Footer ── */
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>context.Context in HTTP Handlers</h1>
+<div class="meta">
+  <span>📅 Lesson 12</span>
+  <span class="tag">Go for TS Devs</span>
+  <span class="tag">~8 min</span>
+</div>
+
+<p>Every <code>http.Request</code> carries a <code>context.Context</code>. It tells your handler when the client has disconnected, when a deadline has passed, and lets you pass request-scoped values (like a request ID) down through the call stack — without touching function signatures all the way.</p>
+<p>This is the last piece before you can write production-grade HTTP handlers. Let's make it concrete.</p>
+
+<hr>
+
+<h2>1. The TypeScript mental model</h2>
+<p>If you've used <code>AbortController</code> in the browser or in Node's <code>fetch</code>, you already know the idea:</p>
+
+<div class="compare">
+  <div class="compare-block lang-ts">
+    <div class="label">TypeScript</div>
+    <pre><span class="kw">const</span> controller = <span class="kw">new</span> <span class="ty">AbortController</span>();
+<span class="kw">const</span> { signal } = controller;
+
+fetch(<span class="str">"/api/data"</span>, { signal });
+
+<span class="cmt">// cancel if client navigates away</span>
+signal.addEventListener(<span class="str">"abort"</span>, () => {
+  console.log(<span class="str">"cancelled"</span>);
+});
+
+controller.abort(); <span class="cmt">// trigger cancellation</span></pre>
+  </div>
+  <div class="compare-block lang-go">
+    <div class="label">Go</div>
+    <pre><span class="cmt">// context is passed as first arg by convention</span>
+<span class="kw">func</span> <span class="fn">fetchData</span>(ctx <span class="ty">context.Context</span>) {
+  req, _ := http.<span class="fn">NewRequestWithContext</span>(
+    ctx, <span class="str">"GET"</span>, <span class="str">"/api/data"</span>, <span class="kw">nil</span>,
+  )
+  <span class="cmt">// if ctx is cancelled, the request stops</span>
+  http.DefaultClient.<span class="fn">Do</span>(req)
+}</pre>
+  </div>
+</div>
+
+<p><code>context.Context</code> is Go's universal cancellation signal. It flows <em>in</em> through every function that does I/O — database queries, outbound HTTP calls, file reads — so any of them can stop work early if the client gives up.</p>
+
+<hr>
+
+<h2>2. What context.Context actually is</h2>
+<p>It's an interface with four methods. You'll rarely call them directly, but knowing them de-mystifies the whole API:</p>
+
+<pre><span class="kw">type</span> <span class="ty">Context</span> <span class="kw">interface</span> {
+  <span class="fn">Deadline</span>() (deadline <span class="ty">time.Time</span>, ok <span class="ty">bool</span>)  <span class="cmt">// when will this context expire?</span>
+  <span class="fn">Done</span>()     <-<span class="kw">chan</span> <span class="kw">struct</span>{}                 <span class="cmt">// closed when context is cancelled</span>
+  <span class="fn">Err</span>()      <span class="ty">error</span>                            <span class="cmt">// why it was cancelled</span>
+  <span class="fn">Value</span>(key <span class="kw">any</span>) <span class="kw">any</span>                         <span class="cmt">// look up a key/value pair</span>
+}</pre>
+
+<div class="callout">
+  <strong>The only one you'll check directly:</strong> <code>ctx.Done()</code> — a channel that gets closed when the context is cancelled. You select on it to bail out of a slow operation.
+</div>
+
+<h3>Three origins of a context</h3>
+<div class="table-wrap">
+<table>
+  <tr><th>Source</th><th>How to get it</th><th>When it cancels</th></tr>
+  <tr><td>HTTP request</td><td class="go-col">r.Context()</td><td>Client disconnects, or server shuts down</td></tr>
+  <tr><td>Manual timeout</td><td class="go-col">context.WithTimeout(ctx, 3*time.Second)</td><td>After the duration</td></tr>
+  <tr><td>Manual cancel</td><td class="go-col">context.WithCancel(ctx)</td><td>When you call <code>cancel()</code></td></tr>
+</table>
+</div>
+
+<hr>
+
+<h2>3. r.Context() — your handler's built-in context</h2>
+<p>The HTTP server populates every request's context automatically. Pull it out with <code>r.Context()</code> and pass it to everything downstream:</p>
+
+<pre><span class="kw">func</span> <span class="fn">GetUserHandler</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+  ctx := r.<span class="fn">Context</span>()                        <span class="cmt">// ← get it here</span>
+
+  user, err := db.<span class="fn">QueryUserContext</span>(ctx, id)  <span class="cmt">// ← pass it everywhere</span>
+  <span class="kw">if</span> err != <span class="kw">nil</span> {
+    <span class="cmt">// if the client disconnected, err will be context.Canceled</span>
+    http.<span class="fn">Error</span>(w, err.<span class="fn">Error</span>(), http.StatusInternalServerError)
+    <span class="kw">return</span>
+  }
+  <span class="cmt">// ... encode response</span>
+}</pre>
+
+<p>If the client closes the connection mid-query, the database driver sees the context is cancelled and stops the query. You save CPU, memory, and DB connections — automatically.</p>
+
+<hr>
+
+<h2>4. Adding a timeout to an outbound call</h2>
+<p>A common pattern: you call a third-party API from your handler. You don't want to wait forever. Wrap the request context with a timeout:</p>
+
+<pre><span class="kw">func</span> <span class="fn">WeatherHandler</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+  <span class="cmt">// give the outbound call max 2 seconds</span>
+  ctx, cancel := context.<span class="fn">WithTimeout</span>(r.<span class="fn">Context</span>(), <span class="num">2</span>*time.Second)
+  <span class="kw">defer</span> <span class="fn">cancel</span>() <span class="cmt">// ← ALWAYS defer cancel — prevents a goroutine leak</span>
+
+  req, err := http.<span class="fn">NewRequestWithContext</span>(ctx, <span class="str">"GET"</span>,
+    <span class="str">"https://api.weather.io/current"</span>, <span class="kw">nil</span>)
+  <span class="kw">if</span> err != <span class="kw">nil</span> { <span class="cmt">/* ... */</span> }
+
+  resp, err := http.DefaultClient.<span class="fn">Do</span>(req)
+  <span class="kw">if</span> err != <span class="kw">nil</span> {
+    <span class="cmt">// could be context.DeadlineExceeded</span>
+    http.<span class="fn">Error</span>(w, <span class="str">"upstream timeout"</span>, http.StatusGatewayTimeout)
+    <span class="kw">return</span>
+  }
+  <span class="kw">defer</span> resp.Body.<span class="fn">Close</span>()
+  <span class="cmt">// ...</span>
+}</pre>
+
+<div class="callout warn">
+  <strong>Always <code>defer cancel()</code>.</strong> <code>context.WithTimeout</code> and <code>context.WithCancel</code> start an internal goroutine. If you never call <code>cancel()</code>, that goroutine leaks until the parent context expires. The pattern <code>ctx, cancel := ...; defer cancel()</code> is idiomatic Go — you'll see it everywhere.
+</div>
+
+<hr>
+
+<h2>5. Checking if a client disconnected</h2>
+<p>For handlers with slow, multi-step processing, you can bail out early:</p>
+
+<pre><span class="kw">func</span> <span class="fn">SlowHandler</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+  ctx := r.<span class="fn">Context</span>()
+
+  result1 := <span class="fn">stepOne</span>(ctx)
+
+  <span class="cmt">// check between steps — no point continuing if client left</span>
+  <span class="kw">select</span> {
+  <span class="kw">case</span> <-ctx.<span class="fn">Done</span>():
+    <span class="cmt">// ctx.Err() is context.Canceled or context.DeadlineExceeded</span>
+    http.<span class="fn">Error</span>(w, <span class="str">"request cancelled"</span>, http.StatusRequestTimeout)
+    <span class="kw">return</span>
+  <span class="kw">default</span>:
+    <span class="cmt">// context still alive, keep going</span>
+  }
+
+  result2 := <span class="fn">stepTwo</span>(ctx, result1)
+  <span class="cmt">// ...</span>
+}</pre>
+
+<p>The <code>select</code> with <code>default</code> is non-blocking — it checks the channel without waiting. Use this between expensive steps.</p>
+
+<hr>
+
+<h2>6. Storing values in a context</h2>
+<p>Middleware often attaches request-scoped data — like an authenticated user ID — so handlers don't need an extra parameter:</p>
+
+<pre><span class="cmt">// internal/middleware/auth.go</span>
+
+<span class="kw">type</span> <span class="ty">contextKey</span> <span class="ty">string</span>  <span class="cmt">// private type — prevents key collisions</span>
+<span class="kw">const</span> userIDKey <span class="ty">contextKey</span> = <span class="str">"userID"</span>
+
+<span class="kw">func</span> <span class="fn">AuthMiddleware</span>(next <span class="ty">http.Handler</span>) <span class="ty">http.Handler</span> {
+  <span class="kw">return</span> http.<span class="fn">HandlerFunc</span>(<span class="kw">func</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+    userID := <span class="fn">validateToken</span>(r.<span class="fn">Header</span>.<span class="fn">Get</span>(<span class="str">"Authorization"</span>))
+
+    <span class="cmt">// inject the user ID into the context</span>
+    ctx := context.<span class="fn">WithValue</span>(r.<span class="fn">Context</span>(), userIDKey, userID)
+    next.<span class="fn">ServeHTTP</span>(w, r.<span class="fn">WithContext</span>(ctx))
+  })
+}
+
+<span class="cmt">// internal/handlers/user.go</span>
+<span class="kw">func</span> <span class="fn">GetProfileHandler</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+  userID, _ := r.<span class="fn">Context</span>().<span class="fn">Value</span>(userIDKey).(<span class="ty">string</span>)
+  <span class="cmt">// use userID ...</span>
+}</pre>
+
+<div class="callout tip">
+  <strong>Use a private type for context keys.</strong> If you use a plain string like <code>"userID"</code> as a key, any package can collide with it. A private named type (<code>type contextKey string</code>) in your package is package-scoped — no collision possible.
+</div>
+
+<hr>
+
+<h2>7. TS → Go cheat sheet</h2>
+<div class="table-wrap">
+<table>
+  <tr><th>TypeScript</th><th>Go</th></tr>
+  <tr>
+    <td class="ts-col">new AbortController()</td>
+    <td class="go-col">context.WithCancel(ctx)</td>
+  </tr>
+  <tr>
+    <td class="ts-col">controller.signal</td>
+    <td class="go-col">ctx (passed as first arg)</td>
+  </tr>
+  <tr>
+    <td class="ts-col">signal.aborted</td>
+    <td class="go-col">ctx.Err() != nil</td>
+  </tr>
+  <tr>
+    <td class="ts-col">signal.addEventListener("abort", fn)</td>
+    <td class="go-col">select { case &lt;-ctx.Done(): ... }</td>
+  </tr>
+  <tr>
+    <td class="ts-col">AbortSignal.timeout(2000)</td>
+    <td class="go-col">context.WithTimeout(ctx, 2*time.Second)</td>
+  </tr>
+  <tr>
+    <td class="ts-col">No equivalent (global state / closure)</td>
+    <td class="go-col">context.WithValue(ctx, key, val)</td>
+  </tr>
+</table>
+</div>
+
+<hr>
+
+<!-- ── QUIZ ── -->
+<div id="quiz">
+  <h2>✦ Quick check</h2>
+
+  <!-- Q1 -->
+  <div class="q-block" id="q1">
+    <p>1. What does <code>defer cancel()</code> protect against when using <code>context.WithTimeout</code>?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q1',false)">It prevents the context from expiring too early</button>
+      <button class="option" onclick="answer(this,'q1',true)">It stops an internal goroutine from leaking if it's never called</button>
+      <button class="option" onclick="answer(this,'q1',false)">It cancels the HTTP response</button>
+      <button class="option" onclick="answer(this,'q1',false)">It resets the timeout so it can be reused</button>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-block" id="q2">
+    <p>2. How do you get the context from an incoming HTTP request inside a handler?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q2',false)">context.Background()</button>
+      <button class="option" onclick="answer(this,'q2',false)">w.Context()</button>
+      <button class="option" onclick="answer(this,'q2',true)">r.Context()</button>
+      <button class="option" onclick="answer(this,'q2',false)">http.Context(r)</button>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-block" id="q3">
+    <p>3. You have a handler that makes a DB query. The client disconnects mid-query. If you pass <code>r.Context()</code> to the query, what happens? <span class="hint">(Pick the best answer.)</span></p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q3',false)">The handler panics</button>
+      <button class="option" onclick="answer(this,'q3',true)">The DB driver cancels the query and returns a context.Canceled error</button>
+      <button class="option" onclick="answer(this,'q3',false)">The query finishes as normal — context has no effect on DB drivers</button>
+      <button class="option" onclick="answer(this,'q3',false)">The server restarts the connection</button>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-block" id="q4">
+    <p>4. Why should you define context keys as a private named type (<code>type contextKey string</code>) instead of a plain string?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q4',false)">Because context.WithValue only accepts custom types</button>
+      <button class="option" onclick="answer(this,'q4',false)">To improve performance at runtime</button>
+      <button class="option" onclick="answer(this,'q4',true)">To prevent key collisions with other packages using the same string value</button>
+      <button class="option" onclick="answer(this,'q4',false)">Because the Go compiler requires it</button>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="q-block" id="q5">
+    <p>5. What does a non-blocking <code>select { case &lt;-ctx.Done(): ... default: }</code> do?</p>
+    <div class="options">
+      <button class="option" onclick="answer(this,'q5',false)">Waits until the context is cancelled, then continues</button>
+      <button class="option" onclick="answer(this,'q5',true)">Checks if the context is already cancelled without blocking; takes the default branch if not</button>
+      <button class="option" onclick="answer(this,'q5',false)">Cancels the context immediately</button>
+      <button class="option" onclick="answer(this,'q5',false)">Starts a goroutine to watch for cancellation</button>
+    </div>
+    <div class="feedback" id="q5-fb"></div>
+  </div>
+
+  <div id="score-block">
+    <p>Score: <span id="score-text"></span></p>
+  </div>
+</div>
+
+<hr>
+
+<h2>References</h2>
+<ul>
+  <li><a href="https://pkg.go.dev/context" target="_blank">pkg.go.dev — context package</a> — the official API docs</li>
+  <li><a href="https://go.dev/blog/context" target="_blank">The Go Blog — Go Concurrency Patterns: Context</a> (2014) — the canonical explainer</li>
+  <li><a href="https://pkg.go.dev/net/http#Request.Context" target="_blank">pkg.go.dev — Request.Context()</a> — how it works in the HTTP server</li>
+  <li><a href="https://pkg.go.dev/net/http#NewRequestWithContext" target="_blank">pkg.go.dev — http.NewRequestWithContext</a> — passing context to outbound calls</li>
+</ul>
+
+<footer>
+  <p>Go for TypeScript Devs · Lesson 12 of the HTTP Server series · <a href="../../index.html">Back to all lessons</a></p>
+  <p style="margin-top:0.5rem;">Questions? Ask your Hermes agent: <code>hermes "In lesson 12, why does WithValue need a private key type?"</code></p>
+</footer>
+
+<script>
+  const explanations = {
+    q1: "context.WithTimeout (and WithCancel) spin up an internal goroutine to watch for the deadline. Calling cancel() releases that goroutine. If you never call it, the goroutine lives until the parent context expires — a leak.",
+    q2: "r.Context() returns the context the HTTP server attached to this request. It's already pre-populated and will be cancelled if the client disconnects.",
+    q3: "Standard library DB drivers (database/sql) accept a context parameter. When the context is cancelled, the driver stops the in-flight query and returns context.Canceled. This is one of the biggest wins of using context — no wasted DB work.",
+    q4: "context.WithValue uses interface{} equality for key lookup. Two different packages using the plain string 'userID' would conflict. A private named type is package-scoped — only your package can produce a value of that type, so collisions are impossible.",
+    q5: "The default branch makes the select non-blocking. If ctx.Done() is already closed (context cancelled), that case runs. Otherwise, the default runs immediately and execution continues. Use this to check for cancellation between expensive steps without waiting.",
+  };
+
+  const scores = {};
+  const totals = { q1:0, q2:0, q3:0, q4:0, q5:0 };
+
+  function answer(btn, qid, correct) {
+    if (totals[qid] !== 0) return; // already answered
+    totals[qid] = 1;
+
+    const buttons = btn.closest('.q-block').querySelectorAll('.option');
+    buttons.forEach(b => b.disabled = true);
+
+    const fb = document.getElementById(qid + '-fb');
+    if (correct) {
+      btn.classList.add('correct');
+      fb.textContent = '✓ Correct! ' + explanations[qid];
+      fb.className = 'feedback ok';
+      scores[qid] = 1;
+    } else {
+      btn.classList.add('wrong');
+      fb.textContent = '✗ Not quite. ' + explanations[qid];
+      fb.className = 'feedback bad';
+      scores[qid] = 0;
+    }
+
+    // Show score when all answered
+    if (Object.keys(totals).filter(k => totals[k] === 1).length === 5) {
+      const total = Object.values(scores).reduce((a, b) => a + b, 0);
+      const block = document.getElementById('score-block');
+      block.style.display = 'block';
+      const msg = total === 5 ? ' — perfect! 🎉' : total >= 3 ? ' — solid.' : ' — review the callouts above.';
+      document.getElementById('score-text').textContent = total + ' / 5' + msg;
+    }
+  }
+</script>
+</body>
+</html>
