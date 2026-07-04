@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 12 — Intuitive F2L: First Two Layers</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #20243a;
+      --border: #2a2d3a;
+      --text: #e8eaf0;
+      --muted: #7a7f99;
+      --accent: #f57c00;
+      --accent-light: #ffaa55;
+      --correct: #0d2e0d;
+      --correct-text: #4caf50;
+      --wrong: #2e0d0d;
+      --wrong-text: #ef5350;
+      --code-bg: #13161f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+      line-height: 1.7;
+    }
+    .tag {
+      color: var(--accent);
+      font-size: 0.76rem;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    h1 { font-size: 1.95rem; color: #fff; margin-bottom: 0.3rem; line-height: 1.25; }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 1.1rem;
+      color: var(--accent-light);
+      margin: 2.2rem 0 0.8rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.4rem;
+    }
+    h3 { font-size: 0.97rem; color: #fff; margin: 1.3rem 0 0.5rem; }
+    p { margin-bottom: 0.9rem; }
+    strong { color: #fff; }
+    a { color: var(--accent-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .highlight {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent);
+      padding: 0.9rem 1.1rem;
+      border-radius: 0 7px 7px 0;
+      margin: 1rem 0;
+    }
+    code {
+      background: var(--code-bg);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+      font-size: 0.87rem;
+      color: #ffd580;
+    }
+    .alg {
+      font-family: 'Fira Code', Consolas, monospace;
+      font-size: 1rem;
+      color: #ffd580;
+      background: var(--code-bg);
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 5px;
+      letter-spacing: 0.05em;
+      margin: 0.15rem 0;
+    }
+    .alg-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin: 0.6rem 0;
+    }
+    .alg-name { color: var(--muted); font-size: 0.84rem; }
+
+    /* Stage comparison */
+    .stage-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    .stage-table th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stage-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .stage-table tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+    .badge-old { background: rgba(122,63,0,0.3); color: #cc8844; }
+    .badge-new { background: rgba(76,175,80,0.15); color: #4caf50; }
+    .badge-same { background: rgba(122,127,153,0.15); color: var(--muted); }
+
+    /* Pair diagram */
+    .pair-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1.1rem 0;
+    }
+    .pair-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      min-width: 200px;
+    }
+    .pair-card-label {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .pair-pieces {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .piece-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .piece-name {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+    .stickers-h {
+      display: flex;
+      gap: 2px;
+    }
+    .sticker {
+      width: 22px;
+      height: 22px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .plus { font-size: 1.1rem; color: var(--muted); }
+    .arrow { font-size: 1.1rem; color: var(--accent); }
+    .slot-target {
+      border: 2px dashed var(--accent);
+      border-radius: 6px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+      color: var(--accent-light);
+      white-space: nowrap;
+    }
+
+    /* Colors */
+    .W { background: #f5f5f5; }
+    .Y { background: #ffca28; }
+    .R { background: #e53935; }
+    .O { background: #fb8c00; }
+    .B { background: #1e88e5; }
+    .G { background: #43a047; }
+    .X { background: #444; }
+
+    /* Steps */
+    ol.steps {
+      padding-left: 1.4rem;
+      margin: 0.5rem 0;
+    }
+    ol.steps li {
+      margin-bottom: 0.55rem;
+      padding-left: 0.2rem;
+    }
+    ul.bullets {
+      padding-left: 1.4rem;
+      margin: 0.5rem 0;
+    }
+    ul.bullets li {
+      margin-bottom: 0.45rem;
+      padding-left: 0.2rem;
+    }
+
+    /* Case cards */
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .case-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 1rem 1.1rem;
+    }
+    .case-number {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.35rem;
+    }
+    .case-title {
+      font-size: 0.93rem;
+      color: #fff;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .case-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.7rem;
+    }
+    .case-action {
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    /* Quiz */
+    .quiz-section {
+      margin-top: 2.8rem;
+      border-top: 1px solid var(--border);
+      padding-top: 2rem;
+    }
+    .quiz-intro {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .progress-wrap {
+      background: var(--border);
+      border-radius: 99px;
+      height: 5px;
+      margin-bottom: 1.5rem;
+    }
+    .progress-fill {
+      height: 5px;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.35s ease;
+      width: 0%;
+    }
+    .question-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1.2rem;
+    }
+    .q-num {
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.4rem;
+    }
+    .q-text {
+      color: #fff;
+      font-size: 0.97rem;
+      margin-bottom: 1rem;
+      line-height: 1.55;
+    }
+    .choices { display: flex; flex-direction: column; gap: 0.5rem; }
+    .choice {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 0.65rem 1rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: var(--text);
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+    }
+    .choice:hover:not([disabled]) {
+      border-color: var(--accent);
+      background: #1c2030;
+    }
+    .choice.correct {
+      background: var(--correct);
+      border-color: var(--correct-text);
+      color: var(--correct-text);
+    }
+    .choice.wrong {
+      background: var(--wrong);
+      border-color: var(--wrong-text);
+      color: var(--wrong-text);
+    }
+    .feedback {
+      margin-top: 0.75rem;
+      padding: 0.6rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.86rem;
+      display: none;
+      line-height: 1.5;
+    }
+    .feedback.show { display: block; }
+    .feedback.fb-correct { background: var(--correct); color: var(--correct-text); }
+    .feedback.fb-wrong { background: var(--wrong); color: var(--wrong-text); }
+
+    /* Score */
+    .score-banner {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-top: 1.25rem;
+    }
+    .score-banner.show { display: block; }
+    .score-big { font-size: 2.8rem; font-weight: 700; color: var(--accent-light); line-height: 1; }
+    .score-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+    .score-msg { color: var(--text); font-size: 0.95rem; margin-top: 0.75rem; }
+
+    /* Ask-me */
+    .ask-me {
+      margin-top: 2.5rem;
+      background: linear-gradient(135deg, #1a1d27 0%, #1c2035 100%);
+      border: 1px solid #323555;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+    }
+    .ask-me p { color: var(--muted); font-size: 0.9rem; margin: 0; }
+    .ask-me strong { color: var(--accent-light); }
+
+    /* Footer */
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .footer a { color: var(--muted); }
+    .footer a:hover { color: var(--accent-light); }
+
+    @media (max-width: 540px) {
+      h1 { font-size: 1.55rem; }
+      .pair-row { flex-direction: column; }
+      .pair-card { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="tag">Rubik's Cube · Lesson 12</div>
+  <h1>Intuitive F2L</h1>
+  <p class="subtitle">Collapse Stages 1–3 into one smarter system — solving the First Two Layers together.</p>
+
+  <!-- ─── THE BIG PICTURE ─── -->
+  <h2>Why F2L?</h2>
+  <p>You already know how to solve a cube. Your beginner method has 8 stages. But stages 1, 2, and 3 — white cross, white corners, second-layer edges — are doing the same physical job: filling the <strong>bottom two layers</strong>. F2L combines them.</p>
+
+  <div class="card" style="overflow-x:auto;">
+    <table class="stage-table">
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>What it solves</th>
+          <th>Beginner</th>
+          <th>F2L</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>White cross (4 edges)</td>
+          <td><span class="badge badge-old">separate</span></td>
+          <td rowspan="3" style="color: var(--correct-text); font-weight:600; font-size:0.88rem; vertical-align:middle;">One combined stage <span class="badge badge-new">F2L</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>White corners (4 corners)</td>
+          <td><span class="badge badge-old">separate</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Second-layer edges (4 edges)</td>
+          <td><span class="badge badge-old">separate</span></td>
+        </tr>
+        <tr>
+          <td>4–8</td>
+          <td>Last layer (OLL + PLL)</td>
+          <td colspan="2" style="text-align:center;"><span class="badge badge-same">unchanged</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>You need no new algorithms. The <strong>Right Trigger</strong> (<code>R U R'</code>) and <strong>Left Trigger</strong> (<code>L' U' L</code>) you already know are the workhorses of F2L. What changes is <em>how you think</em> about the pieces you're moving.</p>
+
+  <!-- ─── PAIRS ─── -->
+  <h2>Corner-Edge Pairs: the Core Unit</h2>
+  <p>In F2L, the basic unit is a <strong>pair</strong>: one corner + one edge that belong in the <em>same slot</em>. They always share <strong>two colours</strong> (everything except white or yellow).</p>
+
+  <div class="pair-row">
+    <div class="pair-card">
+      <div class="pair-card-label">Pair A — Blue/Red</div>
+      <div class="pair-pieces">
+        <div class="piece-box">
+          <div class="stickers-h">
+            <div class="sticker W"></div>
+            <div class="sticker R"></div>
+            <div class="sticker B"></div>
+          </div>
+          <div class="piece-name">corner (W·R·B)</div>
+        </div>
+        <div class="plus">+</div>
+        <div class="piece-box">
+          <div class="stickers-h">
+            <div class="sticker R"></div>
+            <div class="sticker B"></div>
+          </div>
+          <div class="piece-name">edge (R·B)</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="slot-target">Blue-Red slot</div>
+      </div>
+    </div>
+    <div class="pair-card">
+      <div class="pair-card-label">Pair B — Green/Orange</div>
+      <div class="pair-pieces">
+        <div class="piece-box">
+          <div class="stickers-h">
+            <div class="sticker W"></div>
+            <div class="sticker G"></div>
+            <div class="sticker O"></div>
+          </div>
+          <div class="piece-name">corner (W·G·O)</div>
+        </div>
+        <div class="plus">+</div>
+        <div class="piece-box">
+          <div class="stickers-h">
+            <div class="sticker G"></div>
+            <div class="sticker O"></div>
+          </div>
+          <div class="piece-name">edge (G·O)</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="slot-target">Green-Orange slot</div>
+      </div>
+    </div>
+  </div>
+
+  <p>There are <strong>4 pairs</strong> in total, one per slot. To find a pair: look at any bottom-layer corner's two non-white colours → the matching edge has exactly those same two colours.</p>
+
+  <div class="highlight">
+    <strong>Rule:</strong> A corner always has white on one sticker. Its pair partner is the edge whose two stickers match the corner's two <em>non-white</em> stickers.
+  </div>
+
+  <!-- ─── SLOTS ─── -->
+  <h2>The 4 Slots</h2>
+  <p>A <strong>slot</strong> is the space where a corner-edge pair sits in the solved cube — at the junction between the bottom face and two side faces. Each slot is identified by the two side-centre colours adjacent to it.</p>
+
+  <div class="card">
+    <ol class="steps">
+      <li>Hold the cube with yellow on top.</li>
+      <li>Look at the 4 side centres: Front, Right, Back, Left.</li>
+      <li>Each corner is between 3 centres (white + 2 sides). Each edge is between 2 centres.</li>
+      <li>The slot for a pair = the corner where those two side centres meet, in the bottom layer.</li>
+    </ol>
+  </div>
+
+  <p>Example: Blue centre on the right, Red centre in front → the <em>Blue-Red slot</em> is the bottom-front-right corner + the front-right edge.</p>
+
+  <!-- ─── INSERTING A PAIR ─── -->
+  <h2>Inserting a Pair</h2>
+  <p>The most common beginner F2L technique: <strong>bring both pieces to the top layer, unite them, then drop them in with a trigger.</strong></p>
+
+  <h3>The Basic Right-Slot Insert</h3>
+  <p><em>Situation:</em> Corner is in the top layer with <strong>white facing right</strong>. The matching edge is in the top layer, sitting in front, with the side-colour showing on the U face.</p>
+
+  <div class="card">
+    <ol class="steps">
+      <li>Use <code>U</code> moves to bring the pair's target slot to the front-right position.</li>
+      <li>Use <code>U</code> to align the corner directly <em>above</em> the right-front corner of the target slot (corner white face points right, toward the R face).</li>
+      <li>Use another <code>U</code> if needed to bring the edge to the front, matching the front-centre colour.</li>
+      <li>Execute the <strong>Right Trigger: <span class="alg">R U R'</span></strong>.</li>
+    </ol>
+  </div>
+
+  <div class="alg-row">
+    <span class="alg">R U R'</span>
+    <span class="alg-name">Right Trigger — inserts into the right slot</span>
+  </div>
+  <div class="alg-row">
+    <span class="alg">L' U' L</span>
+    <span class="alg-name">Left Trigger — inserts into the left slot</span>
+  </div>
+
+  <p>If the pair needs to go into the <strong>left slot</strong> (front-left position), mirror the setup: use <code>U</code> moves to align pieces on the left side, then execute the <strong>Left Trigger</strong> <code>L' U' L</code>.</p>
+
+  <!-- ─── 4 CASES ─── -->
+  <h2>The 4 Situations You'll Meet</h2>
+  <p>You don't need to memorise algorithms for each — you just need to know <em>how to think</em> about them.</p>
+
+  <div class="case-grid">
+    <div class="case-card">
+      <div class="case-number">Case 1</div>
+      <div class="case-title">Both pieces in the top layer</div>
+      <div class="case-desc">This is the ideal case. Both pieces are on U and can be united freely.</div>
+      <div class="case-action">➜ Use U moves to align corner above slot, edge at front. Execute trigger.</div>
+    </div>
+    <div class="case-card">
+      <div class="case-number">Case 2</div>
+      <div class="case-title">Corner in top, edge in middle</div>
+      <div class="case-desc">The edge is stuck in the middle layer (but NOT in its correct slot).</div>
+      <div class="case-action">➜ Eject the edge to the top with a trigger, then solve as Case 1.</div>
+    </div>
+    <div class="case-card">
+      <div class="case-number">Case 3</div>
+      <div class="case-title">Corner in bottom, wrong slot</div>
+      <div class="case-desc">The corner is in a slot, but the wrong one (or unoriented).</div>
+      <div class="case-action">➜ R U R' from that slot to lift it to the top, then solve as Case 1.</div>
+    </div>
+    <div class="case-card">
+      <div class="case-number">Case 4</div>
+      <div class="case-title">Both pieces in wrong slots</div>
+      <div class="case-desc">Both corner and edge are somewhere in the F2L but placed incorrectly.</div>
+      <div class="case-action">➜ Eject one piece at a time to the top. Once both are on U, solve as Case 1.</div>
+    </div>
+  </div>
+
+  <!-- ─── EJECTING ─── -->
+  <h2>Ejecting a Stuck Piece</h2>
+  <p>A piece in the wrong slot is <em>not a problem</em> — it's a two-step fix:</p>
+
+  <div class="card">
+    <ol class="steps">
+      <li>Execute a trigger at that slot's position — e.g. <code>R U R'</code> — to bring the piece up to the top layer.</li>
+      <li>The U face now has the evicted piece. Solve normally.</li>
+    </ol>
+  </div>
+
+  <div class="highlight">
+    <strong>Key insight:</strong> Ejecting a piece always leaves the rest of the F2L intact. You cannot break what's already solved in the bottom two layers by using a trigger at a specific slot — only that slot gets disturbed.
+  </div>
+
+  <!-- ─── PRACTICE LOOP ─── -->
+  <h2>Your Practice Loop for This Lesson</h2>
+  <ul class="bullets">
+    <li>Pick up your cube. Scramble it.</li>
+    <li>Instead of starting with the white cross, look for any <strong>corner-edge pair</strong> (two pieces sharing two non-white colours).</li>
+    <li>Get both pieces to the top layer. Unite them. Insert with a trigger.</li>
+    <li>Repeat for the remaining 3 pairs.</li>
+    <li>Finish the solve with your normal last-layer method (OLL + PLL).</li>
+    <li>Do 3 solves this way. It'll feel slow — that's normal. The efficiency comes with reps.</li>
+  </ul>
+
+  <!-- ─────────────── QUIZ ─────────────── -->
+  <div class="quiz-section">
+    <h2>Quick-Check Quiz</h2>
+    <p class="quiz-intro">4 questions. Instant feedback. Tests the key ideas from this lesson.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="question-block" id="q1">
+      <div class="q-num">Question 1 of 4</div>
+      <div class="q-text">
+        You find a corner with stickers: <strong>White, Orange, Green</strong>. Which edge is its F2L pair partner?
+      </div>
+      <div class="choices">
+        <button class="choice" onclick="answer(this,'q1',false)">White and Orange</button>
+        <button class="choice" onclick="answer(this,'q1',false)">White and Green</button>
+        <button class="choice" onclick="answer(this,'q1',true)">Orange and Green</button>
+        <button class="choice" onclick="answer(this,'q1',false)">Any edge on the top layer</button>
+      </div>
+      <div class="feedback" id="q1-fb"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="question-block" id="q2">
+      <div class="q-num">Question 2 of 4</div>
+      <div class="q-text">
+        How many F2L pairs must you insert to finish the first two layers?
+      </div>
+      <div class="choices">
+        <button class="choice" onclick="answer(this,'q2',false)">3 (same as Stage 2 corners)</button>
+        <button class="choice" onclick="answer(this,'q2',true)">4 (one per corner-edge slot)</button>
+        <button class="choice" onclick="answer(this,'q2',false)">8 (all edge+corner pieces)</button>
+        <button class="choice" onclick="answer(this,'q2',false)">12 (all non-centre pieces in two layers)</button>
+      </div>
+      <div class="feedback" id="q2-fb"></div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="question-block" id="q3">
+      <div class="q-num">Question 3 of 4</div>
+      <div class="q-text">
+        You're inserting a pair into the <strong>right-front slot</strong>. The corner is above that slot with white facing the Right face. The edge is in the front-top position. Which move inserts the pair?
+      </div>
+      <div class="choices">
+        <button class="choice" onclick="answer(this,'q3',false)">L' U' L (Left Trigger)</button>
+        <button class="choice" onclick="answer(this,'q3',false)">F U F' (Front Trigger)</button>
+        <button class="choice" onclick="answer(this,'q3',true)">R U R' (Right Trigger)</button>
+        <button class="choice" onclick="answer(this,'q3',false)">U R U' R'</button>
+      </div>
+      <div class="feedback" id="q3-fb"></div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="question-block" id="q4">
+      <div class="q-num">Question 4 of 4</div>
+      <div class="q-text">
+        The corner you need is already sitting in the bottom layer — but it's in the <strong>wrong slot</strong>, unoriented. What is the correct first step?
+      </div>
+      <div class="choices">
+        <button class="choice" onclick="answer(this,'q4',false)">Twist the D face to slide it to the right slot</button>
+        <button class="choice" onclick="answer(this,'q4',false)">Apply Sune to orient it in place</button>
+        <button class="choice" onclick="answer(this,'q4',true)">Execute a trigger at that slot to eject the corner to the top layer</button>
+        <button class="choice" onclick="answer(this,'q4',false)">Redo the white cross from scratch</button>
+      </div>
+      <div class="feedback" id="q4-fb"></div>
+    </div>
+
+    <!-- Score banner -->
+    <div class="score-banner" id="scoreBanner">
+      <div class="score-big" id="scoreNum">—</div>
+      <div class="score-sub">out of 4</div>
+      <div class="score-msg" id="scoreMsg"></div>
+    </div>
+  </div>
+
+  <!-- Ask me -->
+  <div class="ask-me">
+    <p>🤖 <strong>Something unclear?</strong> Ask your Hermes agent: <em>"Can you explain F2L pair insertion?"</em> or <em>"Show me how to eject a stuck corner."</em> The agent is your tutor — no question is too small.</p>
+  </div>
+
+  <!-- Footer / citations -->
+  <div class="footer">
+    <p>Further reading:
+      <a href="https://ruwix.com/the-rubiks-cube/advanced-cfop-fridrich/first-two-layers-f2l/" target="_blank">Ruwix — F2L Overview</a> ·
+      <a href="https://www.speedsolving.com/wiki/index.php/First_Two_Layers" target="_blank">Speedsolving Wiki — First Two Layers</a> ·
+      <a href="https://www.cubeskills.com/tutorials/f2l" target="_blank">CubeSkills by Feliks Zemdegs — F2L Tutorial</a>
+    </p>
+    <p style="margin-top:0.5rem;">← <a href="../../../index.html">Back to all lessons</a></p>
+  </div>
+
+  <script>
+    const answers = {
+      q1: {
+        correct: 2, // 0-indexed
+        explanations: [
+          "Not quite — the pair partner never has white. White is the 'floor' colour for all bottom-layer corners, not a shared identifier.",
+          "Close, but white is excluded. The partner edge only carries the two *non-white* colours of the corner.",
+          "✓ Correct! The two non-white stickers on the corner (Orange + Green) exactly define the pair partner edge. White is never shared.",
+          "Any top-layer edge is not guaranteed to be the right partner. Only the edge with the matching two colours pairs with this corner."
+        ]
+      },
+      q2: {
+        correct: 1,
+        explanations: [
+          "There are 4 corner slots and 4 edge slots in the first two layers — one corner-edge pair per slot, giving 4 pairs total.",
+          "✓ Correct! 4 slots × 1 pair each = 4 insertions to complete the first two layers.",
+          "8 would count all individual corner + edge pieces separately. F2L groups them: 4 corner + 4 edge = 4 *pairs*.",
+          "12 would be the total edge count on a 3×3 (12 edges). Only 4 of those belong in the middle layer (the F2L edges)."
+        ]
+      },
+      q3: {
+        correct: 2,
+        explanations: [
+          "Left Trigger (L' U' L) works on the left slot, not the right-front slot.",
+          "A Front Trigger exists but is not the standard insertion move for this setup.",
+          "✓ Correct! The Right Trigger R U R' pulls the right face up, the U face rotates one step, then the right face comes back — precisely dropping a pair into the right slot.",
+          "U R U' R' is a setup move sometimes used before triggering, but it's not the trigger itself. The trigger here is R U R'."
+        ]
+      },
+      q4: {
+        correct: 2,
+        explanations: [
+          "D-face twists only move pieces within the bottom layer — but unoriented pieces can't be fixed by just sliding them; you'd be rearranging unsolved pieces with no gain.",
+          "Sune works on the top layer's orientation. It has no effect on a corner already sitting in the bottom layer.",
+          "✓ Correct! Use a trigger (e.g. R U R' if the corner is at the right-front slot) to kick the corner up to the top layer. From there you can re-pair it correctly and insert it into the right slot.",
+          "The white cross and lower layers are completely independent from a stuck corner. You never need to rebuild from scratch — F2L stages are isolated."
+        ]
+      }
+    };
+
+    let answered = 0;
+    let score = 0;
+
+    function answer(btn, qId, isCorrect) {
+      const block = document.getElementById(qId);
+      const buttons = block.querySelectorAll('.choice');
+      const fb = document.getElementById(qId + '-fb');
+      const clickedIndex = Array.from(buttons).indexOf(btn);
+      const correctIndex = answers[qId].correct;
+      const explanation = answers[qId].explanations[clickedIndex];
+
+      // Disable all buttons
+      buttons.forEach(b => b.disabled = true);
+
+      // Style correct/wrong
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+      if (!isCorrect) {
+        buttons[correctIndex].classList.add('correct');
+      }
+
+      // Show feedback
+      fb.textContent = explanation;
+      fb.className = 'feedback show ' + (isCorrect ? 'fb-correct' : 'fb-wrong');
+
+      if (isCorrect) score++;
+      answered++;
+      updateProgress();
+
+      if (answered === 4) showScore();
+    }
+
+    function updateProgress() {
+      document.getElementById('progressFill').style.width = (answered / 4 * 100) + '%';
+    }
+
+    function showScore() {
+      const banner = document.getElementById('scoreBanner');
+      document.getElementById('scoreNum').textContent = score + '/4';
+      const msgs = [
+        "Keep going — re-read the pair and slot sections, then try the practice loop.",
+        "Good start. Review the ejecting section and try 2–3 practice solves.",
+        "Solid. One more practice solve and these ideas will click into muscle memory.",
+        "Perfect. You're ready — do 3 timed F2L solves and notice where you pause longest."
+      ];
+      document.getElementById('scoreMsg').textContent = msgs[score];
+      banner.classList.add('show');
+    }
+  </script>
+</body>
+</html>
