@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 13 — Capstone: A Complete Go HTTP Server · Go for TS Devs</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --accent2: #7c6af7;
+    --green: #3ab54a;
+    --red: #e05c5c;
+    --yellow: #f5c842;
+    --ts: #3178c6;
+    --go: #00adb5;
+    --code-bg: #0a0d14;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    line-height: 1.65;
+    font-size: 1rem;
+  }
+
+  h1 { font-size: 2rem; color: #fff; margin-bottom: 0.3rem; }
+  h2 { font-size: 1.25rem; color: #fff; margin: 2.5rem 0 0.8rem; }
+  h3 { font-size: 0.82rem; color: var(--accent); margin: 1.5rem 0 0.5rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  p  { color: var(--text); margin-bottom: 0.9rem; }
+  ul { padding-left: 1.4rem; margin-bottom: 0.9rem; }
+  li { margin-bottom: 0.35rem; color: var(--text); }
+  a  { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { background: var(--code-bg); color: #a9d9e8; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.88em; padding: 0.1em 0.38em; border-radius: 3px; }
+  strong { color: #fff; }
+
+  .meta { color: var(--muted); font-size: 0.88rem; margin-bottom: 2.5rem; }
+  .meta span { margin-right: 1.2rem; }
+  .tag { background: var(--surface); border: 1px solid var(--border); padding: 0.1em 0.5em; border-radius: 4px; font-size: 0.78rem; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.87rem;
+    line-height: 1.55;
+    margin-bottom: 1rem;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  .filename {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 0.4rem 1rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    margin-bottom: 0;
+  }
+  .filename + pre {
+    border-radius: 0 0 8px 8px;
+    margin-top: 0;
+  }
+
+  /* ── Side-by-side comparison ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.2rem;
+  }
+  @media (max-width: 620px) { .compare { grid-template-columns: 1fr; } }
+  .compare-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.8rem;
+    border-radius: 5px 5px 0 0;
+    margin-bottom: 0;
+  }
+  .label-ts  { background: #1a2d4a; color: #6ab0f5; }
+  .label-go  { background: #0d2e32; color: #3cd6de; }
+  .compare-label + pre { border-radius: 0 0 8px 8px; margin-top: 0; }
+
+  /* ── Callouts ── */
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 0.8rem 1.1rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 1.1rem;
+    font-size: 0.93rem;
+  }
+  .callout.warn { border-color: var(--yellow); }
+  .callout.win  { border-color: var(--green); }
+
+  /* ── Progress steps ── */
+  .steps { counter-reset: step; }
+  .step {
+    counter-increment: step;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.1rem 1.1rem 3.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+  .step::before {
+    content: counter(step);
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    background: var(--accent2);
+    color: #fff;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.5rem;
+    text-align: center;
+  }
+  .step h4 { color: #fff; font-size: 0.95rem; margin-bottom: 0.5rem; }
+  .step p  { margin-bottom: 0.4rem; }
+
+  /* ── Quiz ── */
+  .quiz-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 3rem;
+  }
+  .quiz-section h2 { margin-top: 0; }
+  .question { margin-bottom: 2rem; }
+  .question p { font-weight: 600; color: #fff; margin-bottom: 0.8rem; }
+  .options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .opt-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .opt-btn:hover { border-color: var(--accent); background: #1e2433; }
+  .opt-btn.correct   { border-color: var(--green); background: #0d2016; color: var(--green); }
+  .opt-btn.incorrect { border-color: var(--red);   background: #2a0f0f; color: var(--red); }
+  .opt-btn:disabled  { cursor: default; }
+  .feedback {
+    margin-top: 0.6rem;
+    font-size: 0.88rem;
+    min-height: 1.2em;
+    color: var(--muted);
+  }
+  .feedback.ok  { color: var(--green); }
+  .feedback.err { color: var(--red); }
+
+  .quiz-score {
+    display: none;
+    text-align: center;
+    padding: 1.5rem 0 0.5rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+  .score-num { font-size: 2.5rem; font-weight: 700; color: var(--accent); }
+  .score-label { color: var(--muted); font-size: 0.95rem; margin-top: 0.3rem; }
+
+  /* ── Finish banner ── */
+  .finish-banner {
+    background: linear-gradient(135deg, #0d2e32, #1a1d27);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 3rem;
+    text-align: center;
+  }
+  .finish-banner h2 { margin-top: 0; color: var(--accent); font-size: 1.4rem; }
+  .finish-banner p  { color: var(--muted); max-width: 520px; margin: 0.6rem auto; }
+
+  /* ── File-tree ── */
+  .file-tree {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.87rem;
+    line-height: 2;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+  .ft-dir  { color: var(--accent2); }
+  .ft-file { color: #a9d9e8; }
+  .ft-note { color: var(--muted); font-style: italic; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  /* ── Lesson nav ── */
+  .lesson-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; font-size: 0.88rem; color: var(--muted); }
+  .ask-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-top: 2.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .ask-box strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>Capstone: A Complete Go HTTP Server</h1>
+<div class="meta">
+  <span class="tag">Go for TS Devs</span>
+  <span class="tag">Lesson 13</span>
+  <span>~10 min</span>
+  <span>📌 Mission goal</span>
+</div>
+
+<p>
+  This is it. Every concept from lessons 1–12 in one complete, runnable project.
+  You're going to build a tiny <strong>tasks API</strong> — three routes, JSON in/out,
+  middleware, error handling, context propagation, and a test. This is exactly
+  the shape of any real Go HTTP server you'll ship.
+</p>
+
+<hr>
+
+<h2>The Project</h2>
+
+<p><strong>tasks-api</strong> — a minimal REST service for managing tasks.</p>
+
+<div class="callout win">
+  <strong>Three endpoints:</strong> <code>GET /tasks</code> (list), <code>POST /tasks</code> (create), <code>GET /tasks/{id}</code> (fetch one).
+</div>
+
+<h2>Step 1 — Project Layout</h2>
+
+<div class="file-tree">
+  <span class="ft-dir">tasks-api/</span><br>
+  ├── <span class="ft-dir">cmd/server/</span><br>
+  │   └── <span class="ft-file">main.go</span>        <span class="ft-note">// entrypoint — wire everything together</span><br>
+  ├── <span class="ft-dir">internal/</span><br>
+  │   ├── <span class="ft-dir">handlers/</span><br>
+  │   │   └── <span class="ft-file">tasks.go</span>   <span class="ft-note">// HTTP handler functions</span><br>
+  │   ├── <span class="ft-dir">middleware/</span><br>
+  │   │   └── <span class="ft-file">logging.go</span> <span class="ft-note">// request logger middleware</span><br>
+  │   └── <span class="ft-dir">store/</span><br>
+  │       └── <span class="ft-file">tasks.go</span>   <span class="ft-note">// in-memory task store</span><br>
+  ├── <span class="ft-file">go.mod</span><br>
+  └── <span class="ft-dir">internal/handlers/</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;└── <span class="ft-file">tasks_test.go</span> <span class="ft-note">// one handler test</span>
+</div>
+
+<p>
+  <code>cmd/server/main.go</code> is the wiring layer only — it imports, configures, and starts.
+  Business logic lives in <code>internal/</code>, invisible to anything outside this module.
+  <a href="https://go.dev/doc/modules/layout" target="_blank">Official module layout reference →</a>
+</p>
+
+<hr>
+
+<h2>Step 2 — go.mod</h2>
+
+<div class="filename">go.mod</div>
+<pre><code>module github.com/amit/tasks-api
+
+go 1.22</code></pre>
+
+<p>No third-party dependencies. Everything we need is in the standard library.</p>
+
+<hr>
+
+<h2>Step 3 — The Task Store</h2>
+
+<p>
+  A simple in-memory store protected by a <code>sync.RWMutex</code> — safe for concurrent
+  reads from multiple goroutines (remember lesson 11: each HTTP request runs in its own goroutine).
+</p>
+
+<div class="filename">internal/store/tasks.go</div>
+<pre><code>package store
+
+import (
+    "fmt"
+    "sync"
+)
+
+type Task struct {
+    ID    string `json:"id"`
+    Title string `json:"title"`
+    Done  bool   `json:"done"`
+}
+
+type Store struct {
+    mu     sync.RWMutex   // protects tasks
+    tasks  map[string]Task
+    nextID int
+}
+
+func New() *Store {
+    return &Store{tasks: make(map[string]Task)}
+}
+
+func (s *Store) Add(title string) Task {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+
+    s.nextID++
+    t := Task{ID: fmt.Sprintf("%d", s.nextID), Title: title}
+    s.tasks[t.ID] = t
+    return t
+}
+
+func (s *Store) Get(id string) (Task, bool) {
+    s.mu.RLock()          // read-only lock: many readers allowed
+    defer s.mu.RUnlock()
+    t, ok := s.tasks[id]
+    return t, ok
+}
+
+func (s *Store) List() []Task {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+    out := make([]Task, 0, len(s.tasks))
+    for _, t := range s.tasks {
+        out = append(out, t)
+    }
+    return out
+}</code></pre>
+
+<div class="compare">
+  <div>
+    <div class="compare-label label-ts">TypeScript</div>
+    <pre><code>// No locking needed in single-threaded Node.js
+class TaskStore {
+  private tasks = new Map&lt;string, Task&gt;();
+  private nextId = 0;
+
+  add(title: string): Task {
+    const id = String(++this.nextId);
+    const t = { id, title, done: false };
+    this.tasks.set(id, t);
+    return t;
+  }
+}</code></pre>
+  </div>
+  <div>
+    <div class="compare-label label-go">Go</div>
+    <pre><code>// Go HTTP handles each request
+// in a separate goroutine — must
+// protect shared state with a mutex.
+type Store struct {
+    mu    sync.RWMutex
+    tasks map[string]Task
+    ...
+}
+
+// RLock = multiple readers OK.
+// Lock  = exclusive writer.
+</code></pre>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>sync.RWMutex vs sync.Mutex:</strong> Use <code>RWMutex</code> when reads vastly
+  outnumber writes. <code>RLock()</code> allows concurrent reads; <code>Lock()</code> blocks
+  everyone.
+  <a href="https://pkg.go.dev/sync#RWMutex" target="_blank">pkg.go.dev/sync →</a>
+</div>
+
+<hr>
+
+<h2>Step 4 — The Handlers</h2>
+
+<p>
+  Handlers are methods on a <code>Handler</code> struct, so they share access to
+  the store without globals.
+</p>
+
+<div class="filename">internal/handlers/tasks.go</div>
+<pre><code>package handlers
+
+import (
+    "encoding/json"
+    "net/http"
+
+    "github.com/amit/tasks-api/internal/store"
+)
+
+type Handler struct {
+    Store *store.Store
+}
+
+// writeJSON encodes v as JSON and sets Content-Type.
+// Centralise this — don't repeat in every handler.
+func writeJSON(w http.ResponseWriter, status int, v any) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    json.NewEncoder(w).Encode(v)
+}
+
+// writeError returns {"error": "message"} with the given status.
+func writeError(w http.ResponseWriter, status int, msg string) {
+    writeJSON(w, status, map[string]string{"error": msg})
+}
+
+// GET /tasks
+func (h *Handler) ListTasks(w http.ResponseWriter, r *http.Request) {
+    writeJSON(w, http.StatusOK, h.Store.List())
+}
+
+// POST /tasks — body: {"title": "..."}
+func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
+    var body struct {
+        Title string `json:"title"`
+    }
+    if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+        writeError(w, http.StatusBadRequest, "invalid JSON")
+        return
+    }
+    if body.Title == "" {
+        writeError(w, http.StatusUnprocessableEntity, "title is required")
+        return
+    }
+
+    task := h.Store.Add(body.Title)
+    writeJSON(w, http.StatusCreated, task)
+}
+
+// GET /tasks/{id}
+func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
+    id := r.PathValue("id")  // Go 1.22+ ServeMux path values
+    task, ok := h.Store.Get(id)
+    if !ok {
+        writeError(w, http.StatusNotFound, "task not found")
+        return
+    }
+    writeJSON(w, http.StatusOK, task)
+}</code></pre>
+
+<div class="callout">
+  <strong>r.PathValue("id")</strong> — added in Go 1.22.
+  <code>go.mod</code> must declare <code>go 1.22</code> or later.
+  <a href="https://pkg.go.dev/net/http#Request.PathValue" target="_blank">Reference →</a>
+</div>
+
+<hr>
+
+<h2>Step 5 — Logging Middleware</h2>
+
+<div class="filename">internal/middleware/logging.go</div>
+<pre><code>package middleware
+
+import (
+    "log"
+    "net/http"
+    "time"
+)
+
+// Logging wraps an http.Handler and logs each request's
+// method, path, and elapsed time.
+func Logging(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        next.ServeHTTP(w, r)
+        log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
+    })
+}</code></pre>
+
+<p>
+  Middleware signature: <code>func(http.Handler) http.Handler</code>.
+  The inner function <em>wraps</em> the next handler — before/after logic is just code
+  before and after <code>next.ServeHTTP(w, r)</code>.
+</p>
+
+<hr>
+
+<h2>Step 6 — main.go: Wire It Together</h2>
+
+<div class="filename">cmd/server/main.go</div>
+<pre><code>package main
+
+import (
+    "context"
+    "log"
+    "net/http"
+    "os"
+    "os/signal"
+    "syscall"
+    "time"
+
+    "github.com/amit/tasks-api/internal/handlers"
+    "github.com/amit/tasks-api/internal/middleware"
+    "github.com/amit/tasks-api/internal/store"
+)
+
+func main() {
+    // 1. Build dependencies
+    s   := store.New()
+    h   := &handlers.Handler{Store: s}
+
+    // 2. Register routes (Go 1.22 pattern: METHOD /path/{param})
+    mux := http.NewServeMux()
+    mux.HandleFunc("GET  /tasks",       h.ListTasks)
+    mux.HandleFunc("POST /tasks",       h.CreateTask)
+    mux.HandleFunc("GET  /tasks/{id}",  h.GetTask)
+
+    // 3. Wrap with middleware
+    handler := middleware.Logging(mux)
+
+    // 4. Configure the server
+    srv := &http.Server{
+        Addr:         ":8080",
+        Handler:      handler,
+        ReadTimeout:  5 * time.Second,
+        WriteTimeout: 10 * time.Second,
+        IdleTimeout:  60 * time.Second,
+    }
+
+    // 5. Start in a goroutine so we can catch OS signals
+    go func() {
+        log.Println("listening on :8080")
+        if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+            log.Fatalf("server error: %v", err)
+        }
+    }()
+
+    // 6. Graceful shutdown on SIGINT / SIGTERM
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    &lt;-quit  // block until signal received
+
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    log.Println("shutting down…")
+    if err := srv.Shutdown(ctx); err != nil {
+        log.Fatalf("shutdown error: %v", err)
+    }
+    log.Println("done")
+}</code></pre>
+
+<div class="compare">
+  <div>
+    <div class="compare-label label-ts">TypeScript (express)</div>
+    <pre><code>const app = express();
+app.use(logger());
+app.get('/tasks', listTasks);
+app.post('/tasks', createTask);
+
+const server = app.listen(8080);
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  server.close(() => process.exit(0));
+});</code></pre>
+  </div>
+  <div>
+    <div class="compare-label label-go">Go (stdlib)</div>
+    <pre><code>mux := http.NewServeMux()
+mux.HandleFunc("GET /tasks", h.ListTasks)
+mux.HandleFunc("POST /tasks", h.CreateTask)
+
+handler := middleware.Logging(mux)
+srv := &http.Server{Addr: ":8080", ...}
+
+// Signal channel blocks main goroutine.
+// srv.Shutdown(ctx) drains in-flight
+// requests before exiting.
+</code></pre>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Graceful shutdown</strong>: <code>srv.Shutdown(ctx)</code> stops accepting new
+  connections and waits for in-flight requests to finish — up to the context deadline.
+  Without this, a deploy would abruptly cut live requests.
+  <a href="https://pkg.go.dev/net/http#Server.Shutdown" target="_blank">pkg.go.dev →</a>
+</div>
+
+<hr>
+
+<h2>Step 7 — One Handler Test</h2>
+
+<div class="filename">internal/handlers/tasks_test.go</div>
+<pre><code>package handlers_test
+
+import (
+    "encoding/json"
+    "net/http"
+    "net/http/httptest"
+    "strings"
+    "testing"
+
+    "github.com/amit/tasks-api/internal/handlers"
+    "github.com/amit/tasks-api/internal/store"
+)
+
+func TestCreateTask(t *testing.T) {
+    h := &handlers.Handler{Store: store.New()}
+
+    // --- 201 Created with valid body ---
+    body := strings.NewReader(`{"title":"buy milk"}`)
+    req  := httptest.NewRequest(http.MethodPost, "/tasks", body)
+    req.Header.Set("Content-Type", "application/json")
+    rec  := httptest.NewRecorder()
+
+    h.CreateTask(rec, req)
+
+    if rec.Code != http.StatusCreated {
+        t.Fatalf("want 201, got %d", rec.Code)
+    }
+
+    var task struct{ Title string }
+    json.NewDecoder(rec.Body).Decode(&task)
+    if task.Title != "buy milk" {
+        t.Errorf("want title %q, got %q", "buy milk", task.Title)
+    }
+
+    // --- 422 when title is empty ---
+    req2 := httptest.NewRequest(http.MethodPost, "/tasks",
+        strings.NewReader(`{"title":""}`))
+    rec2 := httptest.NewRecorder()
+    h.CreateTask(rec2, req2)
+
+    if rec2.Code != http.StatusUnprocessableEntity {
+        t.Fatalf("want 422, got %d", rec2.Code)
+    }
+}</code></pre>
+
+<p>
+  <code>httptest.NewRecorder()</code> is Go's built-in test response writer.
+  No real HTTP connections, no ports — fast and self-contained.
+  <a href="https://pkg.go.dev/net/http/httptest" target="_blank">net/http/httptest →</a>
+</p>
+
+<hr>
+
+<h2>Step 8 — Build and Run</h2>
+
+<div class="steps">
+  <div class="step">
+    <h4>Initialise the module</h4>
+    <p><code>mkdir tasks-api &amp;&amp; cd tasks-api &amp;&amp; go mod init github.com/amit/tasks-api</code></p>
+    <p>Create all the files in their respective directories.</p>
+  </div>
+  <div class="step">
+    <h4>Run the tests</h4>
+    <p><code>go test ./...</code></p>
+    <p>Should print <code>ok  github.com/amit/tasks-api/internal/handlers</code>.</p>
+  </div>
+  <div class="step">
+    <h4>Build the binary</h4>
+    <p><code>go build -o tasks-api ./cmd/server</code></p>
+    <p>Produces a single, self-contained binary — no Node runtime, no <code>node_modules</code>.</p>
+  </div>
+  <div class="step">
+    <h4>Run it</h4>
+    <p><code>./tasks-api</code> → <code>listening on :8080</code></p>
+  </div>
+  <div class="step">
+    <h4>Hit the API</h4>
+    <pre><code># Create a task
+curl -s -X POST http://localhost:8080/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"learn Go"}' | jq
+
+# List all tasks
+curl -s http://localhost:8080/tasks | jq
+
+# Fetch by ID
+curl -s http://localhost:8080/tasks/1 | jq</code></pre>
+  </div>
+  <div class="step">
+    <h4>Graceful shutdown</h4>
+    <p>Press <kbd>Ctrl-C</kbd> — the server logs <em>"shutting down… done"</em> and exits cleanly.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- ── QUIZ ── -->
+<div class="quiz-section">
+  <h2>🧠 Knowledge Check</h2>
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;">5 questions covering the full lesson.</p>
+
+  <!-- Q1 -->
+  <div class="question" id="q1">
+    <p>1. You need to protect a map accessed concurrently by multiple HTTP handlers. Reads are far more frequent than writes. Which type should you use?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q1',false)">sync.Mutex</button>
+      <button class="opt-btn" onclick="answer(this,'q1',true)">sync.RWMutex</button>
+      <button class="opt-btn" onclick="answer(this,'q1',false)">sync.WaitGroup</button>
+      <button class="opt-btn" onclick="answer(this,'q1',false)">sync.Once</button>
+    </div>
+    <div class="feedback" id="fb1"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question" id="q2">
+    <p>2. What does <code>r.PathValue("id")</code> return when the route pattern is <code>"GET /tasks/{id}"</code> and the request is <code>GET /tasks/42</code>?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q2',false)"><code>"{id}"</code></button>
+      <button class="opt-btn" onclick="answer(this,'q2',true)"><code>"42"</code></button>
+      <button class="opt-btn" onclick="answer(this,'q2',false)"><code>42</code> (int)</button>
+      <button class="opt-btn" onclick="answer(this,'q2',false)">The full URL path <code>"/tasks/42"</code></button>
+    </div>
+    <div class="feedback" id="fb2"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question" id="q3">
+    <p>3. In <code>main.go</code>, why do we call <code>srv.ListenAndServe()</code> inside a goroutine?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q3',false)">Because it panics if called from main goroutine</button>
+      <button class="opt-btn" onclick="answer(this,'q3',false)">To share the store across goroutines</button>
+      <button class="opt-btn" onclick="answer(this,'q3',true)">So main can continue and block on the signal channel for graceful shutdown</button>
+      <button class="opt-btn" onclick="answer(this,'q3',false)">It runs faster in a separate goroutine</button>
+    </div>
+    <div class="feedback" id="fb3"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question" id="q4">
+    <p>4. <code>srv.Shutdown(ctx)</code> is called with a 10-second context. What happens to HTTP requests that are still in-flight when <code>Shutdown</code> is called?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q4',false)">They are immediately terminated with a connection reset</button>
+      <button class="opt-btn" onclick="answer(this,'q4',true)">The server waits for them to complete (up to the 10-second deadline)</button>
+      <button class="opt-btn" onclick="answer(this,'q4',false)">They are queued and replayed after restart</button>
+      <button class="opt-btn" onclick="answer(this,'q4',false)">Shutdown returns an error if any requests are in-flight</button>
+    </div>
+    <div class="feedback" id="fb4"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="question" id="q5">
+    <p>5. The handler struct pattern — <code>type Handler struct { Store *store.Store }</code> — is used instead of package-level globals. What is the primary benefit for testing?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q5',false)">It makes the handler compile faster</button>
+      <button class="opt-btn" onclick="answer(this,'q5',false)">It prevents race conditions automatically</button>
+      <button class="opt-btn" onclick="answer(this,'q5',true)">Each test can inject its own fresh store — no shared state between tests</button>
+      <button class="opt-btn" onclick="answer(this,'q5',false)">It allows the handler to be serialised to JSON</button>
+    </div>
+    <div class="feedback" id="fb5"></div>
+  </div>
+
+  <div class="quiz-score" id="quiz-score">
+    <div class="score-num" id="score-num">0/5</div>
+    <div class="score-label" id="score-label"></div>
+  </div>
+</div>
+
+<!-- ── Finish banner ── -->
+<div class="finish-banner">
+  <h2>🎉 Mission Complete</h2>
+  <p>
+    You started from Go syntax and just built a production-shaped HTTP server:
+    clean project layout, typed JSON API, middleware chain, mutex-safe store,
+    graceful shutdown, and a handler test. That's the mission.
+  </p>
+  <p style="margin-top:0.8rem;">
+    <strong style="color:var(--accent)">Next steps:</strong>
+    connect a Postgres database with <code>database/sql</code> + <code>pgx/v5</code>,
+    where everything you learned about context propagation pays off directly.
+  </p>
+</div>
+
+<div class="ask-box">
+  💬 <strong>Ask your teacher anything.</strong> Run <code>hermes ask "…your question…"</code>
+  to get clarification, deeper explanations, or to explore what comes next.
+</div>
+
+<div class="lesson-nav">
+  <a href="0012-context-context.html">← Lesson 12: context.Context</a>
+  <span style="color:var(--accent)">Lesson 13 of 13</span>
+</div>
+
+<script>
+  let answered = {};
+  const total = 5;
+
+  const explanations = {
+    q1: "sync.RWMutex lets many goroutines read simultaneously (RLock/RUnlock), while writes get an exclusive lock. sync.Mutex gives one goroutine exclusive access for everything — fine, but unnecessary when reads dominate.",
+    q2: "r.PathValue returns the string value captured by the named pattern segment. No parsing needed — it's always a string, so convert to int with strconv.Atoi if required.",
+    q3: "ListenAndServe blocks forever (until the server shuts down). If called directly in main, main would block there and never reach the signal channel code below it.",
+    q4: "srv.Shutdown stops accepting new connections immediately, then waits for active requests to finish — up to the context deadline. This is 'graceful': no request is cut off mid-flight as long as it completes within 10 seconds.",
+    q5: "By injecting store.Store as a field, every test creates &handlers.Handler{Store: store.New()}, giving each test its own isolated state. Package-level globals would bleed state between tests."
+  };
+
+  function answer(btn, qid, isCorrect) {
+    if (answered[qid]) return;
+    answered[qid] = true;
+
+    const container = document.getElementById(qid);
+    const btns = container.querySelectorAll('.opt-btn');
+    btns.forEach(b => b.disabled = true);
+    btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+    const fb = document.getElementById('fb' + qid.slice(1));
+    if (isCorrect) {
+      fb.textContent = '✓ Correct. ' + explanations[qid];
+      fb.className = 'feedback ok';
+    } else {
+      fb.textContent = '✗ Not quite. ' + explanations[qid];
+      fb.className = 'feedback err';
+      // Highlight the correct button
+      btns.forEach(b => {
+        if (b.onclick && b.onclick.toString().includes('true')) {
+          b.classList.add('correct');
+        }
+      });
+    }
+
+    if (Object.keys(answered).length === total) showScore();
+  }
+
+  function showScore() {
+    const correct = Object.keys(answered).filter(qid => {
+      const container = document.getElementById(qid);
+      return container.querySelector('.correct:not(.incorrect)') !== null;
+    }).length;
+
+    const scoreEl = document.getElementById('quiz-score');
+    scoreEl.style.display = 'block';
+    document.getElementById('score-num').textContent = correct + '/' + total;
+    const labels = ['Keep reviewing!', 'Good start!', 'Solid!', 'Great work!', 'Excellent!', 'Perfect!'];
+    document.getElementById('score-label').textContent = labels[correct] || '';
+  }
+</script>
+
+</body>
+</html>

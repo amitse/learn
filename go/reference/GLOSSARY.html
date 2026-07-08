@@ -571,6 +571,31 @@
     <td>fetch(url, { signal: ctx })</td>
     <td>Creates an outbound HTTP request that respects the given context. If the context is cancelled, the request is aborted.</td>
   </tr>
+  <tr>
+    <td>sync.RWMutex</td>
+    <td>No direct equivalent (Node is single-threaded)</td>
+    <td>Read/write mutex. <code>RLock()</code>/<code>RUnlock()</code> allow concurrent reads; <code>Lock()</code>/<code>Unlock()</code> give exclusive write access. Use when reads far outnumber writes.</td>
+  </tr>
+  <tr>
+    <td>r.PathValue("name")</td>
+    <td>req.params.name (Express)</td>
+    <td>Extracts a named segment from the URL path registered with Go 1.22+ ServeMux patterns, e.g. <code>"GET /tasks/{id}"</code>. Returns a string.</td>
+  </tr>
+  <tr>
+    <td>srv.Shutdown(ctx)</td>
+    <td>server.close(callback)</td>
+    <td>Gracefully stops an http.Server: no new connections, waits for in-flight requests to complete up to the context deadline.</td>
+  </tr>
+  <tr>
+    <td>signal.Notify(ch, os.Signal…)</td>
+    <td>process.on('SIGTERM', fn)</td>
+    <td>Registers OS signals (e.g. SIGINT, SIGTERM) to be delivered on a channel. Used to trigger graceful shutdown from the OS or a container orchestrator.</td>
+  </tr>
+  <tr>
+    <td>go build -o binary ./cmd/server</td>
+    <td>npm run build + node dist/index.js</td>
+    <td>Compiles a Go program into a single self-contained binary with no runtime dependency. The binary can be shipped and run on any machine with the matching OS/arch.</td>
+  </tr>
 </table>
 
 </body>
