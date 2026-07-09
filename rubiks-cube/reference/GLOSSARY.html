@@ -115,11 +115,15 @@
 
 <h2>Yellow Corner Orientation (OLL Step 2)</h2>
 <dl>
-  <dt>Sune</dt><dd><code>R U R′ U R U2 R′</code> — the algorithm for orienting yellow corners. Places the BR corner and cycles/reorients FL, BL, FR. Named after speed-cuber Sune Berger. Apply up to 3 times to orient all 4 corners.</dd>
+  <dt>Sune</dt><dd><code>R U R′ U R U2 R′</code> — orients yellow corners when the one correct corner (yellow-up) is at back-left (UBL). Named after speed-cuber Sune Berger. In 2-Look OLL, Sune solves the UBL case with one execution.</dd>
+  <dt>Anti-Sune</dt><dd><code>R′ U′ R U′ R′ U2 R</code> — the exact mirror of Sune. Use when the one correct corner is at back-right (UBR). Every move is the prime/inverse of the corresponding Sune move.</dd>
+  <dt>2-Look OLL</dt><dd>An efficient subset of OLL using only 2 algorithms (Sune + Anti-Sune) plus the yellow cross algorithm. Solves OLL in at most 2 looks / 2 algorithm executions. Full OLL has 57 algorithms; 2-Look OLL reduces this to 3 algorithms total (including yellow cross).</dd>
+  <dt>OCLL</dt><dd>"Orientation of Corners, Last Layer" — the second look in 2-Look OLL. After the yellow cross exists, OCLL orients the 4 corner pieces so yellow faces up on all of them. Solved with Sune or Anti-Sune based on which corner has yellow on top and where it sits.</dd>
   <dt>BR (corner)</dt><dd>The back-right corner of the top face. When applying Sune, a yellow-facing sticker must be at BR first. Sune leaves this corner unchanged.</dd>
+  <dt>UBL / UBR</dt><dd>Top-Back-Left and Top-Back-Right — the two setup positions for 2-Look OLL. UBL = use Sune; UBR = use Anti-Sune. Achieved by rotating the whole cube (y / y'), never the U layer.</dd>
   <dt>U2</dt><dd>180° turn of the U (top) face. The key move in Sune (before the final R′) that distinguishes it from the Right Trigger variants.</dd>
-  <dt>OLL Step 2</dt><dd>Orienting the 4 yellow corners after the Yellow Cross is formed. Complete when all 9 top-face stickers show yellow. Solved using Sune.</dd>
-  <dt>0-corner case</dt><dd>A starting state where no yellow corner sticker faces up. Apply Sune blindly (any hold) once; at least one yellow corner will appear. Then use the normal 3-step Sune loop.</dd>
+  <dt>OLL Step 2</dt><dd>Orienting the 4 yellow corners after the Yellow Cross is formed. Complete when all 9 top-face stickers show yellow. In 2-Look OLL, solved using Sune or Anti-Sune.</dd>
+  <dt>0-corner case (OLL)</dt><dd>A state where no yellow corner sticker faces up after the yellow cross. Apply Sune from any hold once — this always produces a 1-correct-corner case which is then solved with Sune or Anti-Sune.</dd>
 </dl>
 
 
@@ -189,6 +193,6 @@
   <dt>Case 4 (F2L)</dt><dd>Both corner and edge are in wrong slots. Fix: eject one piece at a time to the top layer, then solve as Case 1 once both are on U.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 12 — Intuitive F2L (2026-07-04)</p>
+<p class="updated">Last updated: Lesson 13 — 2-Look OLL (2026-07-09)</p>
 </body>
 </html>

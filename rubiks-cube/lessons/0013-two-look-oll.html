@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 13 — 2-Look OLL: Orient the Last Layer in Two Steps</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #20243a;
+      --border: #2a2d3a;
+      --text: #e8eaf0;
+      --muted: #7a7f99;
+      --accent: #f57c00;
+      --accent-light: #ffaa55;
+      --correct: #0d2e0d;
+      --correct-text: #4caf50;
+      --wrong: #2e0d0d;
+      --wrong-text: #ef5350;
+      --yellow: #ffd600;
+      --cube-orange: #f57c00;
+      --code-bg: #13161f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+      line-height: 1.7;
+    }
+    .tag {
+      color: var(--accent);
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    h1 { font-size: 1.95rem; color: #fff; margin-bottom: 0.3rem; line-height: 1.25; }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 0.6rem; }
+    .meta { display: flex; gap: 1rem; margin-bottom: 2.5rem; }
+    .pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.2rem 0.75rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    h2 {
+      font-size: 1.1rem;
+      color: var(--accent-light);
+      margin: 2.5rem 0 0.8rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.4rem;
+    }
+    h3 { font-size: 0.97rem; color: #fff; margin: 1.4rem 0 0.5rem; }
+    p { margin-bottom: 0.9rem; }
+    strong { color: #fff; }
+    a { color: var(--accent-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { padding-left: 1.4rem; margin-bottom: 0.9rem; }
+    li { margin-bottom: 0.35rem; }
+
+    /* ── Callout cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .callout {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent);
+      padding: 0.9rem 1.1rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1rem 0;
+    }
+    .callout.info {
+      border-color: #00adb5;
+    }
+    .callout.success {
+      border-left-color: #4caf50;
+      background: #0a1f0a;
+    }
+
+    /* ── Algorithm display ── */
+    .alg {
+      font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+      font-size: 1.05rem;
+      color: var(--yellow);
+      background: var(--code-bg);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+    .alg-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.3rem;
+      margin: 0.8rem 0;
+      font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    }
+    .alg-name {
+      font-size: 0.76rem;
+      color: var(--muted);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .alg-moves {
+      font-size: 1.25rem;
+      color: var(--yellow);
+      letter-spacing: 0.12em;
+    }
+    .move { display: inline-block; }
+    .move.prime { color: #ffaa55; }
+    .move.double { color: #ffd580; }
+
+    /* ── Cube top-face diagram ── */
+    .face-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .face-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 3px;
+    }
+    .face-grid .cell {
+      border-radius: 5px;
+      border: 1.5px solid #0007;
+      position: relative;
+    }
+    .cell.yellow { background: #ffd600; }
+    .cell.yellow-dim { background: #c8a800; opacity: 0.55; }
+    .cell.center { background: #ffd600; }
+    .cell.misoriented {
+      background: #2a2d3a;
+      border: 1.5px solid #444;
+    }
+    .cell.miso-r { background: linear-gradient(135deg, #f57c00 30%, #1a1d27 70%); }
+    .cell.miso-l { background: linear-gradient(225deg, #f57c00 30%, #1a1d27 70%); }
+    .cell.miso-f { background: linear-gradient(180deg, #f57c00 20%, #1a1d27 65%); }
+    .cell.miso-b { background: linear-gradient(0deg, #f57c00 20%, #1a1d27 65%); }
+    .face-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    /* direction arrows */
+    .arrow {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: #fff9;
+    }
+
+    /* ── Cases grid ── */
+    .cases-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .case-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .case-card h4 {
+      font-size: 0.88rem;
+      color: #fff;
+      margin: 0.6rem 0 0.3rem;
+    }
+    .case-card p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* ── Quiz ── */
+    #quiz-section { margin-top: 2.5rem; }
+    .quiz-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .quiz-box.done { border-color: var(--accent); }
+    .q-number {
+      font-size: 0.72rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .q-text {
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 1.1rem;
+      font-weight: 500;
+    }
+    .options { display: flex; flex-direction: column; gap: 0.5rem; }
+    .opt-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 1rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .opt-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: #25293a;
+    }
+    .opt-btn.correct { background: var(--correct); border-color: #4caf50; color: var(--correct-text); }
+    .opt-btn.wrong   { background: var(--wrong);   border-color: #ef5350; color: var(--wrong-text); }
+    .opt-btn:disabled { cursor: default; opacity: 0.85; }
+    .feedback {
+      margin-top: 0.8rem;
+      font-size: 0.88rem;
+      padding: 0.7rem 1rem;
+      border-radius: 7px;
+      display: none;
+    }
+    .feedback.show { display: block; }
+    .feedback.ok { background: var(--correct); color: var(--correct-text); }
+    .feedback.no { background: var(--wrong); color: var(--wrong-text); }
+
+    /* Score bar */
+    #score-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      text-align: center;
+      display: none;
+    }
+    #score-bar h3 { font-size: 1.2rem; color: var(--accent-light); }
+    #score-bar p { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+    /* Diagram in quiz */
+    .quiz-diagram {
+      display: flex;
+      justify-content: center;
+      margin: 0.7rem 0 1rem;
+    }
+
+    /* Sune breakdown */
+    .move-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 0.7rem 0;
+    }
+    .move-table th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      padding: 0.45rem 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .move-table td {
+      padding: 0.4rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .move-table tr:last-child td { border-bottom: none; }
+    .move-table .move-cell {
+      font-family: 'Fira Code', Consolas, monospace;
+      color: var(--yellow);
+      font-size: 0.95rem;
+    }
+
+    /* practice steps */
+    .steps { counter-reset: step-counter; list-style: none; padding: 0; }
+    .steps li {
+      counter-increment: step-counter;
+      padding: 0.6rem 0 0.6rem 2.8rem;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+    }
+    .steps li:last-child { border-bottom: none; }
+    .steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0.65rem;
+      width: 1.7rem;
+      height: 1.7rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-row {
+      display: flex;
+      gap: 0.5rem;
+      margin: 1.2rem 0;
+      flex-wrap: wrap;
+    }
+    .stage-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .stage-done { background: #0d2e0d; color: #4caf50; border: 1px solid #2a6e2a; }
+    .stage-now  { background: #3a2000; color: #ffaa55; border: 1px solid #7a4400; }
+    .stage-next { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+
+    /* footer */
+    .footer {
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .footer strong { color: var(--text); }
+    .citation {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="tag">🟧 Rubik's Cube · Lesson 13</div>
+  <h1>2-Look OLL: Orient the Last Layer in Two Steps</h1>
+  <p class="subtitle">Replace the beginner's last-layer routine with two focused looks — and just two algorithms.</p>
+  <div class="meta">
+    <span class="pill">⏱ ~8 min</span>
+    <span class="pill">🔢 2 new algorithms</span>
+    <span class="pill">🎯 CFOP entry</span>
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>Where You Are in the Solve</h2>
+
+  <p>You've completed F2L — the first two layers are solved. Now you need to handle the top (last) layer. In the beginner method this felt like 3 or 4 separate steps. <strong>OLL collapses it into one goal: make the entire top face yellow.</strong></p>
+
+  <div class="progress-row">
+    <span class="stage-badge stage-done">✓ White Cross</span>
+    <span class="stage-badge stage-done">✓ White Corners</span>
+    <span class="stage-badge stage-done">✓ F2L (2nd Layer)</span>
+    <span class="stage-badge stage-now">→ OLL (orient top)</span>
+    <span class="stage-badge stage-next">PLL (permute top)</span>
+  </div>
+
+  <p>OLL stands for <strong>Orientation of the Last Layer</strong>. After OLL, every sticker on the top face is yellow. After the following step (PLL), the cube is solved.</p>
+
+  <div class="callout info">
+    <strong>Full OLL = 57 algorithms.</strong> Nobody starts there. 2-Look OLL gets the same result using just <strong>2 algorithms and at most 2 looks</strong>.
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>Look 1 Is Already Done — The Yellow Cross</h2>
+
+  <p>You learned this in Lesson 5. The yellow cross algorithm (<span class="alg">F (R U R' U') F'</span>) makes a yellow cross on the top face.</p>
+
+  <div class="callout success">
+    ✅ After Look 1 you have: yellow cross on top, four yellow edge stickers, yellow center. The four <em>corner</em> stickers on top may still be non-yellow.
+  </div>
+
+  <p>That's exactly what Look 2 fixes.</p>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>Look 2: Orient the Four Top Corners (OCLL)</h2>
+
+  <p>After the yellow cross, look at the four corner cells on the top face. Each corner either has yellow facing up, or it doesn't. There are four practical situations:</p>
+
+  <div class="cases-grid">
+
+    <!-- SKIP -->
+    <div class="case-card">
+      <div class="face-wrap">
+        <div class="face-grid">
+          <div class="cell yellow"></div>
+          <div class="cell yellow"></div>
+          <div class="cell yellow"></div>
+          <div class="cell yellow"></div>
+          <div class="cell yellow center"></div>
+          <div class="cell yellow"></div>
+          <div class="cell yellow"></div>
+          <div class="cell yellow"></div>
+          <div class="cell yellow"></div>
+        </div>
+        <div class="face-label">All 4 corners yellow</div>
+      </div>
+      <h4>Skip</h4>
+      <p>OLL complete. Go straight to PLL.</p>
+    </div>
+
+    <!-- SUNE -->
+    <div class="case-card">
+      <div class="face-wrap">
+        <div class="face-grid">
+          <div class="cell yellow"></div><!-- BL = yellow -->
+          <div class="cell yellow"></div><!-- B edge -->
+          <div class="cell miso-r"><div class="arrow">→</div></div><!-- BR -->
+          <div class="cell yellow"></div><!-- L edge -->
+          <div class="cell yellow center"></div>
+          <div class="cell yellow"></div><!-- R edge -->
+          <div class="cell miso-f"><div class="arrow">↓</div></div><!-- FL -->
+          <div class="cell yellow"></div><!-- F edge -->
+          <div class="cell miso-l"><div class="arrow">←</div></div><!-- FR -->
+        </div>
+        <div class="face-label">1 corner yellow (BL)</div>
+      </div>
+      <h4>Sune</h4>
+      <p>1 correct corner at back-left.</p>
+    </div>
+
+    <!-- ANTI-SUNE -->
+    <div class="case-card">
+      <div class="face-wrap">
+        <div class="face-grid">
+          <div class="cell miso-r"><div class="arrow">→</div></div><!-- BL -->
+          <div class="cell yellow"></div>
+          <div class="cell yellow"></div><!-- BR = yellow -->
+          <div class="cell yellow"></div>
+          <div class="cell yellow center"></div>
+          <div class="cell yellow"></div>
+          <div class="cell miso-r"><div class="arrow">→</div></div><!-- FL -->
+          <div class="cell yellow"></div>
+          <div class="cell miso-b"><div class="arrow">↑</div></div><!-- FR -->
+        </div>
+        <div class="face-label">1 corner yellow (BR)</div>
+      </div>
+      <h4>Anti-Sune</h4>
+      <p>1 correct corner at back-right.</p>
+    </div>
+
+    <!-- ZERO -->
+    <div class="case-card">
+      <div class="face-wrap">
+        <div class="face-grid">
+          <div class="cell miso-f"><div class="arrow">↓</div></div><!-- BL -->
+          <div class="cell yellow"></div>
+          <div class="cell miso-l"><div class="arrow">←</div></div><!-- BR -->
+          <div class="cell yellow"></div>
+          <div class="cell yellow center"></div>
+          <div class="cell yellow"></div>
+          <div class="cell miso-r"><div class="arrow">→</div></div><!-- FL -->
+          <div class="cell yellow"></div>
+          <div class="cell miso-b"><div class="arrow">↑</div></div><!-- FR -->
+        </div>
+        <div class="face-label">0 corners yellow</div>
+      </div>
+      <h4>Zero → Sune</h4>
+      <p>Apply Sune from any angle → creates a 1-correct case.</p>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <strong>Recognition rule:</strong> Count yellow corners on top. <strong>4 = done. 1 = set up and solve. 0 = apply Sune first, then solve the resulting 1-corner case.</strong>
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>The Two Algorithms</h2>
+
+  <h3>Sune</h3>
+  <p>Use when the <strong>one correct corner is at back-left (UBL)</strong>.</p>
+  <div class="alg-block">
+    <div class="alg-name">Sune</div>
+    <div class="alg-moves">R &nbsp;U &nbsp;R' &nbsp;U &nbsp;R &nbsp;U2 &nbsp;R'</div>
+  </div>
+
+  <table class="move-table">
+    <thead><tr><th>Move</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td class="move-cell">R</td><td>Right face clockwise — lifts FR corner to top</td></tr>
+      <tr><td class="move-cell">U</td><td>Top face clockwise — positions the lifted corner</td></tr>
+      <tr><td class="move-cell">R'</td><td>Right face counter-clockwise — returns right face</td></tr>
+      <tr><td class="move-cell">U</td><td>Top face clockwise again</td></tr>
+      <tr><td class="move-cell">R</td><td>Right face clockwise</td></tr>
+      <tr><td class="move-cell">U2</td><td>Top face <em>double</em> — the twist that orients</td></tr>
+      <tr><td class="move-cell">R'</td><td>Right face counter-clockwise — restore</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Anti-Sune</h3>
+  <p>Use when the <strong>one correct corner is at back-right (UBR)</strong>.</p>
+  <div class="alg-block">
+    <div class="alg-name">Anti-Sune</div>
+    <div class="alg-moves">R' &nbsp;U' &nbsp;R &nbsp;U' &nbsp;R' &nbsp;U2 &nbsp;R</div>
+  </div>
+  <p>Anti-Sune is the exact mirror of Sune — every move flipped. If Sune feels natural, Anti-Sune should too after a few repetitions.</p>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>How to Solve Every Case Step-by-Step</h2>
+
+  <div class="card">
+    <h3>Case: 4 yellow corners</h3>
+    <p>OLL is done. Proceed to PLL.</p>
+  </div>
+
+  <div class="card">
+    <h3>Case: 1 yellow corner</h3>
+    <ol class="steps">
+      <li>Identify the one corner that has yellow facing <em>up</em> on the top face.</li>
+      <li>Rotate the whole cube (not the U layer) with <strong>y</strong> or <strong>y'</strong> until that corner sits at <strong>back-left</strong> → do <span class="alg">Sune</span>.</li>
+      <li>If yellow is at back-right instead, rotate until it's back-right → do <span class="alg">Anti-Sune</span>.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>Case: 0 yellow corners</h3>
+    <ol class="steps">
+      <li>Hold the cube in any orientation (cross still on top).</li>
+      <li>Execute <span class="alg">Sune</span> once. Now check the corners again.</li>
+      <li>You will now have exactly 1 yellow corner. Follow the 1-corner procedure above.</li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <strong>Maximum 2 Sune/Anti-Sune executions</strong> to orient any top face. That's why it's called 2-Look OLL.
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>Visual Summary</h2>
+
+  <div class="card">
+    <table class="move-table">
+      <thead>
+        <tr><th>Top-face corners</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>4 yellow</td><td>✓ OLL done — go to PLL</td></tr>
+        <tr><td>1 yellow — at back-left</td><td><span class="alg">R U R' U R U2 R'</span> (Sune)</td></tr>
+        <tr><td>1 yellow — at back-right</td><td><span class="alg">R' U' R U' R' U2 R</span> (Anti-Sune)</td></tr>
+        <tr><td>1 yellow — anywhere else</td><td>Rotate cube (y / y') to bring it to BL or BR, then solve</td></tr>
+        <tr><td>0 yellow</td><td>Sune from any angle → creates 1-yellow case → solve</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2 id="quiz-section">Quiz — Case Recognition & Algorithm Choice</h2>
+  <p style="margin-bottom:1.2rem;">Read each situation, pick the best response. Feedback is instant.</p>
+
+  <!-- Q1 -->
+  <div class="quiz-box" id="q1">
+    <div class="q-number">Question 1 of 5</div>
+    <div class="q-text">You finish F2L and look at the top face. All four corners have yellow stickers facing up — and so does the cross. What do you do?</div>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q1','a')">Execute Sune from any angle just to be safe</button>
+      <button class="opt-btn" onclick="answer(this,'q1','b')">OLL is complete — proceed to PLL</button>
+      <button class="opt-btn" onclick="answer(this,'q1','c')">Apply the yellow cross algorithm first</button>
+      <button class="opt-btn" onclick="answer(this,'q1','d')">Flip the cube and check the bottom</button>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quiz-box" id="q2">
+    <div class="q-number">Question 2 of 5</div>
+    <div class="q-text">After the yellow cross you find exactly 1 corner with yellow on top. It's at the <strong>front-right</strong> of the top face. What do you do before running an algorithm?</div>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q2','a')">Run Sune immediately — position doesn't matter</button>
+      <button class="opt-btn" onclick="answer(this,'q2','b')">Rotate the whole cube (y or y') so the yellow corner lands at back-left, then run Sune</button>
+      <button class="opt-btn" onclick="answer(this,'q2','c')">Move the corner with a U move</button>
+      <button class="opt-btn" onclick="answer(this,'q2','d')">Run Anti-Sune from front-right — it covers that position</button>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quiz-box" id="q3">
+    <div class="q-number">Question 3 of 5</div>
+    <div class="q-text">0 corners have yellow on top after the yellow cross. You apply Sune. Now you check again — there is 1 yellow corner, and it's at back-right. What do you do next?</div>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q3','a')">Apply Sune again — always use Sune</button>
+      <button class="opt-btn" onclick="answer(this,'q3','b')">Rotate U face to bring the corner to back-left, then Sune</button>
+      <button class="opt-btn" onclick="answer(this,'q3','c')">Apply Anti-Sune — the correct corner is at back-right</button>
+      <button class="opt-btn" onclick="answer(this,'q3','d')">Apply Anti-Sune after rotating the corner to back-left</button>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <!-- Q4: Algorithm identification -->
+  <div class="quiz-box" id="q4">
+    <div class="q-number">Question 4 of 5</div>
+    <div class="q-text">Which algorithm is Sune?</div>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q4','a')">R U R' U' R U R' U' R U R'</button>
+      <button class="opt-btn" onclick="answer(this,'q4','b')">R' U' R U' R' U2 R</button>
+      <button class="opt-btn" onclick="answer(this,'q4','c')">R U R' U R U2 R'</button>
+      <button class="opt-btn" onclick="answer(this,'q4','d')">F R U R' U' F'</button>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="quiz-box" id="q5">
+    <div class="q-number">Question 5 of 5</div>
+    <div class="q-text">True or false: 2-Look OLL requires memorising 7 different algorithms.</div>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q5','a')">True — each of the 7 OCLL cases needs its own algorithm</button>
+      <button class="opt-btn" onclick="answer(this,'q5','b')">False — Sune and Anti-Sune cover all cases with at most 2 executions</button>
+    </div>
+    <div class="feedback" id="q5-fb"></div>
+  </div>
+
+  <div id="score-bar">
+    <h3 id="score-text"></h3>
+    <p id="score-sub"></p>
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>Practice Drill</h2>
+
+  <div class="card">
+    <ul class="steps">
+      <li>Solve to the end of F2L on a real or virtual cube (<a href="https://ruwix.com/the-rubiks-cube/notation/" target="_blank">Ruwix simulator</a> works).</li>
+      <li>Do the yellow cross algorithm if needed: <span class="alg">F (R U R' U') F'</span></li>
+      <li>Count yellow corners on top. Identify your case.</li>
+      <li>Apply Sune or Anti-Sune (with correct setup). Check: now all yellow?</li>
+      <li>Repeat 5 complete solves. Note: did you ever need more than 2 algorithm executions for OLL?</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <strong>Benchmark:</strong> After 10 solves, you should be selecting the right algorithm without needing to think about it. Hesitation on the "0-corner" case is normal at first.
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <h2>What's Next</h2>
+
+  <p>With 2-Look OLL in place, the last piece of CFOP entry is <strong>2-Look PLL</strong> — permuting the last layer's edges and corners with just 3 algorithms. That's the next lesson.</p>
+
+  <div class="callout">
+    Once you have 2-Look OLL + 2-Look PLL, your solve is fully CFOP-compatible — and ready to start optimising toward sub-2-minute times.
+  </div>
+
+  <!-- ──────────────────────────────────────── -->
+  <div class="footer">
+    <p><strong>Sources</strong></p>
+    <p class="citation">
+      · <a href="https://ruwix.com/the-rubiks-cube/notation/" target="_blank">Ruwix — Cube Notation &amp; Interactive Simulator</a><br>
+      · <a href="https://www.youcandothecube.com/solve-it/3-x-3-solution" target="_blank">You CAN Do the Rubik's Cube — Official Beginner Solution Guide</a><br>
+      · <a href="https://www.youtube.com/watch?v=7Ron6MN45LY" target="_blank">J Perm — Beginner's Method Tutorial (YouTube)</a>
+    </p>
+    <p style="margin-top:1rem;">
+      <strong>Questions?</strong> Ask your AI teacher — paste any part of this lesson and ask for a deeper explanation, alternate analogies, or help with a specific case you're stuck on.
+    </p>
+  </div>
+
+  <script>
+    const answers = {
+      q1: { correct: 'b', explanation: 'Correct! If all 4 corners are already yellow-up, OLL is complete. Never run an unnecessary algorithm.' },
+      q2: { correct: 'b', explanation: 'Right. Sune is set up with the correct corner at back-left (UBL). Rotate the whole cube — not the U layer — to position it there, then execute Sune.' },
+      q3: { correct: 'c', explanation: 'Exactly. The correct corner is at back-right → that\'s the Anti-Sune setup. No need to rotate first: back-right = Anti-Sune, back-left = Sune.' },
+      q4: { correct: 'c', explanation: 'R U R\' U R U2 R\' — Sune. Option (b) is Anti-Sune. Option (a) is the Sune repetition drill. Option (d) is the yellow cross algorithm.' },
+      q5: { correct: 'b', explanation: 'False. 2-Look OLL deliberately reduces 57 full OLL algorithms to just 2. Sune handles the "1 correct corner at BL" case; Anti-Sune handles "1 correct corner at BR". Any other configuration converts to one of these in one step.' },
+    };
+
+    let scored = 0;
+    let answered = 0;
+    const total = Object.keys(answers).length;
+
+    function answer(btn, qId, choice) {
+      const cfg = answers[qId];
+      const box = document.getElementById(qId);
+      const fb  = document.getElementById(qId + '-fb');
+      const opts = box.querySelectorAll('.opt-btn');
+      opts.forEach(b => b.disabled = true);
+      if (choice === cfg.correct) {
+        btn.classList.add('correct');
+        fb.textContent = '✓ ' + cfg.explanation;
+        fb.className = 'feedback show ok';
+        scored++;
+      } else {
+        btn.classList.add('wrong');
+        opts.forEach(b => {
+          if (b.getAttribute('onclick').includes("'" + cfg.correct + "'")) {
+            b.classList.add('correct');
+          }
+        });
+        fb.textContent = '✗ ' + cfg.explanation;
+        fb.className = 'feedback show no';
+      }
+      answered++;
+      if (answered === total) showScore();
+    }
+
+    function showScore() {
+      const bar = document.getElementById('score-bar');
+      const txt = document.getElementById('score-text');
+      const sub = document.getElementById('score-sub');
+      bar.style.display = 'block';
+      const pct = Math.round((scored / total) * 100);
+      if (pct === 100) {
+        txt.textContent = '🎉 Perfect — ' + scored + '/' + total;
+        sub.textContent = 'OLL recognition is locked in. Next: practice the setup on a real cube.';
+      } else if (pct >= 60) {
+        txt.textContent = scored + '/' + total + ' — Good foundation';
+        sub.textContent = 'Review the cases you missed above, then drill Sune and Anti-Sune setups on a cube.';
+      } else {
+        txt.textContent = scored + '/' + total + ' — Re-read the case table';
+        sub.textContent = 'Focus on the "Visual Summary" table — count corners, identify back-left vs back-right setup.';
+      }
+    }
+  </script>
+</body>
+</html>
