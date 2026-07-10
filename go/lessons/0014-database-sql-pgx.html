@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 14 — database/sql + pgx: Connecting Postgres to Your HTTP Server</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #212435;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #00adb5;
+    --green: #3ab54a;
+    --red: #e05c6a;
+    --yellow: #f5d600;
+    --ts: #3178c6;
+    --go: #00adb5;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+  h1 { font-size: 1.85rem; color: var(--white); margin-bottom: 0.25rem; }
+  h2 { font-size: 1.2rem; color: var(--accent); margin: 2.2rem 0 0.7rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1rem; color: var(--white); margin: 1.4rem 0 0.5rem; }
+  p { margin-bottom: 0.9rem; color: var(--text); }
+  a { color: var(--accent); }
+  .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+  .goal-box {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+  }
+  .goal-box strong { color: var(--accent); }
+
+  /* Comparison table */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 1rem 0 1.5rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .compare-col { padding: 0; }
+  .compare-header {
+    padding: 0.5rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .compare-header.ts { background: #1c2d4a; color: #7eb3e8; border-right: 1px solid var(--border); }
+  .compare-header.go { background: #0d2424; color: var(--accent); }
+  .compare-col pre { border-radius: 0; border-top: 1px solid var(--border); }
+  .compare-col:first-child pre { border-right: 1px solid var(--border); }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    margin: 0.5rem 0 1.2rem;
+  }
+  code { font-family: 'Fira Code', 'Cascadia Code', monospace; }
+  pre code { font-size: inherit; }
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cm { color: #546e7a; }
+  .tp { color: #ffcb6b; }
+  .num { color: #f78c6c; }
+
+  /* Steps */
+  .step-list { list-style: none; counter-reset: step; }
+  .step-list li {
+    counter-increment: step;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .step-list li::before {
+    content: counter(step);
+    min-width: 1.8rem;
+    height: 1.8rem;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+  }
+
+  /* Info callout */
+  .callout {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.9rem;
+  }
+  .callout .label { font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+  .callout.tip .label { color: var(--green); }
+  .callout.warn .label { color: var(--yellow); }
+
+  /* Quiz */
+  #quiz { margin-top: 2.5rem; }
+  .q-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.3rem 1.4rem;
+    margin-bottom: 1.4rem;
+  }
+  .q-text { color: var(--white); font-weight: 600; margin-bottom: 1rem; }
+  .q-text code { background: var(--surface2); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.85em; color: var(--accent); }
+  .options { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+  .options li button {
+    width: 100%;
+    text-align: left;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.6rem 0.9rem;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    font-family: inherit;
+  }
+  .options li button:hover:not(:disabled) { border-color: var(--accent); background: #1e2535; }
+  .options li button.correct { background: #122318; border-color: var(--green); color: var(--green); }
+  .options li button.wrong { background: #2a1118; border-color: var(--red); color: var(--red); }
+  .feedback { font-size: 0.85rem; margin-top: 0.7rem; min-height: 1.2rem; }
+  .feedback.ok { color: var(--green); }
+  .feedback.bad { color: var(--red); }
+
+  #quiz-summary {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-top: 1rem;
+  }
+  #quiz-summary h3 { font-size: 1.3rem; color: var(--white); margin-bottom: 0.5rem; }
+  #quiz-summary p { color: var(--muted); }
+  #quiz-summary .score { font-size: 2.5rem; font-weight: 700; color: var(--accent); margin: 0.5rem 0; }
+
+  .tag { display: inline-block; font-size: 0.72rem; background: #1a2a2a; color: var(--accent); border: 1px solid #1f3d3d; border-radius: 4px; padding: 0.1rem 0.45rem; margin-right: 0.3rem; font-weight: 600; }
+  .citation { font-size: 0.78rem; color: var(--muted); }
+  .citation a { color: var(--muted); }
+  .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<p class="meta">Go for TypeScript Devs · Lesson 14 of ∞</p>
+<h1>database/sql + pgx: Connecting Postgres</h1>
+<p class="meta">Replace your in-memory store with a real Postgres database.</p>
+
+<div class="goal-box">
+  <strong>Goal:</strong> By the end of this lesson you will be able to open a Postgres connection with <code>pgx</code>,
+  run a <code>QueryRow</code> + <code>Exec</code>, and swap your in-memory task store for a real DB layer —
+  without touching your handler or middleware code.
+</div>
+
+<!-- ═══════════════════════════════ WHY pgx ══════════════════════════════ -->
+<h2>1 · Why pgx, and how it relates to database/sql</h2>
+
+<p>
+  Go's standard library ships <a href="https://pkg.go.dev/database/sql" target="_blank"><code>database/sql</code></a> —
+  a generic DB abstraction that works with any driver.
+  <a href="https://github.com/jackc/pgx" target="_blank"><code>pgx/v5</code></a> is the most widely-used
+  Postgres driver. It can be used two ways:
+</p>
+
+<ul style="margin: 0 0 1rem 1.5rem;">
+  <li style="margin-bottom:0.4rem"><strong>pgx native API</strong> — more Postgres-specific features, slightly more ergonomic for pure-Postgres projects</li>
+  <li><strong>pgx as a <code>database/sql</code> driver</strong> — standard interface, easier to swap drivers later, familiar to any Go dev</li>
+</ul>
+
+<p>
+  This lesson uses pgx as a <code>database/sql</code> driver so the concepts transfer to MySQL, SQLite, etc.
+</p>
+<p class="citation">→ <a href="https://pkg.go.dev/database/sql" target="_blank">pkg.go.dev/database/sql</a> &nbsp;·&nbsp;
+<a href="https://github.com/jackc/pgx/wiki/Getting-started-as-a-database-sql-driver" target="_blank">pgx as database/sql driver</a></p>
+
+<!-- ═══════════════════════════════ TS COMPARE ══════════════════════════════ -->
+<h2>2 · TypeScript → Go mental model</h2>
+
+<div class="compare">
+  <div class="compare-col">
+    <div class="compare-header ts">TypeScript (node-postgres / pg)</div>
+    <pre><code><span class="kw">import</span> { Pool } <span class="kw">from</span> <span class="str">'pg'</span>
+
+<span class="kw">const</span> pool = <span class="kw">new</span> <span class="fn">Pool</span>({
+  connectionString: process.env.<span class="tp">DATABASE_URL</span>
+})
+
+<span class="cm">// query</span>
+<span class="kw">const</span> { rows } = <span class="kw">await</span> pool.<span class="fn">query</span>(
+  <span class="str">'SELECT id, title FROM tasks WHERE id=$1'</span>,
+  [id]
+)
+<span class="kw">const</span> task = rows[<span class="num">0</span>]
+
+<span class="cm">// insert</span>
+<span class="kw">await</span> pool.<span class="fn">query</span>(
+  <span class="str">'INSERT INTO tasks(title) VALUES($1)'</span>,
+  [title]
+)</code></pre>
+  </div>
+  <div class="compare-col">
+    <div class="compare-header go">Go (database/sql + pgx)</div>
+    <pre><code><span class="kw">import</span> (
+  <span class="str">"database/sql"</span>
+  _ <span class="str">"github.com/jackc/pgx/v5/stdlib"</span>
+)
+
+db, _ := sql.<span class="fn">Open</span>(<span class="str">"pgx"</span>, os.<span class="fn">Getenv</span>(<span class="str">"DATABASE_URL"</span>))
+
+<span class="cm">// query one row</span>
+<span class="kw">var</span> t <span class="tp">Task</span>
+err := db.<span class="fn">QueryRowContext</span>(ctx,
+  <span class="str">"SELECT id, title FROM tasks WHERE id=$1"</span>,
+  id,
+).<span class="fn">Scan</span>(&amp;t.ID, &amp;t.Title)
+
+<span class="cm">// insert</span>
+_, err = db.<span class="fn">ExecContext</span>(ctx,
+  <span class="str">"INSERT INTO tasks(title) VALUES($1)"</span>,
+  title,
+)</code></pre>
+  </div>
+</div>
+
+<p>Key differences:</p>
+<ul style="margin: 0 0 1rem 1.5rem;">
+  <li style="margin-bottom:0.4rem"><strong>No <code>await</code></strong> — Go is blocking/synchronous within a goroutine. The HTTP server runs each request in its own goroutine automatically.</li>
+  <li style="margin-bottom:0.4rem"><strong><code>.Scan()</code> instead of <code>rows[0]</code></strong> — you scan columns directly into Go variables/struct fields.</li>
+  <li><strong>Blank import <code>_ "…/stdlib"</code></strong> — registers the pgx driver with <code>database/sql</code> as a side effect. The underscore means "import for side effects only".</li>
+</ul>
+
+<!-- ═══════════════════════════════ SETUP ══════════════════════════════ -->
+<h2>3 · Setup: add pgx to your module</h2>
+
+<ol class="step-list">
+  <li>
+    <div>
+      <strong>Add the dependency</strong>
+      <pre><code>go get github.com/jackc/pgx/v5</code></pre>
+      This adds pgx to <code>go.mod</code> and downloads it to the module cache.
+    </div>
+  </li>
+  <li>
+    <div>
+      <strong>Create a <code>DATABASE_URL</code> env var</strong><br>
+      pgx accepts standard Postgres connection strings:
+      <pre><code><span class="cm"># .env (use godotenv or export directly)</span>
+DATABASE_URL=postgres://user:pass@localhost:5432/mydb?sslmode=disable</code></pre>
+    </div>
+  </li>
+  <li>
+    <div>
+      <strong>Open + ping in <code>main.go</code></strong>
+      <pre><code><span class="kw">import</span> (
+  <span class="str">"database/sql"</span>
+  <span class="str">"log"</span>
+  <span class="str">"os"</span>
+  _ <span class="str">"github.com/jackc/pgx/v5/stdlib"</span>
+)
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+  db, err := sql.<span class="fn">Open</span>(<span class="str">"pgx"</span>, os.<span class="fn">Getenv</span>(<span class="str">"DATABASE_URL"</span>))
+  <span class="kw">if</span> err != <span class="kw">nil</span> {
+    log.<span class="fn">Fatal</span>(err)
+  }
+  <span class="kw">if</span> err := db.<span class="fn">Ping</span>(); err != <span class="kw">nil</span> {
+    log.<span class="fn">Fatal</span>(<span class="str">"cannot reach database:"</span>, err)
+  }
+  <span class="cm">// pass db to your store / handlers...</span>
+}</code></pre>
+      <div class="callout tip"><div class="label">Tip</div>
+        <code>sql.Open</code> does NOT open a connection — it just validates the driver name and DSN format.
+        <code>db.Ping()</code> is what actually dials the database. Always ping on startup.
+      </div>
+    </div>
+  </li>
+</ol>
+
+<!-- ═══════════════════════════════ STORE ══════════════════════════════ -->
+<h2>4 · Replacing the in-memory store with a DB store</h2>
+
+<p>
+  Remember the capstone store from Lesson 13? It held tasks in a <code>map[string]Task</code> with a <code>sync.RWMutex</code>.
+  The swap is surgical — handlers don't change at all because the store satisfies the same interface.
+</p>
+
+<pre><code><span class="cm">// internal/store/store.go  (was: in-memory map)</span>
+<span class="cm">// NOW: Postgres-backed</span>
+
+<span class="kw">package</span> store
+
+<span class="kw">import</span> (
+  <span class="str">"context"</span>
+  <span class="str">"database/sql"</span>
+)
+
+<span class="kw">type</span> <span class="tp">Store</span> <span class="kw">struct</span> {
+  db *sql.<span class="tp">DB</span>
+}
+
+<span class="kw">func</span> <span class="fn">New</span>(db *sql.<span class="tp">DB</span>) *<span class="tp">Store</span> {
+  <span class="kw">return</span> &amp;<span class="tp">Store</span>{db: db}
+}
+
+<span class="kw">func</span> (s *<span class="tp">Store</span>) <span class="fn">GetTask</span>(ctx <span class="tp">context.Context</span>, id <span class="tp">string</span>) (<span class="tp">Task</span>, <span class="tp">error</span>) {
+  <span class="kw">var</span> t <span class="tp">Task</span>
+  err := s.db.<span class="fn">QueryRowContext</span>(ctx,
+    <span class="str">"SELECT id, title, done FROM tasks WHERE id = $1"</span>,
+    id,
+  ).<span class="fn">Scan</span>(&amp;t.ID, &amp;t.Title, &amp;t.Done)
+  <span class="kw">if</span> err == sql.<span class="tp">ErrNoRows</span> {
+    <span class="kw">return</span> t, <span class="tp">ErrNotFound</span>
+  }
+  <span class="kw">return</span> t, err
+}
+
+<span class="kw">func</span> (s *<span class="tp">Store</span>) <span class="fn">CreateTask</span>(ctx <span class="tp">context.Context</span>, title <span class="tp">string</span>) (<span class="tp">Task</span>, <span class="tp">error</span>) {
+  <span class="kw">var</span> t <span class="tp">Task</span>
+  err := s.db.<span class="fn">QueryRowContext</span>(ctx,
+    <span class="str">"INSERT INTO tasks(title, done) VALUES($1, false) RETURNING id, title, done"</span>,
+    title,
+  ).<span class="fn">Scan</span>(&amp;t.ID, &amp;t.Title, &amp;t.Done)
+  <span class="kw">return</span> t, err
+}</code></pre>
+
+<div class="callout tip">
+  <div class="label">Tip: RETURNING</div>
+  Postgres's <code>RETURNING</code> clause lets you get the inserted row back in one round-trip — no need for a second SELECT.
+  This is idiomatic Go-Postgres style. <a href="https://www.postgresql.org/docs/current/dml-returning.html" target="_blank">Docs →</a>
+</div>
+
+<div class="callout warn">
+  <div class="label">sql.ErrNoRows</div>
+  When a <code>QueryRow</code> finds nothing, <code>Scan()</code> returns <code>sql.ErrNoRows</code>.
+  Always check for this sentinel error so handlers can return a proper 404 instead of a 500.
+</div>
+
+<!-- ═══════════════════════════════ QUERY MANY ══════════════════════════════ -->
+<h2>5 · Querying multiple rows</h2>
+
+<p>
+  <code>QueryRowContext</code> handles one row. For a list of tasks use <code>QueryContext</code> and iterate with <code>rows.Next()</code>:
+</p>
+
+<div class="compare">
+  <div class="compare-col">
+    <div class="compare-header ts">TypeScript</div>
+    <pre><code><span class="kw">const</span> { rows } = <span class="kw">await</span> pool.<span class="fn">query</span>(
+  <span class="str">'SELECT id, title, done FROM tasks'</span>
+)
+<span class="kw">return</span> rows <span class="cm">// Task[]</span></code></pre>
+  </div>
+  <div class="compare-col">
+    <div class="compare-header go">Go</div>
+    <pre><code>rows, err := s.db.<span class="fn">QueryContext</span>(ctx,
+  <span class="str">"SELECT id, title, done FROM tasks"</span>)
+<span class="kw">if</span> err != <span class="kw">nil</span> { <span class="kw">return</span> <span class="kw">nil</span>, err }
+<span class="kw">defer</span> rows.<span class="fn">Close</span>() <span class="cm">// always!</span>
+
+<span class="kw">var</span> tasks []<span class="tp">Task</span>
+<span class="kw">for</span> rows.<span class="fn">Next</span>() {
+  <span class="kw">var</span> t <span class="tp">Task</span>
+  <span class="kw">if</span> err := rows.<span class="fn">Scan</span>(&amp;t.ID, &amp;t.Title, &amp;t.Done); err != <span class="kw">nil</span> {
+    <span class="kw">return</span> <span class="kw">nil</span>, err
+  }
+  tasks = <span class="fn">append</span>(tasks, t)
+}
+<span class="kw">return</span> tasks, rows.<span class="fn">Err</span>()</code></pre>
+  </div>
+</div>
+
+<div class="callout warn">
+  <div class="label">Two places errors can hide</div>
+  After iterating, always check <code>rows.Err()</code> — a network error mid-stream won't appear until after the loop.
+  And always <code>defer rows.Close()</code> to release the connection back to the pool.
+</div>
+
+<!-- ═══════════════════════════════ CONNECTION POOL ══════════════════════════════ -->
+<h2>6 · Connection pool settings</h2>
+
+<p>
+  <code>sql.DB</code> is a connection pool, not a single connection. Tune it once in <code>main.go</code>:
+</p>
+
+<pre><code>db.<span class="fn">SetMaxOpenConns</span>(<span class="num">25</span>)         <span class="cm">// max connections to Postgres</span>
+db.<span class="fn">SetMaxIdleConns</span>(<span class="num">5</span>)          <span class="cm">// keep 5 idle, ready to reuse</span>
+db.<span class="fn">SetConnMaxLifetime</span>(<span class="num">5</span> * time.Minute) <span class="cm">// avoid stale connections</span></code></pre>
+
+<p class="citation">→ <a href="https://pkg.go.dev/database/sql#DB.SetMaxOpenConns" target="_blank">database/sql pool docs</a></p>
+
+<!-- ═══════════════════════════════ QUIZ ══════════════════════════════ -->
+<h2>Quiz — test your understanding</h2>
+<div id="quiz">
+
+  <div class="q-block" id="q1">
+    <p class="q-text">What does the blank import <code>_ "github.com/jackc/pgx/v5/stdlib"</code> do?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q1',false)">Imports pgx functions so you can call them directly</button></li>
+      <li><button onclick="answer(this,'q1',true)">Registers the pgx driver with database/sql as a side effect, without exposing any identifiers</button></li>
+      <li><button onclick="answer(this,'q1',false)">Opens a connection to Postgres automatically on startup</button></li>
+      <li><button onclick="answer(this,'q1',false)">Is required only in test files</button></li>
+    </ul>
+    <p class="feedback" id="q1-feedback"></p>
+  </div>
+
+  <div class="q-block" id="q2">
+    <p class="q-text">You call <code>db.QueryRowContext(ctx, "SELECT … WHERE id=$1", id).Scan(&amp;t.ID)</code> and get an error. How do you specifically detect that the row was not found?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q2',false)">Check if <code>t.ID == ""</code> after Scan</button></li>
+      <li><button onclick="answer(this,'q2',false)">Catch a <code>pgx.ErrNotFound</code> error</button></li>
+      <li><button onclick="answer(this,'q2',true)">Compare the error to <code>sql.ErrNoRows</code></button></li>
+      <li><button onclick="answer(this,'q2',false)">Call <code>rows.Next()</code> and check if it returns false</button></li>
+    </ul>
+    <p class="feedback" id="q2-feedback"></p>
+  </div>
+
+  <div class="q-block" id="q3">
+    <p class="q-text">Why must you always <code>defer rows.Close()</code> after calling <code>db.QueryContext</code>?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q3',false)">To flush pending writes to Postgres</button></li>
+      <li><button onclick="answer(this,'q3',true)">To release the database connection back to the pool so it can be reused</button></li>
+      <li><button onclick="answer(this,'q3',false)">To trigger rows.Err() evaluation</button></li>
+      <li><button onclick="answer(this,'q3',false)">It's optional; Go's GC handles it automatically</button></li>
+    </ul>
+    <p class="feedback" id="q3-feedback"></p>
+  </div>
+
+  <div class="q-block" id="q4">
+    <p class="q-text">What does <code>sql.Open("pgx", dsn)</code> actually do?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q4',false)">Dials the Postgres server and returns an open connection</button></li>
+      <li><button onclick="answer(this,'q4',false)">Runs a test query to validate credentials</button></li>
+      <li><button onclick="answer(this,'q4',true)">Validates the driver name and DSN format; the actual connection happens lazily on first use (or db.Ping)</button></li>
+      <li><button onclick="answer(this,'q4',false)">Creates a new Postgres database if it doesn't exist</button></li>
+    </ul>
+    <p class="feedback" id="q4-feedback"></p>
+  </div>
+
+  <div class="q-block" id="q5">
+    <p class="q-text">After iterating a <code>*sql.Rows</code> loop, why should you check <code>rows.Err()</code>?</p>
+    <ul class="options">
+      <li><button onclick="answer(this,'q5',false)">To see how many rows were returned</button></li>
+      <li><button onclick="answer(this,'q5',true)">A network error mid-stream is only surfaced after the loop via rows.Err(); scanning alone won't catch it</button></li>
+      <li><button onclick="answer(this,'q5',false)">rows.Next() panics on error, so this is a safety check</button></li>
+      <li><button onclick="answer(this,'q5',false)">rows.Err() is the idiomatic way to check row count</button></li>
+    </ul>
+    <p class="feedback" id="q5-feedback"></p>
+  </div>
+
+</div>
+
+<div id="quiz-summary">
+  <h3>Quiz complete 🎉</h3>
+  <div class="score" id="score-display"></div>
+  <p id="score-msg"></p>
+</div>
+
+<!-- ═══════════════════════════════ NEXT ══════════════════════════════ -->
+<h2>What's next</h2>
+
+<p>
+  Your HTTP server is now persistence-capable. The next natural steps:
+</p>
+<ul style="margin: 0 0 1rem 1.5rem;">
+  <li style="margin-bottom:0.4rem"><strong>Migrations</strong> — manage schema changes with <a href="https://github.com/golang-migrate/migrate" target="_blank">golang-migrate</a> or <a href="https://atlasgo.io" target="_blank">Atlas</a></li>
+  <li style="margin-bottom:0.4rem"><strong>pgxpool</strong> — pgx's own high-performance pool API (for when you want more than <code>database/sql</code> gives)</li>
+  <li><strong>Auth</strong> — JWT middleware layer on top of your existing middleware chain</li>
+</ul>
+
+<div class="callout tip">
+  <div class="label">Ask your teacher</div>
+  Questions about anything in this lesson? Start a new session and ask — your AI teacher will pick up from here.
+</div>
+
+<div class="footer">
+  <p>Lesson 14 · Go for TypeScript Devs ·
+    <a href="../reference/GLOSSARY.html">Glossary</a> ·
+    <a href="../../index.html">All lessons</a>
+  </p>
+  <p style="margin-top:0.4rem">Sources: <a href="https://pkg.go.dev/database/sql" target="_blank">database/sql</a> · <a href="https://github.com/jackc/pgx" target="_blank">pgx</a> · <a href="https://www.postgresql.org/docs/current/dml-returning.html" target="_blank">Postgres RETURNING</a></p>
+</div>
+
+<script>
+const explanations = {
+  q1: "The blank import runs the package's init() function which calls sql.Register(\"pgx\", ...), telling database/sql how to open pgx connections. No exported symbols are needed.",
+  q2: "sql.ErrNoRows is the standard sentinel error returned by Scan() when QueryRow finds no matching rows. It's the Go equivalent of checking rows.length === 0 in Node.",
+  q3: "sql.DB manages a pool of connections. If you don't Close() rows, the underlying connection is held open and can't be reused, starving the pool under load.",
+  q4: "sql.Open just validates config and stores the driver + DSN. No actual TCP connection is made until you call db.Ping(), db.Query(), or similar.",
+  q5: "rows.Next() stops the loop on either EOF or a mid-stream error. It sets an internal error flag but returns false in both cases. Only rows.Err() distinguishes them."
+};
+
+let answered = {};
+const total = 5;
+
+function answer(btn, qid, correct) {
+  if (answered[qid]) return;
+  answered[qid] = true;
+
+  const block = document.getElementById(qid);
+  block.querySelectorAll('button').forEach(b => b.disabled = true);
+  btn.classList.add(correct ? 'correct' : 'wrong');
+
+  const fb = document.getElementById(qid + '-feedback');
+  fb.className = 'feedback ' + (correct ? 'ok' : 'bad');
+  fb.textContent = (correct ? '✓ Correct. ' : '✗ Not quite. ') + explanations[qid];
+
+  if (Object.keys(answered).length === total) showSummary();
+}
+
+function showSummary() {
+  const score = Object.keys(answered).filter(q => {
+    const b = document.querySelector('#' + q + ' button.correct');
+    return b !== null;
+  }).length;
+  const el = document.getElementById('quiz-summary');
+  el.style.display = 'block';
+  document.getElementById('score-display').textContent = score + ' / ' + total;
+  document.getElementById('score-msg').textContent =
+    score === total ? 'Perfect! You\'ve got the key patterns wired in.' :
+    score >= 3 ? 'Solid. Re-read any explanations marked ✗ above.' :
+    'Review sections 3–5 and try again next session.';
+}
+</script>
+</body>
+</html>

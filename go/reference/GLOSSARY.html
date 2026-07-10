@@ -596,6 +596,51 @@
     <td>npm run build + node dist/index.js</td>
     <td>Compiles a Go program into a single self-contained binary with no runtime dependency. The binary can be shipped and run on any machine with the matching OS/arch.</td>
   </tr>
+  <tr>
+    <td>database/sql</td>
+    <td>N/A (pg, mysql2 are direct drivers)</td>
+    <td>Standard library package providing a generic SQL interface. Works with any driver registered via a blank import (e.g. pgx/stdlib, mattn/go-sqlite3).</td>
+  </tr>
+  <tr>
+    <td>sql.Open("pgx", dsn)</td>
+    <td>new Pool({ connectionString })</td>
+    <td>Creates a *sql.DB (a connection pool). Does NOT dial the DB yet — call db.Ping() to verify connectivity on startup.</td>
+  </tr>
+  <tr>
+    <td>db.QueryRowContext(ctx, sql, args…).Scan(&amp;fields…)</td>
+    <td>await pool.query(sql, [args]) → rows[0]</td>
+    <td>Executes a query expected to return one row and scans the columns directly into Go variables. Returns sql.ErrNoRows if no row matched.</td>
+  </tr>
+  <tr>
+    <td>sql.ErrNoRows</td>
+    <td>rows.length === 0</td>
+    <td>Sentinel error returned by Scan() when QueryRow finds no matching row. Map this to a 404 in handlers.</td>
+  </tr>
+  <tr>
+    <td>db.QueryContext(ctx, sql, args…) → rows</td>
+    <td>await pool.query(sql, [args]) → rows array</td>
+    <td>Executes a query returning multiple rows. Must defer rows.Close() and check rows.Err() after iterating with rows.Next().</td>
+  </tr>
+  <tr>
+    <td>rows.Scan(&amp;fields…)</td>
+    <td>row.fieldName</td>
+    <td>Copies the current row's columns into Go variables. Called inside a rows.Next() loop.</td>
+  </tr>
+  <tr>
+    <td>db.ExecContext(ctx, sql, args…)</td>
+    <td>await pool.query(sql, [args]) (no rows expected)</td>
+    <td>Executes a statement that doesn't return rows (UPDATE, DELETE). Returns sql.Result with RowsAffected().</td>
+  </tr>
+  <tr>
+    <td>_ "pkg/stdlib" (blank import)</td>
+    <td>require('pg') side-effect</td>
+    <td>Imports a package solely for its init() side effects (driver registration). The underscore discards the package identifier so you can't accidentally call its functions.</td>
+  </tr>
+  <tr>
+    <td>RETURNING id, title FROM …</td>
+    <td>INSERT … RETURNING (Postgres-specific, same syntax)</td>
+    <td>Postgres clause that returns the affected rows after an INSERT/UPDATE/DELETE. Avoids a second SELECT round-trip.</td>
+  </tr>
 </table>
 
 </body>
