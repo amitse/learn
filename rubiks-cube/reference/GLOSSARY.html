@@ -135,6 +135,8 @@
   <dt>Diagonal (case)</dt><dd>No headlights on any face. Apply the corner permutation algorithm from any hold once; headlights will appear, then solve the resulting adjacent case.</dd>
   <dt>Corner permutation algorithm</dt><dd><code>R U R′ F′ · R U R′ U′ · R′ F · R2 U′ R′</code> — cycles FL, FR, and BL corners, leaving the BR corner fixed. Apply with headlights at the back.</dd>
   <dt>PLL Step 1</dt><dd>Permuting the 4 top-layer corners after OLL is complete. Solved in at most 2 applications of the corner permutation algorithm.</dd>
+  <dt>Y-Perm</dt><dd><code>F R U' R' U' R U R' F' R U R' U' R' F R F'</code> — the standard 2-Look PLL algorithm for cycling 3 last-layer corners. The back-left corner is the anchor (stays put). Setup: place the matching corner pair at the back before executing.</dd>
+  <dt>2-Look PLL</dt><dd>A 2-step method to permute the last layer using only 3 algorithms (Y-Perm, Ua-Perm, Ub-Perm) in at most 4 executions. Look 1 handles corners (Y-Perm); Look 2 handles edges (Ua or Ub). Completes the CFOP beginner framework.</dd>
 </dl>
 
 

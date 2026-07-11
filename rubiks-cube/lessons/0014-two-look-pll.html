@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 14 — 2-Look PLL | Rubik's Cube</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #7c6af7;
+    --accent2: #f7c66a;
+    --green: #4ade80;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --border: #2e3348;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 820px; margin: 0 auto; }
+  header { margin-bottom: 2.5rem; }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-bottom: .6rem;
+  }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: .4rem; }
+  .subtitle { color: var(--muted); font-size: 1.05rem; }
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent2);
+    margin: 2rem 0 .8rem;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 1rem; font-weight: 700; margin: 1.2rem 0 .4rem; color: #c4b5fd; }
+  p { margin-bottom: .8rem; }
+  code {
+    background: var(--surface2);
+    color: #f9a8d4;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: .93em;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.6rem;
+    margin: 1rem 0;
+  }
+  .alg-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    margin: .8rem 0;
+  }
+  .alg-title { font-weight: 700; font-size: 1.05rem; color: var(--accent2); margin-bottom: .3rem; }
+  .alg-code {
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 1.05rem;
+    color: #7dd3fc;
+    letter-spacing: .04em;
+    background: #0f1117;
+    padding: .4rem .8rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin: .3rem 0;
+  }
+  .alg-desc { color: var(--muted); font-size: .92rem; margin-top: .3rem; }
+  .tip {
+    background: #1a2a1a;
+    border-left: 3px solid var(--green);
+    border-radius: 8px;
+    padding: .8rem 1.2rem;
+    margin: 1rem 0;
+    font-size: .95rem;
+  }
+  .warn {
+    background: #2a1a1a;
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+    padding: .8rem 1.2rem;
+    margin: 1rem 0;
+    font-size: .95rem;
+  }
+  table { width: 100%; border-collapse: collapse; margin: .8rem 0; }
+  th { background: var(--surface2); padding: .5rem .8rem; text-align: left; font-size: .85rem; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: .5rem .8rem; border-bottom: 1px solid var(--border); font-size: .93rem; }
+  tr:last-child td { border-bottom: none; }
+
+  /* Cube face diagrams */
+  .face-grid {
+    display: grid;
+    grid-template-columns: repeat(3,28px);
+    grid-template-rows: repeat(3,28px);
+    gap: 2px;
+    display: inline-grid;
+  }
+  .cell {
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,.1);
+  }
+  .Y { background: #fbbf24; }
+  .W { background: #f1f5f9; }
+  .R { background: #ef4444; }
+  .B { background: #3b82f6; }
+  .O { background: #f97316; }
+  .G { background: #22c55e; }
+  .X { background: #334155; } /* unknown/any */
+  .face-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; margin: .6rem 0; }
+  .face-label { font-size: .75rem; color: var(--muted); margin-top: 4px; text-align: center; }
+
+  /* Quiz */
+  #quiz-section { margin-top: 2rem; }
+  .question-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.6rem;
+    margin: 1.2rem 0;
+  }
+  .question-block.correct { border-color: var(--green); background: #0f1e12; }
+  .question-block.wrong { border-color: var(--red); background: #1e0f0f; }
+  .q-text { font-weight: 600; margin-bottom: .9rem; font-size: 1.02rem; }
+  .options { display: flex; flex-direction: column; gap: .5rem; }
+  .opt-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: .55rem 1rem;
+    text-align: left;
+    cursor: pointer;
+    font-size: .95rem;
+    transition: background .15s, border-color .15s;
+  }
+  .opt-btn:hover:not(:disabled) { background: #2d3250; border-color: var(--accent); }
+  .opt-btn.correct-ans { background: #14532d; border-color: var(--green); color: var(--green); }
+  .opt-btn.wrong-ans { background: #450a0a; border-color: var(--red); color: var(--red); }
+  .feedback { margin-top: .8rem; font-size: .93rem; font-weight: 600; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok { color: var(--green); }
+  .feedback.no { color: var(--red); }
+  #score-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.6rem;
+    margin-top: 1.5rem;
+    text-align: center;
+    display: none;
+  }
+  .score-num { font-size: 2.5rem; font-weight: 800; color: var(--accent2); }
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: .88rem;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .progress { display: flex; gap: .4rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .step-dot {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 700;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+  .step-dot.done { background: #14532d; color: var(--green); }
+  .step-dot.active { background: var(--accent); color: #fff; }
+  ul { padding-left: 1.4rem; margin-bottom: .8rem; }
+  li { margin-bottom: .3rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <span class="badge">Lesson 14 · Rubik's Cube</span>
+  <h1>2-Look PLL</h1>
+  <p class="subtitle">Permute the last layer in at most 2 algorithm executions — completing your full solve.</p>
+</header>
+
+<!-- Solve progress map -->
+<div class="progress">
+  <span class="step-dot done">✓ White Cross</span>
+  <span class="step-dot done">✓ White Corners</span>
+  <span class="step-dot done">✓ F2L</span>
+  <span class="step-dot done">✓ 2-Look OLL</span>
+  <span class="step-dot active">→ 2-Look PLL</span>
+</div>
+
+<div class="card">
+  <strong>🎯 What you'll learn:</strong> How to permute (move into correct position) the last layer's pieces using just 3 algorithms in at most 2 passes — giving you a <em>complete, repeatable solve</em> from any scramble.
+</div>
+
+<h2>What is PLL?</h2>
+<p><strong>PLL</strong> = <em>Permutation of the Last Layer</em>. After OLL, every top sticker is yellow — but the edge and corner pieces may not be in the right spots. PLL fixes that without disturbing the orientation.</p>
+<p>Full PLL has 21 algorithms. <strong>2-Look PLL</strong> handles every case with just 3 algorithms and at most 2 passes:</p>
+<table>
+  <thead><tr><th>Look</th><th>What it does</th><th>Algorithms needed</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Look 1</strong></td><td>Permute the 4 corners</td><td>1 algorithm (+ skip if lucky)</td></tr>
+    <tr><td><strong>Look 2</strong></td><td>Permute the 4 edges</td><td>2 algorithms (Ua-perm, Ub-perm)</td></tr>
+  </tbody>
+</table>
+<p>Source: <a href="https://ruwix.com/the-rubiks-cube/advanced-cfop-fridrich/permutate-the-last-layer-pll/" target="_blank">ruwix.com — PLL algorithms</a></p>
+
+<h2>Look 1 — Corner Permutation</h2>
+<p>Look at the 4 top-layer corners. Ask: <em>are any 2 corners in their correct position (colours match their adjacent center)?</em></p>
+
+<div class="tip">
+  <strong>Recognition rule:</strong> Find a side of the cube where both top corners have the same colour on that face. Those 2 corners are "solved" (relative to each other). Keep that face at the <strong>back</strong>, then run the Y-Perm.
+</div>
+
+<div class="alg-card">
+  <div class="alg-title">Y-Perm (corner 3-cycle)</div>
+  <div class="alg-code">F R U' R' U' R U R' F' R U R' U' R' F R F'</div>
+  <div class="alg-desc">Cycles 3 corners: front-right ↔ front-left ↔ back-right. The back-left corner stays put. After this, all 4 corners are in their correct positions.</div>
+</div>
+
+<h3>Recognition cases</h3>
+<table>
+  <thead><tr><th>What you see</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td>All 4 corners already correct</td><td>Skip to Look 2</td></tr>
+    <tr><td>Exactly 2 adjacent corners match on one side</td><td>Place that side at back → Y-Perm</td></tr>
+    <tr><td>No matching pair at all (diagonal swap)</td><td>Apply Y-Perm from any angle → creates a matching pair → apply again</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>⚠️ Common mistake:</strong> Turning the U face to "find" a matching pair will break the OLL you just solved. Always use whole-cube rotations (y / y') to look around.
+</div>
+
+<h2>Look 2 — Edge Permutation</h2>
+<p>Once corners are solved, check the 4 top-layer edges. One of three things is true:</p>
+<ol style="padding-left:1.4rem;margin-bottom:.8rem;">
+  <li>All 4 edges correct → <strong>Solved! 🎉</strong></li>
+  <li>3 edges need to cycle <strong>clockwise</strong> → Ua-Perm</li>
+  <li>3 edges need to cycle <strong>counter-clockwise</strong> → Ub-Perm</li>
+</ol>
+<p>One edge will always be in the correct position already — that's your anchor. Put that edge at the <strong>back</strong>.</p>
+
+<div class="alg-card">
+  <div class="alg-title">Ua-Perm (edges cycle counter-clockwise: L→F→R)</div>
+  <div class="alg-code">R U' R U R U R U' R' U' R2</div>
+  <div class="alg-desc">The front, left, and right edges cycle. Back edge stays put. Mnemonic: "U-inverse, U, U, U, U-inverse, U-inverse" wraps around the right side.</div>
+</div>
+
+<div class="alg-card">
+  <div class="alg-title">Ub-Perm (edges cycle clockwise: R→F→L)</div>
+  <div class="alg-code">R2 U R U R' U' R' U' R' U R'</div>
+  <div class="alg-desc">Mirror of Ua-Perm. Cycles the same 3 edges in the opposite direction. Easiest approach: just perform Ua-Perm twice if you struggle to distinguish.</div>
+</div>
+
+<h3>How to tell Ua vs Ub</h3>
+<div class="card">
+  <p>With the solved edge at the <strong>back</strong>, look at the <strong>front</strong> edge's sticker colour:</p>
+  <ul>
+    <li>If the front sticker should go <strong>left</strong> → <strong>Ua-Perm</strong></li>
+    <li>If the front sticker should go <strong>right</strong> → <strong>Ub-Perm</strong></li>
+  </ul>
+  <p style="margin-top:.5rem;color:var(--muted);font-size:.9rem;">Or simply: apply Ua-Perm. If edges are solved → done. If not, apply Ua-Perm again (= Ub-Perm effect).</p>
+</div>
+
+<h2>Full 2-Look PLL Summary</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Step</th><th>Algorithm</th><th>Notation</th></tr></thead>
+    <tbody>
+      <tr><td>Corner 3-cycle</td><td>Y-Perm</td><td><code>F R U' R' U' R U R' F' R U R' U' R' F R F'</code></td></tr>
+      <tr><td>Edge CCW cycle</td><td>Ua-Perm</td><td><code>R U' R U R U R U' R' U' R2</code></td></tr>
+      <tr><td>Edge CW cycle</td><td>Ub-Perm</td><td><code>R2 U R U R' U' R' U' R' U R'</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>The Complete Solve Checklist</h2>
+<div class="card">
+  <ol style="padding-left:1.4rem;">
+    <li>White cross on bottom</li>
+    <li>White corners (complete white face)</li>
+    <li>Second layer edges (F2L beginner)</li>
+    <li>Yellow cross on top (OLL Look 1)</li>
+    <li>Orient yellow corners (OLL Look 2 — Sune/Anti-Sune)</li>
+    <li>Permute corners (PLL Look 1 — Y-Perm if needed)</li>
+    <li>Permute edges (PLL Look 2 — Ua/Ub-Perm if needed)</li>
+    <li style="color:var(--green);font-weight:700;">✅ Solved!</li>
+  </ol>
+</div>
+
+<h2>Practice Tips</h2>
+<div class="tip">
+  <strong>Drill order:</strong> Learn Ua-Perm first (11 moves, very rhythmic). Then learn Ub-Perm. Practice Y-Perm last — it's the longest but only happens in corners step.
+</div>
+<div class="tip">
+  <strong>Virtual cube:</strong> Use <a href="https://alg.cubing.net/" target="_blank">alg.cubing.net</a> to animate any algorithm and see it step-by-step before trying on a physical cube.
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-section">
+  <h2>Quiz — Test Your PLL Knowledge</h2>
+  <p style="color:var(--muted);font-size:.92rem;margin-bottom:1rem;">5 questions · instant feedback</p>
+
+  <!-- Q1 -->
+  <div class="question-block" id="q1">
+    <p class="q-text">1. After 2-Look OLL, all top stickers are yellow. You check the corners — none of them appear to be in the right position. What should you do?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q1','b')">Apply Y-Perm from any angle, which creates a matching pair of corners, then apply Y-Perm again</button>
+      <button class="opt-btn" onclick="answer(this,'q1','b')">Turn U to align 2 corners, then apply Y-Perm</button>
+      <button class="opt-btn" onclick="answer(this,'q1','a')">Apply Y-Perm from any angle, which creates a matching pair of corners, then apply Y-Perm again</button>
+      <button class="opt-btn" onclick="answer(this,'q1','b')">Skip to Look 2 since corners are a lost cause</button>
+    </div>
+    <div class="feedback" id="fb1"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question-block" id="q2">
+    <p class="q-text">2. With corners solved, you place the one correct edge at the back. You notice the front edge sticker belongs on the LEFT. Which algorithm do you apply?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q2','a')">Ua-Perm: R U' R U R U R U' R' U' R2</button>
+      <button class="opt-btn" onclick="answer(this,'q2','b')">Ub-Perm: R2 U R U R' U' R' U' R' U R'</button>
+      <button class="opt-btn" onclick="answer(this,'q2','b')">Y-Perm: F R U' R' U' R U R' F'...</button>
+      <button class="opt-btn" onclick="answer(this,'q2','b')">Sune: R U R' U R U2 R'</button>
+    </div>
+    <div class="feedback" id="fb2"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question-block" id="q3">
+    <p class="q-text">3. How many algorithm executions does 2-Look PLL require in the WORST case?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q3','b')">1</button>
+      <button class="opt-btn" onclick="answer(this,'q3','b')">3</button>
+      <button class="opt-btn" onclick="answer(this,'q3','a')">4</button>
+      <button class="opt-btn" onclick="answer(this,'q3','b')">6</button>
+    </div>
+    <div class="feedback" id="fb3"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question-block" id="q4">
+    <p class="q-text">4. You need to run the Y-Perm. You found 2 matching corners on the LEFT side. Where should that side be when you execute Y-Perm?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q4','b')">Front</button>
+      <button class="opt-btn" onclick="answer(this,'q4','a')">Back</button>
+      <button class="opt-btn" onclick="answer(this,'q4','b')">Right</button>
+      <button class="opt-btn" onclick="answer(this,'q4','b')">Left</button>
+    </div>
+    <div class="feedback" id="fb4"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="question-block" id="q5">
+    <p class="q-text">5. You're not sure if you need Ua or Ub perm. What's the safest approach?</p>
+    <div class="options">
+      <button class="opt-btn" onclick="answer(this,'q5','b')">Always apply both Ua and Ub — one will undo the other</button>
+      <button class="opt-btn" onclick="answer(this,'q5','a')">Apply Ua-Perm; if not solved, apply Ua-Perm again (achieving Ub-Perm effect)</button>
+      <button class="opt-btn" onclick="answer(this,'q5','b')">Apply Y-Perm to fix edges as well</button>
+      <button class="opt-btn" onclick="answer(this,'q5','b')">Rotate U until edges match, then skip</button>
+    </div>
+    <div class="feedback" id="fb5"></div>
+  </div>
+
+  <div id="score-box">
+    <div class="score-num" id="score-display"></div>
+    <p id="score-msg" style="color:var(--muted);margin-top:.5rem;"></p>
+  </div>
+</div>
+
+<footer>
+  <p><strong>References:</strong>
+    <a href="https://ruwix.com/the-rubiks-cube/advanced-cfop-fridrich/permutate-the-last-layer-pll/" target="_blank">Ruwix — PLL Guide</a> ·
+    <a href="https://alg.cubing.net/" target="_blank">alg.cubing.net</a> ·
+    <a href="https://www.speedsolving.com/wiki/index.php/PLL" target="_blank">SpeedSolving Wiki — PLL</a>
+  </p>
+  <p style="margin-top:.8rem;">💬 <strong>Questions?</strong> Ask your Hermes agent — it's your teacher and can clarify any step.</p>
+  <p style="margin-top:.5rem;color:#555;">Lesson 14 · Generated 2026-07-11</p>
+</footer>
+
+</div><!-- /container -->
+
+<script>
+const correct = { q1:'a', q2:'a', q3:'a', q4:'a', q5:'a' };
+const explanations = {
+  q1: "✅ Correct! A diagonal swap (no matching pair) is handled by applying Y-Perm once from any angle — this always produces a 1-matching-pair case — then applying Y-Perm again with correct setup.",
+  q2: "✅ Correct! Front edge sticker goes LEFT = counter-clockwise cycle = Ua-Perm.",
+  q3: "✅ Correct! Worst case = 2 corner algs (diagonal swap) + 2 edge algs (Ua×2) = 4 executions.",
+  q4: "✅ Correct! The matching pair (the corners that stay put) goes to the BACK. Y-Perm cycles the other 3 corners.",
+  q5: "✅ Correct! Ua-Perm applied twice equals Ub-Perm. No need to memorise which direction — just run it twice if the first attempt doesn't solve it.",
+};
+const wrongs = {
+  q1: "❌ Never turn U to set up — it breaks OLL. Apply Y-Perm from any angle first; it converts the diagonal case into a solvable 2-corner case.",
+  q2: "❌ Front edge belongs LEFT = counter-clockwise = Ua-Perm (R U' R U R U R U' R' U' R2).",
+  q3: "❌ Worst case is 4: 2 for corners (diagonal swap) + 2 for edges (Ua applied twice).",
+  q4: "❌ The matching pair (fixed corners) goes to the BACK when running Y-Perm.",
+  q5: "❌ The simplest safe approach: apply Ua-Perm, check. If not solved, apply Ua-Perm again — this achieves the Ub-Perm effect.",
+};
+
+let answered = {};
+let total = 5;
+
+function answer(btn, qid, chosen) {
+  if (answered[qid]) return;
+  answered[qid] = true;
+
+  const block = document.getElementById(qid);
+  const fb = document.getElementById('fb' + qid.slice(1));
+  const btns = block.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const isCorrect = chosen === correct[qid];
+  btn.classList.add(isCorrect ? 'correct-ans' : 'wrong-ans');
+  block.classList.add(isCorrect ? 'correct' : 'wrong');
+  fb.textContent = isCorrect ? explanations[qid] : wrongs[qid];
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'no');
+
+  if (Object.keys(answered).length === total) showScore();
+}
+
+function showScore() {
+  const box = document.getElementById('score-box');
+  const correctCount = Object.keys(answered).filter(q => {
+    const block = document.getElementById(q);
+    return block.classList.contains('correct');
+  }).length;
+  document.getElementById('score-display').textContent = correctCount + ' / ' + total;
+  const msgs = ['Keep reviewing — run through the algorithms again!', 'Good effort! Re-read the recognition rules.', 'Getting there! Practise Ua vs Ub distinction.', 'Great work! Almost perfect.', 'Perfect! You\'re ready to attempt a full solve. 🎉'];
+  document.getElementById('score-msg').textContent = msgs[correctCount] || msgs[4];
+  box.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
