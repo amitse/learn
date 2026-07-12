@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>0015 — First Timed Solve | Rubik's Cube</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #7c6af7;
+    --accent2: #4ecdc4;
+    --accent3: #f7c94e;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --green: #4ade80;
+    --red: #f87171;
+    --border: #2d3348;
+    --radius: 10px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.7;
+    padding: 2rem 1rem 4rem;
+  }
+  .container { max-width: 780px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 3rem; }
+  .lesson-num {
+    font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin-bottom: 0.5rem;
+  }
+  h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem; }
+  .subtitle { color: var(--muted); font-size: 1.05rem; }
+  .tag {
+    display: inline-block; padding: 0.2rem 0.7rem; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    margin-top: 1rem; background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  h2 {
+    font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;
+    color: var(--accent2);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
+  p { margin-bottom: 0.75rem; color: var(--text); }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { margin-bottom: 0.3rem; }
+  .alg {
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.9rem;
+    color: var(--accent3);
+    letter-spacing: 0.03em;
+  }
+  .step-grid {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 0.75rem 1rem;
+    align-items: start;
+  }
+  .step-num {
+    width: 40px; height: 40px;
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: var(--accent);
+    font-size: 1rem;
+  }
+  .step-content { padding-top: 0.5rem; }
+  /* Timer */
+  #timer-display {
+    font-size: 5rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    text-align: center;
+    color: var(--accent3);
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+    line-height: 1;
+  }
+  #timer-display.running { color: var(--green); }
+  .timer-controls {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  button {
+    padding: 0.6rem 1.6rem;
+    border: none;
+    border-radius: 7px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  #btn-start { background: var(--green); color: #0f1117; }
+  #btn-stop { background: var(--red); color: #fff; }
+  #btn-reset { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  #btn-lap { background: var(--accent); color: #fff; }
+  #lap-list { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; }
+  #lap-list li {
+    display: flex; justify-content: space-between;
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+    font-family: monospace;
+  }
+  #lap-list li:nth-child(odd) { background: var(--surface2); }
+  .best { color: var(--green); font-weight: 700; }
+  .scramble-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  #scramble-text {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    color: var(--accent2);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    word-spacing: 0.4em;
+    line-height: 1.6;
+  }
+  #btn-scramble {
+    background: var(--accent2);
+    color: #0f1117;
+    margin-top: 0.75rem;
+  }
+  /* Quiz */
+  .quiz-q {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+  }
+  .quiz-q p { font-weight: 600; margin-bottom: 0.75rem; color: var(--text); }
+  .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .opt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-align: left;
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt.correct { border-color: var(--green); background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+  .opt.wrong { border-color: var(--red); background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+  .feedback { margin-top: 0.5rem; font-size: 0.9rem; font-weight: 600; }
+  .feedback.ok { color: var(--green); }
+  .feedback.no { color: var(--red); }
+  .quiz-score {
+    text-align: center; font-size: 1.1rem; font-weight: 700;
+    padding: 1rem; background: var(--surface2); border-radius: var(--radius);
+    margin-top: 1rem; display: none;
+  }
+  /* Algo reference table */
+  .alg-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .alg-table th {
+    text-align: left; padding: 0.4rem 0.6rem;
+    border-bottom: 2px solid var(--accent);
+    color: var(--accent); font-weight: 700;
+  }
+  .alg-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .alg-table tr:last-child td { border-bottom: none; }
+  .alg-table tr:hover td { background: var(--surface2); }
+  .citation { color: var(--muted); font-size: 0.8rem; }
+  .citation a { color: var(--accent2); }
+  .milestone {
+    background: color-mix(in srgb, var(--accent3) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent3) 40%, transparent);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .milestone strong { color: var(--accent3); }
+  .teacher-note {
+    background: color-mix(in srgb, var(--accent2) 10%, transparent);
+    border-left: 3px solid var(--accent2);
+    padding: 0.75rem 1rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="lesson-num">Lesson 0015 · Rubik's Cube</div>
+    <h1>First Timed Solve</h1>
+    <p class="subtitle">You have every piece of the puzzle. Time to put it together — literally.</p>
+    <span class="tag">⏱ Practice</span>
+  </header>
+
+  <!-- Milestone -->
+  <div class="milestone">
+    <strong>🎯 Mission checkpoint:</strong> You now have all the algorithms for a complete beginner CFOP solve.
+    Today is about doing the full solve — start to finish — and getting your first benchmark time.
+    Don't aim for fast. Aim for <em>complete</em>.
+  </div>
+
+  <!-- The complete method recap -->
+  <div class="card">
+    <h2>📋 Your Complete Method — All 7 Steps</h2>
+    <p>This is your full solve pipeline. Every step, every algorithm you need:</p>
+    <div class="step-grid">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>White Cross</h3>
+        <p>Place the 4 white edges on the white face, aligned to their centre colours. Intuitive — no fixed algorithm.</p>
+      </div>
+
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>White Corners (Layer 1)</h3>
+        <p>Insert the 4 white corners. Trigger: <span class="alg">R U R' U'</span> (right-trigger), repeated until corner slots in.</p>
+      </div>
+
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Second Layer Edges (F2L beginner)</h3>
+        <p>Insert the 4 middle-layer edges. Two cases:</p>
+        <ul>
+          <li>Edge goes right: <span class="alg">U R U' R' U' F' U F</span></li>
+          <li>Edge goes left: <span class="alg">U' L' U L U F U' F'</span></li>
+        </ul>
+      </div>
+
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>Yellow Cross (2-Look OLL step 1)</h3>
+        <p>Make a yellow cross on top. Use <span class="alg">F R U R' U' F'</span>. Apply until cross appears (up to 3×).</p>
+      </div>
+
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h3>Orient Yellow Corners (2-Look OLL step 2)</h3>
+        <p>Sune: <span class="alg">R U R' U R U2 R'</span> &nbsp;|&nbsp; Anti-Sune: <span class="alg">R U2 R' U' R U' R'</span></p>
+        <p>Identify your OLL case; apply once or twice until all yellow faces up.</p>
+      </div>
+
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <h3>Permute Yellow Corners (2-Look PLL step 1)</h3>
+        <p>Find a matching corner pair → put it at back → Y-Perm: <span class="alg">F R U' R' U' R U R' F' R U R' U' R' F R F'</span></p>
+      </div>
+
+      <div class="step-num">7</div>
+      <div class="step-content">
+        <h3>Permute Yellow Edges (2-Look PLL step 2)</h3>
+        <p>Solved edge at back. Front sticker goes left → Ua: <span class="alg">R U' R U R U R U' R' U' R2</span></p>
+        <p>Front sticker goes right → Ub: <span class="alg">R2 U R U R' U' R' U' R' U R'</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Algorithm Reference -->
+  <div class="card">
+    <h2>⚡ Algorithm Quick Reference</h2>
+    <table class="alg-table">
+      <thead><tr><th>Name</th><th>Algorithm</th><th>When to use</th></tr></thead>
+      <tbody>
+        <tr><td>Right Trigger</td><td><span class="alg">R U R' U'</span></td><td>White corners</td></tr>
+        <tr><td>F2L Right</td><td><span class="alg">U R U' R' U' F' U F</span></td><td>Edge goes right</td></tr>
+        <tr><td>F2L Left</td><td><span class="alg">U' L' U L U F U' F'</span></td><td>Edge goes left</td></tr>
+        <tr><td>Cross alg</td><td><span class="alg">F R U R' U' F'</span></td><td>Yellow cross</td></tr>
+        <tr><td>Sune</td><td><span class="alg">R U R' U R U2 R'</span></td><td>OLL corners</td></tr>
+        <tr><td>Anti-Sune</td><td><span class="alg">R U2 R' U' R U' R'</span></td><td>OLL corners</td></tr>
+        <tr><td>Y-Perm</td><td><span class="alg">F R U' R' U' R U R' F' R U R' U' R' F R F'</span></td><td>PLL corners</td></tr>
+        <tr><td>Ua-Perm</td><td><span class="alg">R U' R U R U R U' R' U' R2</span></td><td>PLL edges (CCW)</td></tr>
+        <tr><td>Ub-Perm</td><td><span class="alg">R2 U R U R' U' R' U' R' U R'</span></td><td>PLL edges (CW)</td></tr>
+      </tbody>
+    </table>
+    <p class="citation" style="margin-top:0.75rem">
+      Source: <a href="https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/" target="_blank">ruwix.com — Beginner's Method</a>
+    </p>
+  </div>
+
+  <!-- Scramble Generator -->
+  <div class="card">
+    <h2>🎲 Scramble Generator</h2>
+    <p>Hit the button to get a random scramble. Apply these moves to your solved cube, then solve it.</p>
+    <div class="scramble-box">
+      <div id="scramble-text">Press "New Scramble" to start</div>
+      <button id="btn-scramble" onclick="generateScramble()">🔀 New Scramble</button>
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem">
+      Tip: Read each move left-to-right. A prime (') = counterclockwise. A 2 = half turn. 
+      Use <a href="https://ruwix.com/online-rubiks-cube-solver-program/" style="color:var(--accent2)" target="_blank">ruwix.com</a> or 
+      <a href="https://cubedb.net" style="color:var(--accent2)" target="_blank">cubedb.net</a> for a virtual cube if you don't have a physical one.
+    </p>
+  </div>
+
+  <!-- Timer -->
+  <div class="card">
+    <h2>⏱ Solve Timer</h2>
+    <p>Start the timer when you begin solving, stop when you finish. Record your laps to track progress across multiple attempts.</p>
+    <div id="timer-display">0:00.00</div>
+    <div class="timer-controls">
+      <button id="btn-start" onclick="startTimer()">▶ Start</button>
+      <button id="btn-stop" onclick="stopTimer()">■ Stop</button>
+      <button id="btn-lap" onclick="recordLap()">+ Log Solve</button>
+      <button id="btn-reset" onclick="resetTimer()">↺ Reset</button>
+    </div>
+
+    <div id="laps-section" style="display:none">
+      <h3 style="margin-bottom:0.5rem;margin-top:0.5rem">📊 Solve Log</h3>
+      <ul id="lap-list"></ul>
+      <div id="stats" style="margin-top:0.75rem;font-size:0.9rem;color:var(--muted)"></div>
+    </div>
+  </div>
+
+  <!-- Strategy Tips -->
+  <div class="card">
+    <h2>🧠 Strategy for Your First Solve</h2>
+    <ol>
+      <li><strong>Slow down at each step boundary</strong> — pause, identify your case, then execute.</li>
+      <li><strong>White cross first.</strong> Try to get it in ≤ 4 moves per edge — think ahead before turning.</li>
+      <li><strong>Check before each F2L insertion</strong> — is the edge going left or right? Pick the right trigger.</li>
+      <li><strong>For OLL</strong> — count stickers, don't guess. Identify the Sune/Anti-Sune case first.</li>
+      <li><strong>For PLL</strong> — find the matching corner pair. Rotate the whole cube (y), not the U layer.</li>
+      <li><strong>If you get stuck</strong> — undo a few moves, re-identify, try again. Never restart from scratch unless completely lost.</li>
+    </ol>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card">
+    <h2>🧪 Solve Strategy Quiz</h2>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem">Test your recall before you start solving.</p>
+    <div id="quiz"></div>
+    <div class="quiz-score" id="quiz-score"></div>
+  </div>
+
+  <div class="teacher-note">
+    💬 <strong>Ask your teacher anything.</strong> Stuck on a step? Not sure which OLL case you have? 
+    Confused by Y-Perm recognition? Just describe what you see on your cube and ask — your Hermes agent can walk you through it.
+  </div>
+
+  <p style="text-align:center;margin-top:2rem;color:var(--muted);font-size:0.85rem">
+    Lesson 0015 · Rubik's Cube · <a href="https://amitse.github.io/learn/" style="color:var(--accent2)">Back to index</a>
+  </p>
+</div>
+
+<script>
+// ─── Scramble Generator ───────────────────────────────────────────────────────
+const MOVES = ['U','D','L','R','F','B'];
+const SUFFIXES = ['','\'','2'];
+function generateScramble() {
+  const moves = [];
+  let last = -1;
+  for (let i = 0; i < 20; i++) {
+    let m;
+    do { m = Math.floor(Math.random() * 6); } while (m === last);
+    last = m;
+    moves.push(MOVES[m] + SUFFIXES[Math.floor(Math.random() * 3)]);
+  }
+  document.getElementById('scramble-text').textContent = moves.join('  ');
+}
+
+// ─── Timer ────────────────────────────────────────────────────────────────────
+let timerInterval = null;
+let startTime = null;
+let elapsedMs = 0;
+let laps = [];
+
+function formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  const cent = Math.floor((ms % 1000) / 10);
+  return `${min}:${String(sec).padStart(2,'0')}.${String(cent).padStart(2,'0')}`;
+}
+
+function startTimer() {
+  if (timerInterval) return;
+  startTime = Date.now() - elapsedMs;
+  timerInterval = setInterval(() => {
+    elapsedMs = Date.now() - startTime;
+    const disp = document.getElementById('timer-display');
+    disp.textContent = formatTime(elapsedMs);
+    disp.classList.add('running');
+  }, 10);
+}
+function stopTimer() {
+  if (!timerInterval) return;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  document.getElementById('timer-display').classList.remove('running');
+}
+function resetTimer() {
+  stopTimer();
+  elapsedMs = 0;
+  document.getElementById('timer-display').textContent = '0:00.00';
+  document.getElementById('timer-display').classList.remove('running');
+}
+function recordLap() {
+  if (elapsedMs === 0) return;
+  laps.push(elapsedMs);
+  renderLaps();
+  resetTimer();
+}
+function renderLaps() {
+  const ul = document.getElementById('lap-list');
+  const section = document.getElementById('laps-section');
+  section.style.display = 'block';
+  const min = Math.min(...laps);
+  ul.innerHTML = laps.map((ms, i) => `
+    <li>
+      <span>Solve #${i+1}</span>
+      <span class="${ms === min && laps.length > 1 ? 'best' : ''}">${formatTime(ms)}${ms === min && laps.length > 1 ? ' 🏆 best' : ''}</span>
+    </li>
+  `).reverse().join('');
+  const stats = document.getElementById('stats');
+  if (laps.length > 1) {
+    const avg = laps.reduce((a,b)=>a+b,0)/laps.length;
+    stats.textContent = `Best: ${formatTime(min)} · Average: ${formatTime(Math.round(avg))} · Solves: ${laps.length}`;
+  }
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+const questions = [
+  {
+    q: "You finish F2L. Looking at the top face, you see a yellow dot (no cross, no line). What do you do?",
+    opts: [
+      "Apply F R U R' U' F' once — this always gives you a cross immediately.",
+      "Apply F R U R' U' F' up to 3 times — the cross appears after 1, 2, or 3 applications.",
+      "Apply Sune — it handles the dot case directly.",
+      "Rotate the cube and try F2L again; a dot means you made an error."
+    ],
+    correct: 1,
+    explain: "The dot case requires up to 3 applications of the cross algorithm. It never requires Sune at this stage."
+  },
+  {
+    q: "During 2-Look PLL, you're permuting edges. The front edge's top sticker points LEFT. Which algorithm do you use?",
+    opts: [
+      "Ub-Perm (R2 U R U R' U' R' U' R' U R')",
+      "Ua-Perm (R U' R U R U R U' R' U' R2)",
+      "Y-Perm",
+      "Apply Ua twice — it doesn't matter which you pick."
+    ],
+    correct: 1,
+    explain: "Front sticker going LEFT → Ua-Perm (counter-clockwise edge cycle). Right → Ub-Perm."
+  },
+  {
+    q: "You find no matching corner pair during 2-Look PLL corner permutation. What is this case, and what do you do?",
+    opts: [
+      "It means PLL is already solved — skip to edge permutation.",
+      "This is a diagonal swap. Apply Y-Perm from any face; it creates a matching pair, then apply Y-Perm once more.",
+      "Undo OLL and redo it — a diagonal swap means your OLL was wrong.",
+      "Apply Ua-Perm twice to fix diagonal corners."
+    ],
+    correct: 1,
+    explain: "Diagonal swap: apply Y-Perm from any angle to create a matching corner pair, then apply Y-Perm once more to finish. This is the expected 2-execution case."
+  },
+  {
+    q: "What is the correct way to 'move' around the cube during PLL to find the matching corner pair?",
+    opts: [
+      "Turn the U layer (U, U', U2) until you find the matching pair.",
+      "Rotate the whole cube using y, y', y2 — never touch the U layer.",
+      "Either works — U turns and y rotations are equivalent.",
+      "Flip the cube upside down (x2) and re-orient."
+    ],
+    correct: 1,
+    explain: "Always use whole-cube y rotations. Turning the U layer after OLL is complete will break the orientation of corners you just fixed."
+  },
+  {
+    q: "You're inserting a second-layer edge. The target slot is on the RIGHT side. Which algorithm do you apply?",
+    opts: [
+      "U' L' U L U F U' F' (left insertion)",
+      "U R U' R' U' F' U F (right insertion)",
+      "R U R' U' (right trigger — same as white corners)",
+      "F R U R' U' F' (cross algorithm)"
+    ],
+    correct: 1,
+    explain: "Edge going RIGHT → U R U' R' U' F' U F. Edge going LEFT → U' L' U L U F U' F'."
+  }
+];
+
+let answers = new Array(questions.length).fill(null);
+let score = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quiz');
+  container.innerHTML = questions.map((q, qi) => `
+    <div class="quiz-q" id="qq-${qi}">
+      <p>Q${qi+1}: ${q.q}</p>
+      <div class="quiz-options">
+        ${q.opts.map((o, oi) => `
+          <button class="opt" id="opt-${qi}-${oi}" onclick="answer(${qi},${oi})">${o}</button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="fb-${qi}"></div>
+    </div>
+  `).join('');
+}
+
+function answer(qi, oi) {
+  if (answers[qi] !== null) return;
+  answers[qi] = oi;
+  const q = questions[qi];
+  const fb = document.getElementById(`fb-${qi}`);
+  for (let i = 0; i < q.opts.length; i++) {
+    const btn = document.getElementById(`opt-${qi}-${i}`);
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === oi && oi !== q.correct) btn.classList.add('wrong');
+  }
+  if (oi === q.correct) {
+    fb.textContent = '✓ Correct! ' + q.explain;
+    fb.className = 'feedback ok';
+  } else {
+    fb.textContent = '✗ ' + q.explain;
+    fb.className = 'feedback no';
+  }
+  if (answers.every(a => a !== null)) {
+    const sc = answers.filter((a, i) => a === questions[i].correct).length;
+    const div = document.getElementById('quiz-score');
+    div.style.display = 'block';
+    div.innerHTML = `
+      <div style="font-size:2rem;margin-bottom:0.5rem">${sc === questions.length ? '🏆' : sc >= 3 ? '💪' : '📖'}</div>
+      You scored <strong style="color:var(--accent3)">${sc}/${questions.length}</strong>.
+      ${sc === questions.length
+        ? "Perfect recall — you're ready to solve. Hit that timer!"
+        : sc >= 3
+        ? "Good foundation. Review any missed questions above, then attempt your solve."
+        : "Review the algorithm reference above before solving. The patterns will click as you practice."}
+    `;
+  }
+}
+
+renderQuiz();
+</script>
+</body>
+</html>
