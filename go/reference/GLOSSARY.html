@@ -641,6 +641,31 @@
     <td>INSERT … RETURNING (Postgres-specific, same syntax)</td>
     <td>Postgres clause that returns the affected rows after an INSERT/UPDATE/DELETE. Avoids a second SELECT round-trip.</td>
   </tr>
+  <tr>
+    <td>schema migration</td>
+    <td>Prisma migrate / Drizzle push</td>
+    <td>A versioned SQL script (up + down pair) that transforms the DB schema. Tracked in a schema_migrations table so each migration only runs once.</td>
+  </tr>
+  <tr>
+    <td>golang-migrate</td>
+    <td>prisma / drizzle-kit (migration runner)</td>
+    <td>CLI + Go library that applies numbered .up.sql / .down.sql files to a database in order, tracking state in schema_migrations.</td>
+  </tr>
+  <tr>
+    <td>dirty flag (schema_migrations)</td>
+    <td>failed migration state</td>
+    <td>Set to true when a migration crashes mid-flight. migrate refuses to proceed. Fix: restore DB to a clean state then run `migrate force N`.</td>
+  </tr>
+  <tr>
+    <td>migrate.ErrNoChange</td>
+    <td>—</td>
+    <td>Returned by m.Up() when all migrations are already applied. Not an error — explicitly ignore it in code.</td>
+  </tr>
+  <tr>
+    <td>migrate force N</td>
+    <td>—</td>
+    <td>Forcibly sets the schema_migrations version to N and clears the dirty flag. Use after manually recovering from a failed migration.</td>
+  </tr>
 </table>
 
 </body>
