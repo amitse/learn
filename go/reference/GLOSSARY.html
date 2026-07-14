@@ -662,9 +662,34 @@
     <td>Returned by m.Up() when all migrations are already applied. Not an error — explicitly ignore it in code.</td>
   </tr>
   <tr>
-    <td>migrate force N</td>
+  migrate force N
     <td>—</td>
     <td>Forcibly sets the schema_migrations version to N and clears the dirty flag. Use after manually recovering from a failed migration.</td>
+  </tr>
+  <tr>
+    <td>JWT (JSON Web Token)</td>
+    <td>—</td>
+    <td>Stateless auth token: header.payload.signature (base64url, dot-separated). Server verifies the HMAC/RSA signature; no DB lookup needed per request.</td>
+  </tr>
+  <tr>
+    <td>RegisteredClaims</td>
+    <td>—</td>
+    <td>Struct from golang-jwt/jwt that provides standard fields (exp, iat, nbf, sub, iss, aud). Embed it in your custom Claims struct for automatic validation.</td>
+  </tr>
+  <tr>
+    <td>keyfunc</td>
+    <td>—</td>
+    <td>Callback passed to ParseWithClaims that returns the signing key. Using a function (rather than a value) allows asymmetric key rotation without changing call sites.</td>
+  </tr>
+  <tr>
+    <td>contextKey (pattern)</td>
+    <td>—</td>
+    <td>An unexported named type (e.g. type contextKey string) used as a context.WithValue key. Prevents collision with keys from other packages because no external code can construct a value of that exact type.</td>
+  </tr>
+  <tr>
+    <td>r.WithContext(ctx)</td>
+    <td>req (mutated)</td>
+    <td>Returns a shallow copy of the *http.Request with a new context attached. Idiomatic in middleware; avoids data races on shared request state.</td>
   </tr>
 </table>
 

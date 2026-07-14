@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lesson 16 — JWT Middleware in Go</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #21263a;
+    --border: #2e3350;
+    --text: #e2e8f0;
+    --muted: #8892aa;
+    --accent: #7c83f7;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --cyan: #22d3ee;
+    --orange: #fb923c;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.7; font-size: 16px; }
+  .container { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+  .lesson-meta { font-size: 0.78rem; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .4rem; }
+  h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; }
+  h2 { font-size: 1.25rem; color: var(--accent); margin: 2rem 0 .75rem; font-weight: 600; }
+  h3 { font-size: 1rem; color: var(--cyan); margin: 1.4rem 0 .5rem; font-weight: 600; }
+  p { margin-bottom: 1rem; color: var(--text); }
+  .tagline { color: var(--muted); font-size: 1rem; margin-top: .4rem; }
+  a { color: var(--accent); }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: .875em; background: var(--surface2); padding: .1em .35em; border-radius: 4px; color: var(--cyan); }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: .82rem;
+    line-height: 1.6;
+  }
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cm  { color: #546e7a; }
+  .ty  { color: var(--yellow); }
+  .num { color: var(--orange); }
+  .op  { color: var(--muted); }
+
+  .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0 1.5rem; }
+  .side-by-side pre { margin: 0; }
+  .lang-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .3rem; }
+  @media (max-width: 640px) { .side-by-side { grid-template-columns: 1fr; } }
+
+  .callout { background: var(--surface); border-left: 3px solid var(--accent); padding: .9rem 1.1rem; border-radius: 0 8px 8px 0; margin: 1.2rem 0; font-size: .94rem; }
+  .callout.warn { border-color: var(--yellow); }
+  .callout.tip  { border-color: var(--green); }
+
+  /* Quiz */
+  .quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+  .quiz h2 { margin-top: 0; }
+  .q-block { margin-bottom: 1.8rem; }
+  .q-block p { font-weight: 600; margin-bottom: .75rem; }
+  .options { display: flex; flex-direction: column; gap: .5rem; }
+  .opt { display: flex; align-items: flex-start; gap: .7rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: .65rem 1rem; cursor: pointer; transition: border-color .15s; font-size: .93rem; }
+  .opt:hover { border-color: var(--accent); }
+  .opt.correct { border-color: var(--green); background: rgba(74,222,128,.08); }
+  .opt.wrong   { border-color: var(--red);   background: rgba(248,113,113,.08); }
+  .opt input[type=radio] { margin-top: .2rem; accent-color: var(--accent); flex-shrink: 0; }
+  .feedback { font-size: .88rem; margin-top: .6rem; padding: .5rem .8rem; border-radius: 6px; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok  { background: rgba(74,222,128,.12); color: var(--green); }
+  .feedback.bad { background: rgba(248,113,113,.12); color: var(--red); }
+  .score-bar { text-align: center; font-size: 1.1rem; font-weight: 700; padding: 1rem; border-radius: 8px; background: var(--surface2); display: none; }
+  .score-bar.show { display: block; }
+  #submit-btn { margin-top: .5rem; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: .65rem 1.4rem; font-size: .95rem; font-weight: 600; cursor: pointer; }
+  #submit-btn:hover { opacity: .88; }
+
+  footer { border-top: 1px solid var(--border); margin-top: 3rem; padding-top: 1.5rem; color: var(--muted); font-size: .88rem; }
+  .progress { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--muted); margin-bottom: .3rem; }
+  .progress-dots { display: flex; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .dot.done { background: var(--accent); }
+  .dot.current { background: var(--green); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="lesson-meta">Go for TypeScript Devs · Lesson 16 of ∞</div>
+    <h1>JWT Middleware</h1>
+    <p class="tagline">Protect your HTTP routes with JSON Web Tokens — without a framework</p>
+    <div class="progress" style="margin-top:1rem;">
+      <span>Progress:</span>
+      <div class="progress-dots">
+        <div class="dot done" title="Syntax"></div>
+        <div class="dot done" title="Modules"></div>
+        <div class="dot done" title="HTTP"></div>
+        <div class="dot done" title="Routing"></div>
+        <div class="dot done" title="JSON"></div>
+        <div class="dot done" title="Middleware"></div>
+        <div class="dot done" title="Full server"></div>
+        <div class="dot done" title="Errors"></div>
+        <div class="dot done" title="Testing"></div>
+        <div class="dot done" title="Layout"></div>
+        <div class="dot done" title="Goroutines"></div>
+        <div class="dot done" title="Context"></div>
+        <div class="dot done" title="Capstone"></div>
+        <div class="dot done" title="database/sql"></div>
+        <div class="dot done" title="Migrations"></div>
+        <div class="dot current" title="JWT Middleware — you are here"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT YOU'LL BUILD -->
+  <h2>🎯 What you'll build</h2>
+  <p>A <strong>reusable JWT middleware function</strong> that reads a <code>Bearer</code> token from the <code>Authorization</code> header, validates it with <code>golang-jwt/jwt</code>, and injects the parsed claims into the request context — so any downstream handler can grab <code>userID</code> without touching the token again.</p>
+
+  <div class="callout">
+    <strong>Why this matters for your server:</strong> Every API that stores user data needs auth. JWT is stateless — no DB lookup per request — which makes it fast and easy to deploy. After this lesson you can lock any route behind <code>AuthMiddleware(handler)</code>.
+  </div>
+
+  <!-- QUICK THEORY -->
+  <h2>1 — How JWT works (30-second version)</h2>
+  <p>A JWT is three base64url-encoded JSON objects joined by dots:</p>
+  <pre><span class="cm">// HEADER.PAYLOAD.SIGNATURE</span>
+eyJhbGciOiJIUzI1NiJ9
+  .<span class="str">eyJ1c2VySUQiOjQyLCJleHAiOjE3MjAwMDAwMDB9</span>
+  .<span class="num">V9nGNWVX...</span></pre>
+  <p>The <strong>server never stores the token</strong>. Instead it verifies the <em>signature</em> using a shared secret. If the signature matches, the payload is trustworthy. <a href="https://jwt.io/introduction" target="_blank">jwt.io/introduction →</a></p>
+
+  <!-- TS vs Go -->
+  <h2>2 — TypeScript vs Go: the mental model</h2>
+  <div class="side-by-side">
+    <div>
+      <div class="lang-label">TypeScript (express-jwt / jsonwebtoken)</div>
+      <pre><span class="kw">import</span> jwt <span class="kw">from</span> <span class="str">'jsonwebtoken'</span>
+
+<span class="kw">const</span> payload = jwt.verify(
+  token, SECRET
+) <span class="kw">as</span> { userID: <span class="ty">number</span> }
+
+<span class="cm">// Attach to req, then next()</span>
+req.user = payload</pre>
+    </div>
+    <div>
+      <div class="lang-label">Go (golang-jwt/jwt)</div>
+      <pre><span class="kw">import</span> <span class="str">"github.com/golang-jwt/jwt/v5"</span>
+
+token, err := jwt.<span class="fn">ParseWithClaims</span>(
+  raw, &amp;Claims{},
+  <span class="kw">func</span>(t *jwt.<span class="ty">Token</span>) (<span class="kw">any</span>, error) {
+    <span class="kw">return</span> []<span class="ty">byte</span>(SECRET), <span class="kw">nil</span>
+  },
+)
+<span class="cm">// Attach to context, not the request</span>
+ctx = context.<span class="fn">WithValue</span>(ctx, key, claims)</pre>
+    </div>
+  </div>
+  <p>Two key differences: Go uses <strong>context</strong> (not a mutable request object) to pass data downstream, and the secret is returned from a <em>function</em> (the keyfunc) — which lets you swap in asymmetric keys without changing call sites.</p>
+
+  <!-- INSTALLATION -->
+  <h2>3 — Install the library</h2>
+  <pre><span class="cm"># in your project root</span>
+go get github.com/golang-jwt/jwt/v5</pre>
+  <p>See <a href="https://github.com/golang-jwt/jwt" target="_blank">github.com/golang-jwt/jwt</a> — it's the successor to <code>dgrijalva/jwt-go</code> (archived) and is the community-standard package.</p>
+
+  <!-- CLAIMS STRUCT -->
+  <h2>4 — Define your Claims struct</h2>
+  <pre><span class="kw">package</span> auth
+
+<span class="kw">import</span> <span class="str">"github.com/golang-jwt/jwt/v5"</span>
+
+<span class="cm">// Claims embeds the standard claims (exp, iat, sub…)</span>
+<span class="cm">// and adds your own fields.</span>
+<span class="kw">type</span> <span class="ty">Claims</span> <span class="kw">struct</span> {
+    UserID <span class="ty">int64</span>  <span class="str">`json:"userID"`</span>
+    Email  <span class="ty">string</span> <span class="str">`json:"email"`</span>
+    jwt.<span class="ty">RegisteredClaims</span>        <span class="cm">// embedded: Expiry, IssuedAt, etc.</span>
+}</pre>
+  <p>Embedding <code>jwt.RegisteredClaims</code> gives you automatic expiry checking for free — the library validates <code>exp</code> before handing you the parsed struct.</p>
+
+  <!-- SIGNING A TOKEN -->
+  <h2>5 — Sign a token (login endpoint)</h2>
+  <pre><span class="kw">func</span> <span class="fn">SignToken</span>(userID <span class="ty">int64</span>, email <span class="ty">string</span>, secret <span class="ty">string</span>) (<span class="ty">string</span>, <span class="ty">error</span>) {
+    claims := &amp;<span class="ty">Claims</span>{
+        UserID: userID,
+        Email:  email,
+        RegisteredClaims: jwt.<span class="ty">RegisteredClaims</span>{
+            ExpiresAt: jwt.<span class="fn">NewNumericDate</span>(time.<span class="fn">Now</span>().<span class="fn">Add</span>(<span class="num">24</span> * time.<span class="ty">Hour</span>)),
+            IssuedAt:  jwt.<span class="fn">NewNumericDate</span>(time.<span class="fn">Now</span>()),
+        },
+    }
+    token := jwt.<span class="fn">NewWithClaims</span>(jwt.<span class="ty">SigningMethodHS256</span>, claims)
+    <span class="kw">return</span> token.<span class="fn">SignedString</span>([]<span class="ty">byte</span>(secret))
+}</pre>
+
+  <!-- CONTEXT KEY -->
+  <h2>6 — Context key type (avoid collisions)</h2>
+  <pre><span class="cm">// Use an unexported type for context keys to prevent third-party packages</span>
+<span class="cm">// from accidentally reading or overwriting your values.</span>
+<span class="kw">type</span> <span class="ty">contextKey</span> <span class="ty">string</span>
+
+<span class="kw">const</span> <span class="ty">ClaimsKey</span> contextKey = <span class="str">"claims"</span></pre>
+  <div class="callout tip">
+    <strong>Why a custom type?</strong> <code>context.WithValue</code> compares keys using <code>==</code>. If two packages both use the plain string <code>"claims"</code>, they'll accidentally share the same slot. A private type makes collisions impossible.
+  </div>
+
+  <!-- THE MIDDLEWARE -->
+  <h2>7 — The middleware function</h2>
+  <pre><span class="kw">func</span> <span class="fn">AuthMiddleware</span>(secret <span class="ty">string</span>) <span class="kw">func</span>(<span class="ty">http.Handler</span>) <span class="ty">http.Handler</span> {
+    <span class="kw">return func</span>(next <span class="ty">http.Handler</span>) <span class="ty">http.Handler</span> {
+        <span class="kw">return</span> http.<span class="fn">HandlerFunc</span>(<span class="kw">func</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+            raw := r.<span class="fn">Header</span>.<span class="fn">Get</span>(<span class="str">"Authorization"</span>)
+            <span class="kw">if</span> !strings.<span class="fn">HasPrefix</span>(raw, <span class="str">"Bearer "</span>) {
+                http.<span class="fn">Error</span>(w, <span class="str">"missing token"</span>, http.<span class="ty">StatusUnauthorized</span>)
+                <span class="kw">return</span>
+            }
+            raw = strings.<span class="fn">TrimPrefix</span>(raw, <span class="str">"Bearer "</span>)
+
+            claims := &amp;<span class="ty">Claims</span>{}
+            _, err := jwt.<span class="fn">ParseWithClaims</span>(raw, claims,
+                <span class="kw">func</span>(*jwt.<span class="ty">Token</span>) (<span class="kw">any</span>, <span class="ty">error</span>) {
+                    <span class="kw">return</span> []<span class="ty">byte</span>(secret), <span class="kw">nil</span>
+                },
+            )
+            <span class="kw">if</span> err != <span class="kw">nil</span> {
+                http.<span class="fn">Error</span>(w, <span class="str">"invalid token"</span>, http.<span class="ty">StatusUnauthorized</span>)
+                <span class="kw">return</span>
+            }
+
+            ctx := context.<span class="fn">WithValue</span>(r.<span class="fn">Context</span>(), <span class="ty">ClaimsKey</span>, claims)
+            next.<span class="fn">ServeHTTP</span>(w, r.<span class="fn">WithContext</span>(ctx))
+        })
+    }
+}</pre>
+  <p>This follows the <strong>factory pattern</strong> from Lesson 6 — <code>AuthMiddleware(secret)</code> returns a <code>func(http.Handler) http.Handler</code> so it composes cleanly with other middleware.</p>
+
+  <!-- READING CLAIMS IN A HANDLER -->
+  <h2>8 — Reading claims in a protected handler</h2>
+  <pre><span class="kw">func</span> <span class="fn">MeHandler</span>(w <span class="ty">http.ResponseWriter</span>, r *<span class="ty">http.Request</span>) {
+    claims, ok := r.<span class="fn">Context</span>().<span class="fn">Value</span>(<span class="ty">ClaimsKey</span>).(*<span class="ty">Claims</span>)
+    <span class="kw">if</span> !ok {
+        http.<span class="fn">Error</span>(w, <span class="str">"unauthorized"</span>, http.<span class="ty">StatusUnauthorized</span>)
+        <span class="kw">return</span>
+    }
+    <span class="cm">// claims.UserID and claims.Email are now available</span>
+    json.<span class="fn">NewEncoder</span>(w).<span class="fn">Encode</span>(<span class="kw">map</span>[<span class="ty">string</span>]<span class="kw">any</span>{
+        <span class="str">"userID"</span>: claims.UserID,
+        <span class="str">"email"</span>:  claims.Email,
+    })
+}</pre>
+  <div class="callout warn">
+    <strong>Always type-assert with the two-return form</strong> (<code>v, ok := ctx.Value(k).(T)</code>). A one-return assert panics if the value is absent or the wrong type.
+  </div>
+
+  <!-- WIRING IT UP -->
+  <h2>9 — Wiring it all together</h2>
+  <pre><span class="kw">func</span> <span class="fn">main</span>() {
+    secret := os.<span class="fn">Getenv</span>(<span class="str">"JWT_SECRET"</span>)
+
+    mux := http.<span class="fn">NewServeMux</span>()
+
+    <span class="cm">// Public routes — no middleware</span>
+    mux.<span class="fn">HandleFunc</span>(<span class="str">"POST /login"</span>, loginHandler)
+
+    <span class="cm">// Protected routes — wrapped in AuthMiddleware</span>
+    auth := auth.<span class="fn">AuthMiddleware</span>(secret)
+    mux.<span class="fn">Handle</span>(<span class="str">"GET /me"</span>,      auth(<span class="ty">http.HandlerFunc</span>(MeHandler)))
+    mux.<span class="fn">Handle</span>(<span class="str">"GET /posts"</span>,   auth(<span class="ty">http.HandlerFunc</span>(PostsHandler)))
+
+    http.<span class="fn">ListenAndServe</span>(<span class="str">":8080"</span>, mux)
+}</pre>
+
+  <!-- QUIZ -->
+  <div class="quiz">
+    <h2>🧠 Quick Check</h2>
+    <form id="quiz-form">
+
+      <div class="q-block" id="q1">
+        <p>1. Why do we use an unexported custom type (like <code>type contextKey string</code>) for context keys?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q1" value="a" /> <span>It makes context lookups faster at runtime</span></label>
+          <label class="opt"><input type="radio" name="q1" value="b" /> <span>It prevents other packages from accidentally reading or overwriting the same key</span></label>
+          <label class="opt"><input type="radio" name="q1" value="c" /> <span>It's required by the <code>context</code> package — plain strings are rejected</span></label>
+        </div>
+        <div class="feedback" id="f1"></div>
+      </div>
+
+      <div class="q-block" id="q2">
+        <p>2. <code>jwt.RegisteredClaims</code> is embedded in your <code>Claims</code> struct. What does that buy you automatically?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q2" value="a" /> <span>The library automatically refreshes the token before it expires</span></label>
+          <label class="opt"><input type="radio" name="q2" value="b" /> <span>Expiry (<code>exp</code>), IssuedAt, and other standard claims are validated without extra code</span></label>
+          <label class="opt"><input type="radio" name="q2" value="c" /> <span>HTTPS is enforced on all requests containing this token</span></label>
+        </div>
+        <div class="feedback" id="f2"></div>
+      </div>
+
+      <div class="q-block" id="q3">
+        <p>3. In the middleware, why do we call <code>r.WithContext(ctx)</code> rather than mutating <code>r</code> directly?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q3" value="a" /> <span><code>http.Request</code> is immutable — <code>WithContext</code> returns a shallow copy with the new context attached</span></label>
+          <label class="opt"><input type="radio" name="q3" value="b" /> <span>Directly mutating <code>r.Context</code> would panic in Go</span></label>
+          <label class="opt"><input type="radio" name="q3" value="c" /> <span>It's just a style preference; both approaches work identically</span></label>
+        </div>
+        <div class="feedback" id="f3"></div>
+      </div>
+
+      <div class="q-block" id="q4">
+        <p>4. What HTTP status code should your middleware return when the token is present but expired?</p>
+        <div class="options">
+          <label class="opt"><input type="radio" name="q4" value="a" /> <span>400 Bad Request — the client sent a malformed header</span></label>
+          <label class="opt"><input type="radio" name="q4" value="b" /> <span>401 Unauthorized — the credentials are missing or invalid</span></label>
+          <label class="opt"><input type="radio" name="q4" value="c" /> <span>403 Forbidden — the user is authenticated but lacks permission</span></label>
+        </div>
+        <div class="feedback" id="f4"></div>
+      </div>
+
+      <button type="button" id="submit-btn" onclick="checkAnswers()">Check answers</button>
+    </form>
+    <div class="score-bar" id="score-bar"></div>
+  </div>
+
+  <!-- NEXT STEPS -->
+  <h2>🚀 What's next</h2>
+  <p>You now have stateless auth wired into your middleware chain. Natural next steps:</p>
+  <ul style="color:var(--muted); padding-left:1.4rem; margin-bottom:1rem;">
+    <li><strong>Lesson 17 — pgxpool:</strong> replace <code>database/sql</code> with the native pgx connection pool for higher throughput</li>
+    <li><strong>Lesson 18 — testcontainers-go:</strong> integration-test your DB handlers with a real ephemeral Postgres</li>
+    <li><strong>Lesson 19 — Graceful shutdown:</strong> drain in-flight requests on SIGTERM before the process exits</li>
+  </ul>
+
+  <div class="callout">
+    <strong>Ask your teacher anything!</strong> Run <code>hermes ask "go jwt question"</code> in your terminal — Hermes can explain any part of this lesson, help you debug token errors, or extend the example.
+  </div>
+
+  <!-- REFERENCES -->
+  <h2>📚 References</h2>
+  <ul style="color:var(--muted); padding-left:1.4rem;">
+    <li><a href="https://jwt.io/introduction" target="_blank">jwt.io — Introduction to JSON Web Tokens</a></li>
+    <li><a href="https://github.com/golang-jwt/jwt" target="_blank">golang-jwt/jwt — official Go library</a></li>
+    <li><a href="https://pkg.go.dev/context#WithValue" target="_blank">pkg.go.dev — context.WithValue</a></li>
+    <li><a href="https://pkg.go.dev/net/http#Request.WithContext" target="_blank">pkg.go.dev — Request.WithContext</a></li>
+    <li><a href="https://www.alexedwards.net/blog/making-and-using-middleware" target="_blank">Alex Edwards — Making and Using Middleware in Go</a></li>
+  </ul>
+
+  <footer>
+    Lesson 16 · Go for TypeScript Devs · Generated by Hermes · 2026-07-14
+  </footer>
+</div>
+
+<script>
+const correct = { q1: 'b', q2: 'b', q3: 'a', q4: 'b' };
+const explanations = {
+  q1: { b: "✅ Correct! Context keys are compared with ==, so a private type ensures your key is unique — no other package can construct a value of that exact type.", a: "❌ Type has no effect on lookup speed.", c: "❌ context.WithValue accepts any comparable type, including plain strings." },
+  q2: { b: "✅ Correct! Embedding RegisteredClaims means ParseWithClaims automatically validates exp, nbf, etc.", a: "❌ JWT libraries never auto-refresh tokens — the client must re-authenticate.", c: "❌ HTTPS is a transport concern; JWT handles authentication, not encryption." },
+  q3: { a: "✅ Correct! http.Request is designed to be copied, not mutated. WithContext is the idiomatic pattern.", b: "❌ Mutating exported fields of a struct is allowed; it's just wrong design for immutable request data.", c: "❌ Mutating r directly would cause data races if the request is shared across goroutines." },
+  q4: { b: "✅ Correct! 401 means 'authentication required or failed'. An expired token is an auth failure.", a: "❌ 400 is for syntactically malformed requests, not authentication issues.", c: "❌ 403 means the user is authenticated but doesn't have permission for that resource." },
+};
+
+function checkAnswers() {
+  let score = 0;
+  for (const [q, ans] of Object.entries(correct)) {
+    const sel = document.querySelector(`input[name="${q}"]:checked`);
+    const fb = document.getElementById('f' + q.slice(1));
+    const opts = document.querySelectorAll(`input[name="${q}"]`);
+    opts.forEach(o => o.closest('.opt').classList.remove('correct','wrong'));
+    if (!sel) { fb.textContent = '⚠️ Pick an answer.'; fb.className = 'feedback show bad'; continue; }
+    const chosen = sel.value;
+    const exp = explanations[q][chosen] || '';
+    if (chosen === ans) {
+      score++;
+      sel.closest('.opt').classList.add('correct');
+      fb.textContent = exp;
+      fb.className = 'feedback show ok';
+    } else {
+      sel.closest('.opt').classList.add('wrong');
+      document.querySelector(`input[name="${q}"][value="${ans}"]`).closest('.opt').classList.add('correct');
+      fb.textContent = exp;
+      fb.className = 'feedback show bad';
+    }
+  }
+  const bar = document.getElementById('score-bar');
+  const pct = Math.round(score / Object.keys(correct).length * 100);
+  bar.textContent = `${score}/${Object.keys(correct).length} correct (${pct}%) ${pct===100?'🎉 Perfect!':pct>=75?'👍 Nice work!':'📖 Review the sections above and try again.'}`;
+  bar.className = 'score-bar show';
+}
+</script>
+</body>
+</html>
