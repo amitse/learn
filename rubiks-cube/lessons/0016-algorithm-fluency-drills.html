@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0016 — Algorithm Fluency Drills | Rubik's Cube</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222535;
+    --border: #2e3148;
+    --accent: #7c6af7;
+    --accent2: #4fd1c5;
+    --accent3: #f6ad55;
+    --text: #e2e8f0;
+    --muted: #718096;
+    --green: #48bb78;
+    --red: #fc8181;
+    --yellow: #f6e05e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+  header { margin-bottom: 2.5rem; }
+  .lesson-num { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  h1 { font-size: 2rem; margin: 0.3rem 0 0.6rem; line-height: 1.2; }
+  .tagline { color: var(--muted); font-size: 1rem; }
+  section { margin-bottom: 2.5rem; }
+  h2 { font-size: 1.2rem; color: var(--accent2); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1rem; color: var(--accent3); margin: 1.2rem 0 0.5rem; }
+  p { margin-bottom: 0.8rem; color: #cbd5e0; }
+
+  /* Algorithm Card */
+  .alg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .alg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem; }
+  .alg-name { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .alg-tag { font-size: 0.75rem; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 0.2rem 0.6rem; border-radius: 20px; }
+  .alg-moves {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    color: var(--accent);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    margin: 0.5rem 0;
+    letter-spacing: 0.05em;
+  }
+  .alg-tip { font-size: 0.88rem; color: var(--muted); margin-top: 0.5rem; }
+  .alg-tip span { color: var(--accent3); font-weight: 600; }
+  .finger-hint { margin-top: 0.6rem; font-size: 0.85rem; background: var(--bg); border-left: 3px solid var(--accent); padding: 0.4rem 0.8rem; border-radius: 0 6px 6px 0; color: #a0aec0; }
+
+  /* Drill timer */
+  .drill-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .drill-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
+  .drill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem; margin-bottom: 1rem; }
+  .drill-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    font-family: inherit;
+  }
+  .drill-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .drill-btn.active { background: var(--accent); border-color: var(--accent); color: white; font-weight: 700; }
+  .drill-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+  .drill-alg-name { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .drill-alg-moves { font-family: monospace; font-size: 1.15rem; color: var(--accent); letter-spacing: 0.04em; }
+  .drill-timer { font-size: 2.5rem; font-weight: 700; text-align: center; color: var(--accent2); font-variant-numeric: tabular-nums; margin: 0.5rem 0; }
+  .drill-controls { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn {
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-green { background: var(--green); color: #1a1d27; }
+  .drill-log { margin-top: 1rem; }
+  .drill-log-title { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem; }
+  .log-list { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .log-item {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .log-item.fast { border-color: var(--green); color: var(--green); }
+  .log-item.slow { border-color: var(--red); color: var(--red); }
+
+  /* Quiz */
+  .quiz-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .quiz-question { font-size: 1rem; margin-bottom: 1rem; color: var(--text); }
+  .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.8rem; }
+  .quiz-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text);
+    transition: all 0.15s;
+    font-family: inherit;
+    text-align: left;
+  }
+  .quiz-option:hover:not(:disabled) { border-color: var(--accent); }
+  .quiz-option.correct { background: rgba(72,187,120,0.15); border-color: var(--green); color: var(--green); }
+  .quiz-option.wrong { background: rgba(252,129,129,0.12); border-color: var(--red); color: var(--red); }
+  .quiz-feedback { font-size: 0.88rem; min-height: 1.5rem; color: var(--muted); padding: 0.3rem 0; }
+  .quiz-feedback.ok { color: var(--green); }
+  .quiz-feedback.no { color: var(--red); }
+  .score-bar { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; }
+  .score-label { font-size: 0.85rem; color: var(--muted); }
+  .score-val { font-size: 1rem; font-weight: 700; color: var(--accent2); }
+
+  /* Progress */
+  .progress-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+  .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; font-size: 0.9rem; }
+  .progress-name { color: var(--text); }
+  .progress-bar-wrap { flex: 1; margin: 0 1rem; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+  .progress-count { color: var(--muted); font-size: 0.8rem; min-width: 40px; text-align: right; }
+
+  /* Footer */
+  footer { margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 1.5rem; font-size: 0.85rem; color: var(--muted); }
+  footer a { color: var(--accent2); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .citation { font-size: 0.8rem; color: var(--muted); }
+  .citation a { color: var(--accent); text-decoration: none; }
+  .citation a:hover { text-decoration: underline; }
+  .tip-box { background: rgba(124,106,247,0.1); border: 1px solid rgba(124,106,247,0.3); border-radius: 8px; padding: 0.8rem 1rem; font-size: 0.9rem; color: #c3b9f7; margin: 1rem 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="lesson-num">Rubik's Cube · Lesson 0016</div>
+  <h1>Algorithm Fluency Drills</h1>
+  <div class="tagline">Build muscle memory for the 5 algorithms you'll use every solve</div>
+</header>
+
+<section>
+  <h2>Why This Matters</h2>
+  <p>You can now complete a solve — but if you have to <em>think</em> about each algorithm, you'll be slow and error-prone under pressure. Fluency means the algorithm runs on autopilot: your fingers execute it while your eyes look ahead to the next step.</p>
+  <p>Today's lesson targets the 5 algorithms that appear in almost every solve: <strong>Sune, Anti-Sune, Y-Perm, Ua, Ub</strong>. Use the drill timer and quiz below to build real reps.</p>
+  <div class="tip-box">🎯 <strong>Goal:</strong> Execute any of these 5 algorithms correctly, from memory, in under 5 seconds. Even at slow speed, accuracy first — speed follows.</div>
+</section>
+
+<section>
+  <h2>The 5 Core Algorithms</h2>
+
+  <div class="alg-card">
+    <div class="alg-header">
+      <span class="alg-name">Sune</span>
+      <span class="alg-tag">OLL / Orient corners</span>
+    </div>
+    <div class="alg-moves">R U R' U R U2 R'</div>
+    <div class="alg-tip"><span>When to use:</span> OLL — when you have one correctly-oriented corner (yellow facing up, top-left).</div>
+    <div class="finger-hint">🤌 Right index push R, right thumb U, index pull R'. Rhythm: <em>push-up-pull · push-up-up-pull</em></div>
+  </div>
+
+  <div class="alg-card">
+    <div class="alg-header">
+      <span class="alg-name">Anti-Sune</span>
+      <span class="alg-tag">OLL / Orient corners</span>
+    </div>
+    <div class="alg-moves">R U2 R' U' R U' R'</div>
+    <div class="alg-tip"><span>When to use:</span> OLL — mirror of Sune. When the correctly-oriented corner is top-right and the other pattern calls for it.</div>
+    <div class="finger-hint">🤌 Same finger assignment as Sune — learn both back-to-back so your hands feel the contrast.</div>
+  </div>
+
+  <div class="alg-card">
+    <div class="alg-header">
+      <span class="alg-name">Y-Perm</span>
+      <span class="alg-tag">PLL / Permute corners</span>
+    </div>
+    <div class="alg-moves">F R U' R' U' R U R' F' R U R' U' R' F R F'</div>
+    <div class="alg-tip"><span>When to use:</span> PLL — swaps two diagonal corners. <em>If two corners look diagonal after OLL, this is your algorithm.</em></div>
+    <div class="finger-hint">🤌 First half ends with F' — pause mentally there. Second half is a standard right trigger into F R F'.</div>
+  </div>
+
+  <div class="alg-card">
+    <div class="alg-header">
+      <span class="alg-name">Ua-Perm</span>
+      <span class="alg-tag">PLL / Cycle 3 edges</span>
+    </div>
+    <div class="alg-moves">R U' R U R U R U' R' U' R2</div>
+    <div class="alg-tip"><span>When to use:</span> PLL — cycles 3 last-layer edges counterclockwise (viewed from top).</div>
+    <div class="finger-hint">🤌 The rhythm is very regular — <em>up-down, up, up, up-down-down</em>. Practice slow until the pattern is natural.</div>
+  </div>
+
+  <div class="alg-card">
+    <div class="alg-header">
+      <span class="alg-name">Ub-Perm</span>
+      <span class="alg-tag">PLL / Cycle 3 edges</span>
+    </div>
+    <div class="alg-moves">R2 U R U R' U' R' U' R' U R'</div>
+    <div class="alg-tip"><span>When to use:</span> PLL — cycles 3 last-layer edges clockwise (viewed from top). Mirror of Ua.</div>
+    <div class="finger-hint">🤌 Starts with R2 which is easy — then it's the reverse rhythm of Ua. Learn Ua first, then Ub is the "undo" feel.</div>
+  </div>
+
+  <p class="citation">Algorithms sourced from <a href="https://ruwix.com/the-rubiks-cube/notation/" target="_blank">ruwix.com</a> and <a href="https://www.speedsolving.com/wiki/index.php/OLL" target="_blank">speedsolving.com wiki</a>.</p>
+</section>
+
+<section>
+  <h2>⏱ Drill Timer</h2>
+  <p>Pick an algorithm, mentally (or physically) execute it, then log the time. Build reps — aim for 10+ executions per algorithm per session.</p>
+
+  <div class="drill-box">
+    <div class="drill-title">Select Algorithm to Drill</div>
+    <div class="drill-grid" id="drillBtns"></div>
+    <div class="drill-display" id="drillDisplay">
+      <div class="drill-alg-name" id="drillAlgName">— select an algorithm above —</div>
+      <div class="drill-alg-moves" id="drillAlgMoves"></div>
+    </div>
+    <div class="drill-timer" id="drillTimer">0.00</div>
+    <div class="drill-controls">
+      <button class="btn btn-primary" id="drillStartStop">Start</button>
+      <button class="btn btn-secondary" id="drillReset">Reset</button>
+    </div>
+    <div class="drill-log" id="drillLog" style="display:none">
+      <div class="drill-log-title">Recent times (green = &lt;5s, red = &gt;10s)</div>
+      <ul class="log-list" id="logList"></ul>
+    </div>
+  </div>
+
+  <div class="progress-section" id="progressSection">
+    <h3 style="color:var(--accent2);font-size:0.9rem;margin-bottom:0.8rem;">Reps per algorithm this session</h3>
+    <div id="progressRows"></div>
+  </div>
+</section>
+
+<section>
+  <h2>🧠 Recognition Quiz</h2>
+  <p>Knowing the moves isn't enough — you need to instantly recognise <em>which</em> algorithm to use. Answer all 5 questions.</p>
+
+  <div id="quizContainer"></div>
+  <div class="score-bar">
+    <span class="score-label">Score:</span>
+    <span class="score-val" id="quizScore">0 / 5</span>
+    <button class="btn btn-secondary" id="quizRetry" style="margin-left:auto;display:none">Retry Quiz</button>
+  </div>
+</section>
+
+<section>
+  <h2>What's Next</h2>
+  <p>Once these 5 algorithms feel automatic, your next gains come from <strong>OLL case recognition</strong> — identifying at a glance which OLL case you're looking at, so you execute the right algorithm immediately without trial-and-error.</p>
+  <p>Keep a real or virtual cube handy. Apps like <a href="https://cstimer.net/" target="_blank" style="color:var(--accent2)">cstimer.net</a> have algorithm training modes — drill directly after this lesson for maximum retention.</p>
+</section>
+
+<footer>
+  <p>💬 <strong>Questions?</strong> Ask your Hermes agent anything — <em>"Why does Sune work for multiple OLL cases?"</em> or <em>"What's the difference between OLL and PLL?"</em> — and get an instant explanation.</p>
+  <p style="margin-top:0.8rem;">Lesson 0016 · Rubik's Cube · <a href="../MISSION.md">Mission</a></p>
+</footer>
+
+</div>
+
+<script>
+const ALGS = [
+  { id:'sune',    name:'Sune',      moves:'R U R\' U R U2 R\'',                       tag:'OLL' },
+  { id:'antisune',name:'Anti-Sune', moves:'R U2 R\' U\' R U\' R\'',                   tag:'OLL' },
+  { id:'yperm',   name:'Y-Perm',    moves:'F R U\' R\' U\' R U R\' F\' R U R\' U\' R\' F R F\'', tag:'PLL' },
+  { id:'ua',      name:'Ua-Perm',   moves:'R U\' R U R U R U\' R\' U\' R2',           tag:'PLL' },
+  { id:'ub',      name:'Ub-Perm',   moves:'R2 U R U R\' U\' R\' U\' R\' U R\'',      tag:'PLL' },
+];
+
+// --- Drill Timer ---
+let activeAlg = null;
+let timerInterval = null;
+let startTime = null;
+let running = false;
+let reps = { sune:0, antisune:0, yperm:0, ua:0, ub:0 };
+let logs = [];
+
+const drillBtns = document.getElementById('drillBtns');
+const drillAlgName = document.getElementById('drillAlgName');
+const drillAlgMoves = document.getElementById('drillAlgMoves');
+const drillTimerEl = document.getElementById('drillTimer');
+const drillLog = document.getElementById('drillLog');
+const logList = document.getElementById('logList');
+const progressRows = document.getElementById('progressRows');
+
+ALGS.forEach(alg => {
+  const btn = document.createElement('button');
+  btn.className = 'drill-btn';
+  btn.textContent = alg.name;
+  btn.dataset.id = alg.id;
+  btn.addEventListener('click', () => {
+    if (running) stopTimer(false);
+    activeAlg = alg;
+    document.querySelectorAll('.drill-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drillAlgName.textContent = alg.name + ' (' + alg.tag + ')';
+    drillAlgMoves.textContent = alg.moves;
+    drillTimerEl.textContent = '0.00';
+  });
+  drillBtns.appendChild(btn);
+  // progress row
+  const row = document.createElement('div');
+  row.className = 'progress-row';
+  row.id = 'prog-' + alg.id;
+  row.innerHTML = `<span class="progress-name">${alg.name}</span>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="bar-${alg.id}" style="width:0%"></div></div>
+    <span class="progress-count" id="count-${alg.id}">0 reps</span>`;
+  progressRows.appendChild(row);
+});
+
+function updateProgress() {
+  ALGS.forEach(alg => {
+    const r = reps[alg.id];
+    const pct = Math.min(r * 10, 100);
+    document.getElementById('bar-' + alg.id).style.width = pct + '%';
+    document.getElementById('count-' + alg.id).textContent = r + ' rep' + (r !== 1 ? 's' : '');
+  });
+}
+
+function stopTimer(log = true) {
+  if (!running) return;
+  clearInterval(timerInterval);
+  running = false;
+  const elapsed = (Date.now() - startTime) / 1000;
+  drillTimerEl.textContent = elapsed.toFixed(2);
+  document.getElementById('drillStartStop').textContent = 'Start';
+  if (log && activeAlg) {
+    reps[activeAlg.id]++;
+    updateProgress();
+    logs.unshift({ alg: activeAlg.name, time: elapsed });
+    if (logs.length > 20) logs.pop();
+    renderLog();
+  }
+}
+
+function renderLog() {
+  drillLog.style.display = 'block';
+  logList.innerHTML = '';
+  logs.slice(0, 10).forEach(entry => {
+    const li = document.createElement('li');
+    li.className = 'log-item' + (entry.time < 5 ? ' fast' : entry.time > 10 ? ' slow' : '');
+    li.textContent = entry.alg + ': ' + entry.time.toFixed(2) + 's';
+    logList.appendChild(li);
+  });
+}
+
+document.getElementById('drillStartStop').addEventListener('click', () => {
+  if (!activeAlg) { alert('Select an algorithm first!'); return; }
+  if (running) {
+    stopTimer(true);
+  } else {
+    running = true;
+    startTime = Date.now();
+    document.getElementById('drillStartStop').textContent = 'Stop';
+    timerInterval = setInterval(() => {
+      drillTimerEl.textContent = ((Date.now() - startTime) / 1000).toFixed(2);
+    }, 50);
+  }
+});
+
+document.getElementById('drillReset').addEventListener('click', () => {
+  stopTimer(false);
+  drillTimerEl.textContent = '0.00';
+});
+
+updateProgress();
+
+// --- Quiz ---
+const QUESTIONS = [
+  {
+    q: 'You\'ve finished OLL. Looking at the top layer, all corners are oriented (yellow up) but the edges are wrong. Two edges need to swap diagonally. Which algorithm?',
+    opts: ['Ua-Perm', 'Ub-Perm', 'Y-Perm', 'Sune'],
+    ans: 2,
+    exp: 'Y-Perm handles a diagonal corner swap in PLL. Ua/Ub cycle edges, not corners.'
+  },
+  {
+    q: 'During OLL you have exactly one corner with yellow facing up (top-left position). Which algorithm should you use?',
+    opts: ['Anti-Sune', 'Sune', 'Y-Perm', 'Ub-Perm'],
+    ans: 1,
+    exp: 'Sune is applied when one correctly-oriented corner is in the top-left. Anti-Sune mirrors this for top-right.'
+  },
+  {
+    q: 'After OLL, three of the four last-layer edges are in wrong positions — they need to cycle counter-clockwise (viewed from top). Which algorithm?',
+    opts: ['Ub-Perm', 'Ua-Perm', 'Sune', 'Anti-Sune'],
+    ans: 1,
+    exp: 'Ua-Perm cycles 3 edges counter-clockwise. Ub-Perm does the same but clockwise.'
+  },
+  {
+    q: 'What is the move count (number of moves) in Anti-Sune?',
+    opts: ['6', '7', '8', '9'],
+    ans: 1,
+    exp: 'Anti-Sune is R U2 R\' U\' R U\' R\' — 7 moves.'
+  },
+  {
+    q: 'You apply Sune once during OLL but the corners still aren\'t all oriented. What should you do?',
+    opts: ['Apply Y-Perm instead', 'Start the solve over', 'Apply Sune again (possibly multiple times)', 'Apply Ua-Perm'],
+    ans: 2,
+    exp: 'Sune may need to be applied 2–3 times to fully orient all corners. This is expected — don\'t panic!'
+  },
+];
+
+let quizAnswers = new Array(QUESTIONS.length).fill(null);
+let quizDone = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  QUESTIONS.forEach((q, qi) => {
+    const box = document.createElement('div');
+    box.className = 'quiz-box';
+    box.innerHTML = `<div class="quiz-question"><strong>Q${qi+1}.</strong> ${q.q}</div>
+      <div class="quiz-options" id="opts-${qi}"></div>
+      <div class="quiz-feedback" id="fb-${qi}"></div>`;
+    container.appendChild(box);
+    const optsDiv = box.querySelector('#opts-' + qi);
+    q.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = opt;
+      if (quizAnswers[qi] !== null) {
+        btn.disabled = true;
+        if (oi === q.ans) btn.classList.add('correct');
+        else if (oi === quizAnswers[qi]) btn.classList.add('wrong');
+      }
+      btn.addEventListener('click', () => {
+        if (quizAnswers[qi] !== null) return;
+        quizAnswers[qi] = oi;
+        quizDone++;
+        optsDiv.querySelectorAll('.quiz-option').forEach((b, bi) => {
+          b.disabled = true;
+          if (bi === q.ans) b.classList.add('correct');
+          else if (bi === oi) b.classList.add('wrong');
+        });
+        const fb = document.getElementById('fb-' + qi);
+        if (oi === q.ans) {
+          fb.className = 'quiz-feedback ok';
+          fb.textContent = '✓ Correct! ' + q.exp;
+        } else {
+          fb.className = 'quiz-feedback no';
+          fb.textContent = '✗ Not quite. ' + q.exp;
+        }
+        const correct = quizAnswers.filter((a, i) => a === QUESTIONS[i].ans).length;
+        document.getElementById('quizScore').textContent = correct + ' / ' + QUESTIONS.length;
+        if (quizDone === QUESTIONS.length) document.getElementById('quizRetry').style.display = 'inline-block';
+      });
+      optsDiv.appendChild(btn);
+    });
+  });
+}
+
+document.getElementById('quizRetry').addEventListener('click', () => {
+  quizAnswers = new Array(QUESTIONS.length).fill(null);
+  quizDone = 0;
+  document.getElementById('quizScore').textContent = '0 / ' + QUESTIONS.length;
+  document.getElementById('quizRetry').style.display = 'none';
+  renderQuiz();
+});
+
+renderQuiz();
+</script>
+</body>
+</html>
