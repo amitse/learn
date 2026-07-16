@@ -592,6 +592,16 @@
     <td>Registers OS signals (e.g. SIGINT, SIGTERM) to be delivered on a channel. Used to trigger graceful shutdown from the OS or a container orchestrator.</td>
   </tr>
   <tr>
+    <td>http.ErrServerClosed</td>
+    <td>server.close() resolved (no equivalent error)</td>
+    <td>Sentinel error returned by ListenAndServe / ListenAndServeTLS when Shutdown or Close is called. Should be filtered with errors.Is — it is expected, not a crash.</td>
+  </tr>
+  <tr>
+    <td>srv.Shutdown(ctx)</td>
+    <td>await server.close()</td>
+    <td>Gracefully stops an http.Server: closes the listener, waits for active handlers to finish, respects the context deadline. Does not interrupt hijacked (WebSocket) connections.</td>
+  </tr>
+  <tr>
     <td>go build -o binary ./cmd/server</td>
     <td>npm run build + node dist/index.js</td>
     <td>Compiles a Go program into a single self-contained binary with no runtime dependency. The binary can be shipped and run on any machine with the matching OS/arch.</td>
