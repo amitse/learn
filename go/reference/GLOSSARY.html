@@ -45,7 +45,36 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Concurrency (Lesson 11) <span class="new-badge">new</span></h2>
+<h2>Configuration (Lesson 18) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>configuration boundary</td>
+    <td>validated <code>process.env</code> at startup</td>
+    <td>The one place where untyped environment strings are read, defaulted, parsed, and validated into a typed <code>Config</code> value. Keep raw environment access out of handlers and services.</td>
+  </tr>
+  <tr>
+    <td>os.LookupEnv</td>
+    <td><code>"KEY" in process.env</code></td>
+    <td>Returns <code>(value string, ok bool)</code>. Use it when a missing value must be distinguished from an explicitly empty value, especially for required secrets.</td>
+  </tr>
+  <tr>
+    <td>default value</td>
+    <td><code>process.env.PORT ?? "8080"</code></td>
+    <td>A safe fallback for optional operational settings. Use for local-friendly values such as a port or timeout; do not use a fallback for credentials such as <code>JWT_SECRET</code>.</td>
+  </tr>
+  <tr>
+    <td>time.Duration</td>
+    <td>number of milliseconds (roughly)</td>
+    <td>A typed duration used by Go APIs, e.g. <code>5*time.Second</code>. Parse environment text with <code>time.ParseDuration("5s")</code> once at startup.</td>
+  </tr>
+</table>
+
+<h2>Concurrency (Lesson 11)</h2>
 <table>
   <tr>
     <th>Term</th>

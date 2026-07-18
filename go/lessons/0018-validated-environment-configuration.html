@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 18 — Validated Environment Configuration | Go for TS Devs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#3178c6;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:860px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.5rem 0 .75rem;color:var(--accent);font-size:1.3rem}p,li{color:var(--text)}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.86rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:#74aaf5}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:8px;color:var(--muted)}.score{font-weight:800;color:var(--accent)}a{color:#70dce1}footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--border);margin-top:3rem;padding-top:1.2rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Validated environment configuration</h1>
+<p class="lede">Turn process environment strings into one typed, checked <code>Config</code> value at startup—so a missing JWT secret or malformed port fails before your HTTP server accepts traffic.</p>
+
+<h2>The boundary: environment → typed config</h2>
+<p>In Node, libraries such as <code>zod</code> often validate <code>process.env</code> on boot. Go’s standard library gives you the same building blocks directly: <code>os.LookupEnv</code> tells you whether a variable exists, and parsing functions turn strings into useful types. Do this once in <code>main</code>; don’t scatter <code>os.Getenv</code> calls through handlers.</p>
+<div class="compare">
+ <div class="card"><div class="lang ts">TypeScript</div><pre>const port = Number(process.env.PORT ?? 8080)
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is required")
+}</pre></div>
+ <div class="card"><div class="lang go">Go</div><pre>port, err := strconv.Atoi(getenv("PORT", "8080"))
+if err != nil { return Config{}, err }
+
+secret, ok := os.LookupEnv("JWT_SECRET")
+if !ok || secret == "" { /* fail */ }</pre></div>
+</div>
+<div class="callout"><strong>Important:</strong> <code>os.Getenv("JWT_SECRET")</code> returns <code>""</code> both when the variable is unset and when it is explicitly empty. Use <code>LookupEnv</code> when that distinction—or clear validation—matters.</div>
+
+<h2>Build one loader</h2>
+<p>Put this in <code>internal/config/config.go</code>. It has one job: accept an environment lookup function, apply safe defaults, and reject invalid startup state.</p>
+<pre>package config
+
+import (
+    "fmt"
+    "os"
+    "strconv"
+    "strings"
+    "time"
+)
+
+type Config struct {
+    Addr            string
+    JWTSecret       string
+    ShutdownTimeout time.Duration
+}
+
+func Load() (Config, error) {
+    port := getenv("PORT", "8080")
+    portNum, err := strconv.Atoi(port)
+    if err != nil || portNum &lt; 1 || portNum &gt; 65535 {
+        return Config{}, fmt.Errorf("PORT must be a number from 1 to 65535")
+    }
+
+    secret, ok := os.LookupEnv("JWT_SECRET")
+    if !ok || strings.TrimSpace(secret) == "" {
+        return Config{}, fmt.Errorf("JWT_SECRET is required")
+    }
+
+    timeout, err := time.ParseDuration(getenv("SHUTDOWN_TIMEOUT", "5s"))
+    if err != nil || timeout &lt;= 0 {
+        return Config{}, fmt.Errorf("SHUTDOWN_TIMEOUT must be a positive duration")
+    }
+
+    return Config{
+        Addr:            ":" + port,
+        JWTSecret:       secret,
+        ShutdownTimeout: timeout,
+    }, nil
+}
+
+func getenv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok &amp;&amp; value != "" {
+        return value
+    }
+    return fallback
+}</pre>
+<p><span class="step">1</span><strong>Defaults</strong> make local development easy: no <code>PORT</code> means <code>:8080</code>; no timeout means <code>5s</code>.</p>
+<p><span class="step">2</span><strong>Required values</strong> must not silently default. A generated fallback JWT secret would make tokens invalid after each restart; fail fast instead.</p>
+<p><span class="step">3</span><strong>Parse at the edge.</strong> The rest of the app receives a <code>time.Duration</code>, not a string it must parse again.</p>
+
+<h2>Wire it into the server</h2>
+<pre>func main() {
+    cfg, err := config.Load()
+    if err != nil {
+        log.Fatal("configuration error: ", err)
+    }
+
+    // cfg.JWTSecret goes to auth.AuthMiddleware.
+    srv := &amp;http.Server{Addr: cfg.Addr, Handler: mux}
+
+    // During SIGTERM handling:
+    ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+    defer cancel()
+    _ = srv.Shutdown(ctx)
+}</pre>
+<p>Run locally with explicit values:</p>
+<pre>JWT_SECRET=dev-only-secret PORT=8081 SHUTDOWN_TIMEOUT=8s go run ./cmd/server</pre>
+<p>Do not commit secrets to Git. Your deployment platform should supply <code>JWT_SECRET</code>; a local <code>.env</code> file is a convenience, not a substitute for a real secret-management policy.</p>
+
+<h2>Quick check</h2>
+<section class="quiz" id="quiz">
+ <p class="score" id="score">Choose an answer for instant feedback.</p>
+ <div class="q" data-answer="b" data-explain="LookupEnv returns both the string and whether the key was present; Getenv only returns a string.">
+  <p><strong>1.</strong> Which API can distinguish an unset variable from a variable set to an empty string?</p>
+  <div class="options"><button class="option" data-choice="a">os.Getenv</button><button class="option" data-choice="b">os.LookupEnv</button><button class="option" data-choice="c">strconv.Atoi</button></div><div class="feedback"></div>
+ </div>
+ <div class="q" data-answer="c" data-explain="The configuration boundary should parse strings once so downstream code uses a real time.Duration.">
+  <p><strong>2.</strong> Why parse <code>SHUTDOWN_TIMEOUT</code> in <code>config.Load</code> rather than in shutdown code?</p>
+  <div class="options"><button class="option" data-choice="a">time.ParseDuration only works in main</button><button class="option" data-choice="b">It makes the duration global</button><button class="option" data-choice="c">It validates once and keeps stringly typed values out of the app</button></div><div class="feedback"></div>
+ </div>
+ <div class="q" data-answer="a" data-explain="Authentication secrets are required production configuration. A missing secret must stop startup, not create unpredictable tokens.">
+  <p><strong>3.</strong> What should your server do if <code>JWT_SECRET</code> is missing?</p>
+  <div class="options"><button class="option" data-choice="a">Return an error and exit before serving requests</button><button class="option" data-choice="b">Generate a random secret every boot</button><button class="option" data-choice="c">Disable auth middleware</button></div><div class="feedback"></div>
+ </div>
+</section>
+
+<div class="callout"><strong>Ask your teacher:</strong> if you want, ask for a table-driven test for <code>config.Load</code> next. Configuration loading is deliberately easy to test once the environment lookup is injected.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/os#LookupEnv" target="_blank">Go standard library: os.LookupEnv</a></li><li><a href="https://pkg.go.dev/strconv#Atoi" target="_blank">Go standard library: strconv.Atoi</a></li><li><a href="https://pkg.go.dev/time#ParseDuration" target="_blank">Go standard library: time.ParseDuration</a></li><li><a href="https://12factor.net/config" target="_blank">The Twelve-Factor App: Config</a></li></ul>
+<footer>Lesson 18 · Go for TypeScript Devs · 2026-07-18</footer>
+</main><script>
+let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: configuration is a checked startup boundary.':'Review the feedback, then try the pattern in a small server.'):"keep going"}`;})));
+</script></body></html>
