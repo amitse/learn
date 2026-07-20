@@ -45,7 +45,31 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Configuration (Lesson 18) <span class="new-badge">new</span></h2>
+<h2>Testable Configuration (Lesson 19) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>Lookup</td>
+    <td><code>(key) =&gt; string | undefined</code></td>
+    <td>A named function type with signature <code>func(string) (string, bool)</code>. It represents the behaviour “look up an environment value” without coupling the loader to the OS. <code>os.LookupEnv</code> directly satisfies it.</td>
+  </tr>
+  <tr>
+    <td>function dependency</td>
+    <td>injected callback</td>
+    <td>A small dependency-injection seam: pass the exact behaviour a function needs rather than reading global state inside it. Here, <code>config.Load(lookup)</code> is deterministic because the caller supplies lookup behaviour.</td>
+  </tr>
+  <tr>
+    <td>test double</td>
+    <td>fake / stub</td>
+    <td>A test implementation of a dependency. A closure over <code>map[string]string</code> makes a tiny <code>Lookup</code> double, letting each table row declare environment values without mutating the process environment.</td>
+  </tr>
+</table>
+
+<h2>Configuration (Lesson 18)</h2>
 <table>
   <tr>
     <th>Term</th>

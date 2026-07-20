@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 19 — Testable Configuration | Go for TS Devs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#3178c6;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.35rem 0 .75rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:#74aaf5}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;color:var(--muted);margin-top:9px}.score{color:var(--yellow);font-weight:700}a{color:#7edce0}footer{margin-top:2.5rem;color:var(--muted);font-size:.82rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Test configuration without touching the environment</h1>
+<p class="lede">Make your configuration loader accept a tiny lookup function. Your production code still reads <code>os.LookupEnv</code>; tests supply a map instead—fast, isolated, and table-driven.</p>
+
+<h2>The seam: a function dependency</h2>
+<p>Lesson 18 put environment parsing at startup. The remaining problem is testing every missing and malformed value without tests changing process-global state. In TypeScript, this is like passing a <code>getEnv</code> dependency instead of mutating <code>process.env</code>.</p>
+<div class="compare">
+ <div class="card"><div class="lang ts">TypeScript</div><pre>type Lookup = (key: string) =&gt;
+  string | undefined;
+
+function load(lookup: Lookup) {
+  const port = lookup("PORT") ?? "8080";
+  // validate and return config
+}</pre></div>
+ <div class="card"><div class="lang go">Go</div><pre>type Lookup func(string) (string, bool)
+
+func Load(lookup Lookup) (Config, error) {
+    port := getenv(lookup, "PORT", "8080")
+    // validate and return Config
+}</pre></div>
+</div>
+<p>The signature mirrors <a href="https://pkg.go.dev/os#LookupEnv" target="_blank"><code>os.LookupEnv</code></a>: value plus a boolean that says whether the key exists. A named function type documents the dependency and keeps the production call readable.</p>
+
+<h2>Refactor the loader</h2>
+<p>Only this one concept changes: <code>Load</code> receives how to look up a value. It never knows whether its caller uses the OS, a map, or a test double.</p>
+<pre>package config
+
+import (
+    "fmt"
+    "os"
+    "strconv"
+    "strings"
+    "time"
+)
+
+type Lookup func(string) (string, bool)
+
+type Config struct {
+    Addr            string
+    JWTSecret       string
+    ShutdownTimeout time.Duration
+}
+
+func Load(lookup Lookup) (Config, error) {
+    port, err := strconv.Atoi(getenv(lookup, "PORT", "8080"))
+    if err != nil || port &lt; 1 || port &gt; 65535 {
+        return Config{}, fmt.Errorf("PORT must be 1 through 65535")
+    }
+
+    secret, ok := lookup("JWT_SECRET")
+    if !ok || strings.TrimSpace(secret) == "" {
+        return Config{}, fmt.Errorf("JWT_SECRET is required")
+    }
+
+    timeout, err := time.ParseDuration(getenv(lookup, "SHUTDOWN_TIMEOUT", "5s"))
+    if err != nil || timeout &lt;= 0 {
+        return Config{}, fmt.Errorf("SHUTDOWN_TIMEOUT must be positive")
+    }
+    return Config{Addr: fmt.Sprintf(":%d", port), JWTSecret: secret, ShutdownTimeout: timeout}, nil
+}
+
+func getenv(lookup Lookup, key, fallback string) string {
+    if value, ok := lookup(key); ok &amp;&amp; value != "" { return value }
+    return fallback
+}
+
+// Production composition root: the OS is just one implementation.
+func FromEnvironment() (Config, error) { return Load(os.LookupEnv) }</pre>
+<div class="callout"><strong>Keep the side effect at the edge:</strong> <code>FromEnvironment</code> is the only function coupled to the process environment. Handlers and validation deal solely in typed <code>Config</code> values.</div>
+
+<h2>Write the table-driven test</h2>
+<p>A map becomes a lookup function in three lines. Each test case gets its own map, so cases cannot leak state into one another.</p>
+<pre>func lookup(values map[string]string) Lookup {
+    return func(key string) (string, bool) {
+        value, ok := values[key]
+        return value, ok
+    }
+}
+
+func TestLoad(t *testing.T) {
+    tests := []struct {
+        name    string
+        env     map[string]string
+        wantErr bool
+    }{
+        {"uses safe defaults", map[string]string{"JWT_SECRET": "dev-secret"}, false},
+        {"rejects missing secret", map[string]string{}, true},
+        {"rejects bad port", map[string]string{"JWT_SECRET": "x", "PORT": "nope"}, true},
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            _, err := Load(lookup(tt.env))
+            if (err != nil) != tt.wantErr {
+                t.Fatalf("Load() error = %v, wantErr %v", err, tt.wantErr)
+            }
+        })
+    }
+}</pre>
+<p><span class="step">1</span><strong>Arrange:</strong> each row declares just the environment values relevant to its scenario.</p>
+<p><span class="step">2</span><strong>Act:</strong> pass that row’s map-backed <code>Lookup</code> to <code>Load</code>.</p>
+<p><span class="step">3</span><strong>Assert:</strong> compare whether an error occurred. Add field assertions to the successful row as your config grows.</p>
+<p>Run only this package with <code>go test ./internal/config</code>, or the whole module with <code>go test ./...</code>. Go discovers <code>_test.go</code> files and <code>TestXxx</code> functions automatically. <a href="https://pkg.go.dev/testing" target="_blank">The testing package documentation</a> describes <code>t.Run</code> subtests and failure methods.</p>
+
+<h2>Quick check</h2>
+<section class="quiz" id="quiz">
+ <p class="score" id="score">Choose an answer for instant feedback.</p>
+ <div class="q" data-answer="b" data-explain="A Lookup has the same shape as os.LookupEnv, so os.LookupEnv is a direct production implementation.">
+  <p><strong>1.</strong> What should production code pass to <code>Load</code>?</p>
+  <div class="options"><button class="option" data-choice="a">A map literal</button><button class="option" data-choice="b">os.LookupEnv</button><button class="option" data-choice="c">os.Getenv</button></div><div class="feedback"></div>
+ </div>
+ <div class="q" data-answer="c" data-explain="The bool preserves whether the key was absent, which matters for required configuration and clear validation.">
+  <p><strong>2.</strong> Why is <code>func(string) (string, bool)</code> better than <code>func(string) string</code> here?</p>
+  <div class="options"><button class="option" data-choice="a">It parses durations automatically</button><button class="option" data-choice="b">It prevents all empty strings</button><button class="option" data-choice="c">It can distinguish an absent key from a present key</button></div><div class="feedback"></div>
+ </div>
+ <div class="q" data-answer="a" data-explain="The map-backed function has no process-global state, so table rows are independent and tests remain safe to run together.">
+  <p><strong>3.</strong> What makes the map-backed lookup useful in a table-driven test?</p>
+  <div class="options"><button class="option" data-choice="a">Each case supplies isolated inputs without changing the OS environment</button><button class="option" data-choice="b">It avoids writing any assertions</button><button class="option" data-choice="c">It makes Config mutable</button></div><div class="feedback"></div>
+ </div>
+</section>
+<div class="callout"><strong>Ask your teacher:</strong> ask for the next incremental test: assert the exact default <code>Addr</code> and <code>ShutdownTimeout</code>, not only whether loading succeeded.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/os#LookupEnv" target="_blank">Go standard library: os.LookupEnv</a></li><li><a href="https://pkg.go.dev/testing#T.Run" target="_blank">Go standard library: testing.T.Run</a></li><li><a href="https://go.dev/doc/effective_go#testing" target="_blank">Effective Go: Testing</a></li></ul>
+<footer>Lesson 19 · Go for TypeScript Devs · 2026-07-20</footer>
+</main><script>
+let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: you can isolate configuration tests from the OS.':'Review the feedback, then re-read the seam and test sections.'):'keep going'}`;})));
+</script></body></html>
