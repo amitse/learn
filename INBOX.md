@@ -28,8 +28,9 @@ _Last curated: 2026-07-19 (Discord thread `1528149169041309907`)._
 
 - **Source/date:** User-supplied distilled notes attributed to Derek Sivers, *Hell Yeah or No*, 2026-05-01; deposited in Discord on 2026-07-19 (messages `1528150134754644081`, `1528150297682247721`, `1528150371568980150`, `1528150435385573527`).
 - **Takeaway:** A coherent operating system is proposed: choose a clear priority, decline weak commitments, make goals change today's behavior, protect focused time, favor action over further consumption, and treat sustained practice as the route to competence. The business claim is framed as a heuristic: validate demand before building.
-- **Status:** Captured as a candidate future track/reference. Do not turn it into a lesson sequence yet.
-- **Prerequisite/mission gap:** Needs a concrete outcome, time horizon, and real decision context—for example, “reduce project commitments to one priority for the next six weeks”—rather than a wish to learn productivity in the abstract. The source is a user-provided distillation, not independently verified against the book.
+- **Status:** Activated 2026-07-21 as the **Calm Execution** track.
+- **Mission:** Over 30 days, reduce procrastination by consistently beginning one pre-chosen important action daily using a repeatable cue and a two-minute opening step. Success is 20 intentional starts, system review of misses, and no reliance on urgency or guilt.
+- **Source note:** The Sivers material remains a user-provided distillation, not an independently verified representation of the book.
 
 ## Product Ideas
 
