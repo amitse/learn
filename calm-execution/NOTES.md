@@ -4,4 +4,5 @@
 - Primary behaviour: begin one pre-chosen important action daily.
 - Track starts, not hours, streaks, or self-worth.
 - Start with implementation design: cue + tiny physical action + visible record.
+- Lesson 2 added a one-barrier pre-cue setup and two log fields: `setup done?` and `started?`.
 - Increase difficulty only when the basic start ritual is reliable.
