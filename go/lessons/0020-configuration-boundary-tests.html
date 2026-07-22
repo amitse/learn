@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 20 — Configuration Boundary Tests | Go for TS Devs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#3178c6;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.35rem 0 .75rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:#74aaf5}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:10px;color:var(--muted)}.score{color:var(--yellow);font-weight:700}@media(max-width:650px){.compare{grid-template-columns:1fr}}a{color:#76dce2}footer{margin-top:2.5rem;color:var(--muted);font-size:.82rem}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Test configuration boundaries, not just errors</h1>
+<p class="lede">A config test that only checks <code>err == nil</code> can still accept the wrong address or timeout. Add exact assertions for a valid configuration and boundary cases that protect your HTTP server before it starts.</p>
+
+<h2>The missing assertion</h2>
+<p>Lesson 19 made <code>Load</code> deterministic by injecting a lookup function. Now use that seam to verify the typed <em>output</em>, not merely that loading did not fail.</p>
+<div class="compare">
+ <div class="card"><div class="lang ts">TypeScript</div><pre>const config = load(getEnv);
+expect(config).toEqual({
+  addr: ":8080",
+  timeoutMs: 5000,
+});</pre></div>
+ <div class="card"><div class="lang go">Go</div><pre>got, err := Load(lookup(env))
+if err != nil { t.Fatal(err) }
+if got.Addr != ":8080" ||
+   got.ShutdownTimeout != 5*time.Second {
+    t.Errorf("got %#v", got)
+}</pre></div>
+</div>
+<p>In Go, ordinary comparisons are the assertion library. Stop with <code>t.Fatal</code> when <code>Load</code> failed: there is no useful config to inspect. Then use <code>t.Errorf</code> for independent field mismatches so one run can show every wrong value. See <a href="https://pkg.go.dev/testing#T" target="_blank">testing.T</a>.</p>
+
+<h2>Add one successful row with expected values</h2>
+<p>Extend the table from Lesson 19. The expected configuration is a value, so <code>reflect.DeepEqual</code> is unnecessary here: every field is directly comparable.</p>
+<pre>func TestLoad(t *testing.T) {
+    tests := []struct {
+        name    string
+        env     map[string]string
+        want    Config
+        wantErr bool
+    }{
+        {
+            name: "uses safe defaults",
+            env:  map[string]string{"JWT_SECRET": "dev-secret"},
+            want: Config{
+                Addr:            ":8080",
+                JWTSecret:       "dev-secret",
+                ShutdownTimeout: 5 * time.Second,
+            },
+        },
+        {
+            name: "accepts the ephemeral port",
+            env:  map[string]string{"JWT_SECRET": "x", "PORT": "0"},
+            want: Config{Addr: ":0", JWTSecret: "x", ShutdownTimeout: 5 * time.Second},
+        },
+        {
+            name:    "rejects zero timeout",
+            env:     map[string]string{"JWT_SECRET": "x", "SHUTDOWN_TIMEOUT": "0s"},
+            wantErr: true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got, err := Load(lookup(tt.env))
+            if (err != nil) != tt.wantErr {
+                t.Fatalf("Load() error = %v, wantErr %v", err, tt.wantErr)
+            }
+            if tt.wantErr { return }
+            if got.Addr != tt.want.Addr { t.Errorf("Addr = %q, want %q", got.Addr, tt.want.Addr) }
+            if got.JWTSecret != tt.want.JWTSecret { t.Errorf("JWTSecret = %q, want %q", got.JWTSecret, tt.want.JWTSecret) }
+            if got.ShutdownTimeout != tt.want.ShutdownTimeout { t.Errorf("ShutdownTimeout = %v, want %v", got.ShutdownTimeout, tt.want.ShutdownTimeout) }
+        })
+    }
+}</pre>
+<div class="callout"><strong>One decision:</strong> port <code>0</code> is valid for an HTTP listener—it asks the OS to choose a free port. Therefore validation should allow <code>0..65535</code>, while a shutdown timeout of <code>0s</code> is invalid because it gives in-flight requests no time to drain.</div>
+
+<h2>Make the production rule match the test</h2>
+<p>If your Lesson 19 loader rejected port zero, change the lower bound. The valid port range is <code>0</code> through <code>65535</code>; the <a href="https://pkg.go.dev/net#Listen" target="_blank">net package documentation</a> describes that <code>:0</code> selects an automatically assigned port.</p>
+<pre>port, err := strconv.Atoi(getenv(lookup, "PORT", "8080"))
+if err != nil || port &lt; 0 || port &gt; 65535 {
+    return Config{}, fmt.Errorf("PORT must be 0 through 65535")
+}
+
+// A graceful shutdown deadline must leave positive time to finish work.
+timeout, err := time.ParseDuration(getenv(lookup, "SHUTDOWN_TIMEOUT", "5s"))
+if err != nil || timeout &lt;= 0 {
+    return Config{}, fmt.Errorf("SHUTDOWN_TIMEOUT must be positive")
+}</pre>
+<p><span class="step">1</span>Describe the contract in a table row: input map, expected typed <code>Config</code>, or expected failure.</p>
+<p><span class="step">2</span>Call <code>Load</code> once per row; fatal only when the error result contradicts the row.</p>
+<p><span class="step">3</span>For success rows, assert the values your server will actually use. Run <code>go test ./...</code>.</p>
+
+<h2>Quick check</h2>
+<section class="quiz" id="quiz"><p class="score" id="score">Choose an answer for instant feedback.</p>
+ <div class="q" data-answer="b" data-explain="A nil error only says loading succeeded. Exact field assertions protect the address and timeout that main will pass to the server."><p><strong>1.</strong> Why assert <code>got.Addr</code> and <code>got.ShutdownTimeout</code> after a successful load?</p><div class="options"><button class="option" data-choice="a">Go requires an assertion library for every test</button><button class="option" data-choice="b">Success alone does not prove the parsed defaults are correct</button><button class="option" data-choice="c">It makes environment variables typed</button></div><div class="feedback"></div></div>
+ <div class="q" data-answer="a" data-explain="Using :0 tells the OS to choose an available port. It is especially useful in tests, and net.Listen documents the behavior."><p><strong>2.</strong> What does a configured address of <code>:0</code> mean?</p><div class="options"><button class="option" data-choice="a">Let the OS select an available port</button><button class="option" data-choice="b">Disable the HTTP listener</button><button class="option" data-choice="c">Always listen on port 8080</button></div><div class="feedback"></div></div>
+ <div class="q" data-answer="c" data-explain="Once the row expects an error and that expectation is met, there is no meaningful Config to compare. Return before output assertions."><p><strong>3.</strong> What should the test do after a row correctly produces an expected error?</p><div class="options"><button class="option" data-choice="a">Compare zero-value Config fields</button><button class="option" data-choice="b">Call Load again with os.LookupEnv</button><button class="option" data-choice="c">Return from that subtest</button></div><div class="feedback"></div></div>
+</section>
+<div class="callout"><strong>Ask your teacher:</strong> ask how to test <code>main</code> wiring so a chosen port is observable without binding a real production port.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/testing#T" target="_blank">Go standard library: testing.T</a></li><li><a href="https://pkg.go.dev/net#Listen" target="_blank">Go standard library: net.Listen</a></li><li><a href="https://pkg.go.dev/time#ParseDuration" target="_blank">Go standard library: time.ParseDuration</a></li></ul>
+<footer>Lesson 20 · Go for TypeScript Devs · 2026-07-22</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: you can test config as a typed startup contract.':'Review the feedback, then revisit the table and boundary rule.'):'keep going'}`}))); </script></body></html>

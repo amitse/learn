@@ -45,7 +45,31 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Testable Configuration (Lesson 19) <span class="new-badge">new</span></h2>
+<h2>Configuration Boundary Tests (Lesson 20) <span class="new-badge">new</span></h2>
+<table>
+  <tr>
+    <th>Term</th>
+    <th>TS Equivalent</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td>ephemeral port</td>
+    <td>random test-server port</td>
+    <td>An OS-selected available port. Binding an address such as <code>:0</code> asks the operating system to allocate one. Port <code>0</code> is therefore valid configuration, particularly for tests that must avoid collisions.</td>
+  </tr>
+  <tr>
+    <td>boundary test</td>
+    <td>edge-case test</td>
+    <td>A test at the edge of a valid input range. Here, <code>PORT=0</code> is accepted, while a shutdown duration of <code>0s</code> is rejected because graceful shutdown needs positive time.</td>
+  </tr>
+  <tr>
+    <td>output assertion</td>
+    <td><code>expect(value).toEqual(...)</code></td>
+    <td>A check on the actual typed result of a successful operation. For configuration, assert fields such as <code>Addr</code> and <code>ShutdownTimeout</code>, not merely that <code>err</code> is nil.</td>
+  </tr>
+</table>
+
+<h2>Testable Configuration (Lesson 19)</h2>
 <table>
   <tr>
     <th>Term</th>
