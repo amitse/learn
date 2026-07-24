@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Configuration Boundary Tests (Lesson 20) <span class="new-badge">new</span></h2>
+<h2>Server Wiring with Ephemeral Listeners (Lesson 21) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>net.Listener</td><td>Node <code>Server</code> listen handle</td><td>The concrete bound network endpoint returned by <code>net.Listen</code>. Its <code>Addr()</code> reports the address actually assigned by the OS; pass it to <code>http.Server.Serve</code>.</td></tr>
+  <tr><td>ephemeral listener</td><td><code>app.listen(0)</code></td><td>A listener bound with port <code>0</code>. The OS selects an available port, avoiding collisions between tests. Use <code>ln.Addr().String()</code>, not the requested <code>:0</code>, for a client URL.</td></tr>
+  <tr><td>http.Server.Serve</td><td>start serving on an existing Node listener</td><td>Serves HTTP using a supplied <code>net.Listener</code>. It blocks until the listener/server is closed, so a test normally starts it in a goroutine.</td></tr>
+  <tr><td>t.Cleanup</td><td><code>afterEach</code> teardown</td><td>Registers cleanup to run when the test (or subtest) finishes, including after <code>t.Fatal</code>. Use it to close a server/listener deterministically.</td></tr>
+</table>
+
+<h2>Configuration Boundary Tests (Lesson 20)</h2>
 <table>
   <tr>
     <th>Term</th>

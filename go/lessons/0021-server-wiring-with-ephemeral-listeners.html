@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 21 — Server Wiring with Ephemeral Listeners | Go for TS Devs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#3178c6;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.35rem 0 .75rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:#74aaf5}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.6em;margin-top:10px;color:var(--muted)}a{color:#7ddfe3}footer{margin-top:2rem;color:var(--muted);font-size:.82rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Wire a server to an ephemeral listener</h1>
+<p class="lede">Your configuration now permits <code>:0</code>. Use <code>net.Listen</code> to bind that address, inspect the actual port the OS chose, and serve your existing mux without a fragile hard-coded test port.</p>
+
+<h2>Why <code>ListenAndServe</code> is too opaque here</h2>
+<p><code>http.ListenAndServe(addr, handler)</code> both creates a listener and serves it. That is perfect in <code>main</code>, but a wiring test needs the listener value so it can discover the assigned address and close it deterministically. Split the two operations: <code>net.Listen</code>, then <code>srv.Serve</code>.</p>
+<div class="compare"><div class="card"><div class="lang ts">TypeScript</div><pre>const server = app.listen(0);
+await once(server, "listening");
+const { port } = server.address();
+// fetch(`http://127.0.0.1:${port}/health`)
+await close(server);</pre></div><div class="card"><div class="lang go">Go</div><pre>ln, err := net.Listen("tcp", ":0")
+if err != nil { return err }
+addr := ln.Addr().String()
+
+go srv.Serve(ln)
+defer srv.Close()</pre></div></div>
+<p>Port <code>0</code> asks the OS for an available ephemeral port. After <code>Listen</code> succeeds, <code>ln.Addr()</code> is the concrete address—not <code>:0</code>. The Go <a href="https://pkg.go.dev/net#Listen" target="_blank">net.Listen documentation</a> specifies this behavior.</p>
+
+<h2>The smallest testable server factory</h2>
+<p>Keep server construction in a function. It takes your already-validated <code>Config</code> and handler, while <code>main</code> remains the composition root.</p>
+<pre>func NewServer(cfg config.Config, h http.Handler) *http.Server {
+    return &amp;http.Server{
+        Addr:    cfg.Addr,
+        Handler: h,
+    }
+}</pre>
+<p>This factory has no network side effect. Its unit test can assert <code>srv.Addr</code> and <code>srv.Handler</code> directly. The next layer—the listener test—proves that its configured address can actually bind.</p>
+
+<h2>Bind once, discover the port, make one request</h2>
+<p>Use an explicit loopback host in the client URL. A listener address such as <code>[::]:43211</code> may mean “all interfaces,” whereas <code>127.0.0.1</code> reliably reaches the local server.</p>
+<pre>func TestHealthOverEphemeralListener(t *testing.T) {
+    mux := http.NewServeMux()
+    mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusNoContent)
+    })
+
+    srv := NewServer(config.Config{Addr: "127.0.0.1:0"}, mux)
+    ln, err := net.Listen("tcp", srv.Addr)
+    if err != nil { t.Fatal(err) }
+    t.Cleanup(func() { _ = srv.Close() })
+
+    go func() {
+        err := srv.Serve(ln)
+        if err != nil &amp;&amp; !errors.Is(err, http.ErrServerClosed) {
+            t.Errorf("Serve: %v", err)
+        }
+    }()
+
+    url := "http://" + ln.Addr().String() + "/health"
+    resp, err := http.Get(url)
+    if err != nil { t.Fatal(err) }
+    defer resp.Body.Close()
+    if resp.StatusCode != http.StatusNoContent {
+        t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusNoContent)
+    }
+}</pre>
+<div class="callout"><strong>Important distinction:</strong> <code>srv.Addr</code> remains the requested address (<code>127.0.0.1:0</code>); <code>ln.Addr()</code> is the address that was actually bound. Build the test URL from the latter.</div>
+
+<h2>Three moves to reuse</h2>
+<p><span class="step">1</span>Create the listener first with <code>net.Listen("tcp", cfg.Addr)</code>.</p>
+<p><span class="step">2</span>Start <code>srv.Serve(ln)</code> in a goroutine, because it blocks while serving.</p>
+<p><span class="step">3</span>Make the request against <code>ln.Addr().String()</code>; close the server with <code>t.Cleanup</code>.</p>
+<p>The <a href="https://pkg.go.dev/net/http#Server.Serve" target="_blank">http.Server.Serve docs</a> state that it returns <code>http.ErrServerClosed</code> after <code>Close</code> or <code>Shutdown</code>; filter that expected result just as you did in the graceful-shutdown lesson.</p>
+
+<h2>Quick check</h2><section class="quiz"><p class="score" id="score">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="The listener is the source of truth after binding. Its Addr contains the OS-assigned ephemeral port."><p><strong>1.</strong> After binding <code>127.0.0.1:0</code>, which value belongs in the client URL?</p><div class="options"><button class="option" data-choice="a">srv.Addr</button><button class="option" data-choice="b">ln.Addr().String()</button><button class="option" data-choice="c">The literal string :0</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="Serve blocks accepting and handling connections. A goroutine lets the test continue to issue its request."><p><strong>2.</strong> Why run <code>srv.Serve(ln)</code> in a goroutine?</p><div class="options"><button class="option" data-choice="a">It blocks until the server is closed</button><button class="option" data-choice="b">HTTP handlers only work in goroutines</button><button class="option" data-choice="c">net.Listen returns a channel</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="Close triggers the expected ErrServerClosed return. The test should reject other Serve errors while allowing that shutdown result."><p><strong>3.</strong> Which Serve error is expected after the cleanup closes the server?</p><div class="options"><button class="option" data-choice="a">context.Canceled</button><button class="option" data-choice="b">net.ErrClosed only</button><button class="option" data-choice="c">http.ErrServerClosed</button></div><div class="feedback"></div></div>
+</section>
+<div class="callout"><strong>Ask your teacher:</strong> ask how to replace <code>srv.Close()</code> in this test with graceful <code>srv.Shutdown(ctx)</code> and still make cleanup reliable.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/net#Listen" target="_blank">Go standard library: net.Listen</a></li><li><a href="https://pkg.go.dev/net/http#Server.Serve" target="_blank">Go standard library: http.Server.Serve</a></li><li><a href="https://pkg.go.dev/testing#T.Cleanup" target="_blank">Go standard library: testing.T.Cleanup</a></li></ul>
+<footer>Lesson 21 · Go for TypeScript Devs · 2026-07-24</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: you can test a server on a collision-free port.':'Review the feedback, then trace listener → Serve → client URL.'):'keep going'}`})));</script></body></html>
