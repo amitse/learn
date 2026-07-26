@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Server Wiring with Ephemeral Listeners (Lesson 21) <span class="new-badge">new</span></h2>
+<h2>Graceful Shutdown Drain Tests (Lesson 22) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>active connection</td><td>in-flight Node request</td><td>A connection currently executing an HTTP handler. <code>http.Server.Shutdown(ctx)</code> waits for active connections to become idle before returning, unless its context expires.</td></tr>
+  <tr><td>coordination channel</td><td>deferred Promise</td><td>A channel used by a test to establish event ordering. Closing <code>started</code> proves a handler began; receiving from <code>release</code> deliberately pauses it until the test closes that channel.</td></tr>
+  <tr><td>non-blocking select</td><td>immediate promise-state check</td><td>A <code>select</code> with a <code>default</code> case. It checks whether a channel has a value without waiting, useful here to prove shutdown has not returned prematurely.</td></tr>
+</table>
+
+<h2>Server Wiring with Ephemeral Listeners (Lesson 21)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>net.Listener</td><td>Node <code>Server</code> listen handle</td><td>The concrete bound network endpoint returned by <code>net.Listen</code>. Its <code>Addr()</code> reports the address actually assigned by the OS; pass it to <code>http.Server.Serve</code>.</td></tr>
