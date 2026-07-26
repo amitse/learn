@@ -8,4 +8,5 @@
 - Lesson 3 added a neutral review: identify the earliest break (`cue`, `setup`, or `action`) and test one adjustment tomorrow.
 - Lesson 4 anchored the ritual to one observable, dependable event and retained the `setup done?` / `started?` evidence fields.
 - Lesson 5 added a 30-second, one-line attempt record: date, cue yes/no, setup yes/no, started yes/no, plus an optional neutral note.
+- Lesson 6 added a brief pattern scan: identify the earliest repeated break across several records and test one small adjustment on the next attempt.
 - Increase difficulty only when the basic start ritual is reliable.
