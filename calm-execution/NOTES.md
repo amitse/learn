@@ -9,4 +9,5 @@
 - Lesson 4 anchored the ritual to one observable, dependable event and retained the `setup done?` / `started?` evidence fields.
 - Lesson 5 added a 30-second, one-line attempt record: date, cue yes/no, setup yes/no, started yes/no, plus an optional neutral note.
 - Lesson 6 added a brief pattern scan: identify the earliest repeated break across several records and test one small adjustment on the next attempt.
+- Lesson 7 added one bounded recovery option: after a missed primary cue, use one pre-chosen fallback event for the same two-minute action; record `primary missed?`, `fallback used?`, and `started?`.
 - Increase difficulty only when the basic start ritual is reliable.
