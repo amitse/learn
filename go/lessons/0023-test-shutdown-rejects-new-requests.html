@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 23 — Test Shutdown Rejects New Requests | Go for TS Devs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#74aaf5;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.3rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:9px;color:var(--muted)}a{color:#6fdbe0}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Test shutdown rejects new requests</h1>
+<p class="lede">Lesson 22 proved that shutdown drains an in-flight request. The other half of the contract is equally important: once shutdown closes the listener, a <em>new</em> connection must not reach a handler.</p>
+
+<h2>The two phases of graceful shutdown</h2>
+<p><a href="https://pkg.go.dev/net/http#Server.Shutdown" target="_blank"><code>Server.Shutdown</code></a> closes open listeners first, then waits for active connections to become idle. That gives your server a clean boundary: requests already inside may finish; new connections are refused.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>server.close(() =&gt; {
+  // no longer accepting connections
+});
+// Existing requests may complete.</pre></div><div class="card"><div class="lang go">Go</div><pre>go srv.Shutdown(ctx)
+// listener closes first
+// active handlers then drain</pre></div></div>
+<p>Do not test this by sleeping after <code>Shutdown</code>. Scheduling is not a contract. Instead, wrap the listener and signal exactly when its <code>Close</code> method is called.</p>
+
+<h2>Make listener closure observable</h2>
+<pre>type signalListener struct {
+    net.Listener
+    closed chan struct{}
+    once   sync.Once
+}
+
+func (l *signalListener) Close() error {
+    l.once.Do(func() { close(l.closed) })
+    return l.Listener.Close()
+}</pre>
+<p>The embedded <code>net.Listener</code> supplies the usual listener methods. This tiny test wrapper overrides only <code>Close</code>. <code>sync.Once</code> makes the close signal safe even if cleanup closes the listener again.</p>
+
+<h2>The test: drain one request, reject the next</h2>
+<pre>func TestShutdownRejectsNewRequests(t *testing.T) {
+    raw, err := net.Listen("tcp", "127.0.0.1:0")
+    if err != nil { t.Fatal(err) }
+    ln := &amp;signalListener{Listener: raw, closed: make(chan struct{})}
+
+    started, release := make(chan struct{}), make(chan struct{})
+    mux := http.NewServeMux()
+    mux.HandleFunc("GET /slow", func(w http.ResponseWriter, r *http.Request) {
+        close(started)
+        &lt;-release
+        w.WriteHeader(http.StatusNoContent)
+    })
+    srv := &amp;http.Server{Handler: mux}
+    go func() { _ = srv.Serve(ln) }()
+    t.Cleanup(func() { _ = srv.Close() })
+
+    go func() { _, _ = http.Get("http://" + ln.Addr().String() + "/slow") }()
+    &lt;-started // an active request keeps Shutdown waiting
+
+    shutdownDone := make(chan error, 1)
+    go func() { shutdownDone &lt;- srv.Shutdown(context.Background()) }()
+    &lt;-ln.closed // fact: Shutdown has closed the listener
+
+    client := &amp;http.Client{Transport: &amp;http.Transport{DisableKeepAlives: true}}
+    _, err = client.Get("http://" + ln.Addr().String() + "/new")
+    if err == nil {
+        t.Fatal("new request succeeded after listener closed")
+    }
+
+    close(release)
+    if err := &lt;-shutdownDone; err != nil { t.Fatalf("Shutdown: %v", err) }
+}</pre>
+<div class="callout"><strong>Why a fresh client?</strong> A default HTTP transport can reuse an existing idle connection. <code>DisableKeepAlives: true</code> forces this assertion to require a new TCP connection—the thing a closed listener rejects.</div>
+
+<h2>Read the proof</h2>
+<p><span class="step">1</span>Start <code>/slow</code> and wait for <code>started</code>, so shutdown cannot finish immediately.</p>
+<p><span class="step">2</span>Start <code>Shutdown</code>, then wait for <code>&lt;-ln.closed</code>. This establishes the listener-close ordering without guessing a duration.</p>
+<p><span class="step">3</span>A separate no-keep-alive client tries <code>/new</code>. It must receive a connection error, not an HTTP response.</p>
+<p><span class="step">4</span>Release the old handler and require <code>Shutdown</code> to return successfully.</p>
+<p>See the standard library documentation for <a href="https://pkg.go.dev/net/http#Server.Shutdown" target="_blank">shutdown ordering</a>, <a href="https://pkg.go.dev/net#Listener" target="_blank"><code>net.Listener</code></a>, and <a href="https://pkg.go.dev/net/http#Transport.DisableKeepAlives" target="_blank">DisableKeepAlives</a>.</p>
+
+<h2>Quick check</h2><section class="quiz"><p class="score" id="score">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="The signal says Close was actually called on the listener. A sleep guesses that it happened."><p><strong>1.</strong> Why wait on <code>&lt;-ln.closed</code> before making the new request?</p><div class="options"><button class="option" data-choice="a">To give the handler extra CPU time</button><button class="option" data-choice="b">To prove the listener is closed before the assertion</button><button class="option" data-choice="c">To make the HTTP client retry automatically</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="The test is about new connections. Disabling keep-alives prevents a client from reusing an existing connection and bypassing that condition."><p><strong>2.</strong> What does <code>DisableKeepAlives: true</code> protect this test from?</p><div class="options"><button class="option" data-choice="a">A handler writing twice</button><button class="option" data-choice="b">Shutdown timing out</button><button class="option" data-choice="c">Reusing an existing connection</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="Shutdown closes listeners first, preventing new connections, then waits for active connections to become idle."><p><strong>3.</strong> After shutdown begins, which request may still complete?</p><div class="options"><button class="option" data-choice="a">The request already executing in a handler</button><button class="option" data-choice="b">Any request that arrives before the context deadline</button><button class="option" data-choice="c">Neither; all requests are cancelled immediately</button></div><div class="feedback"></div></div>
+</section>
+<div class="callout"><strong>Ask your teacher:</strong> ask how to test the deadline path—what should happen when an active request outlives the shutdown context?</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/net/http#Server.Shutdown" target="_blank">Go standard library: http.Server.Shutdown</a></li><li><a href="https://pkg.go.dev/net#Listener" target="_blank">Go standard library: net.Listener</a></li><li><a href="https://pkg.go.dev/net/http#Transport.DisableKeepAlives" target="_blank">Go standard library: http.Transport.DisableKeepAlives</a></li><li><a href="https://pkg.go.dev/sync#Once" target="_blank">Go standard library: sync.Once</a></li></ul>
+<footer class="muted">Lesson 23 · Go for TypeScript Devs · 2026-07-28</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: you can verify both sides of graceful shutdown.':'Review the feedback, then trace listener close → rejected new request → drained old request.'):'keep going'}`})));</script></body></html>

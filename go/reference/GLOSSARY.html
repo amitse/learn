@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Graceful Shutdown Drain Tests (Lesson 22) <span class="new-badge">new</span></h2>
+<h2>Shutdown Admission Tests (Lesson 23) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>listener-close signal</td><td>server-close spy callback</td><td>A test channel closed by a <code>net.Listener</code> wrapper when its <code>Close</code> method is called. It establishes the exact boundary at which a server has stopped accepting new TCP connections, without guessing via <code>time.Sleep</code>.</td></tr>
+  <tr><td>embedded listener wrapper</td><td>delegating server wrapper</td><td>A struct that embeds <code>net.Listener</code> and overrides only <code>Close</code>. Embedded methods continue to satisfy the <code>net.Listener</code> interface while the wrapper adds a test observation.</td></tr>
+  <tr><td>DisableKeepAlives</td><td>fresh HTTP agent / connection</td><td>An <code>http.Transport</code> option that prevents persistent connection reuse. In a shutdown-admission test it ensures the request needs a new TCP connection, which a closed listener rejects.</td></tr>
+</table>
+
+<h2>Graceful Shutdown Drain Tests (Lesson 22)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>active connection</td><td>in-flight Node request</td><td>A connection currently executing an HTTP handler. <code>http.Server.Shutdown(ctx)</code> waits for active connections to become idle before returning, unless its context expires.</td></tr>
