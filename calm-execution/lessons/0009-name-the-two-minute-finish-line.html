@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 9 — Name the Two-Minute Finish Line</title>
+  <style>
+    :root { --ink:#252334; --muted:#68657a; --paper:#fbfaff; --lavender:#ede7ff; --violet:#6845bf; --violet-dark:#482b92; --line:#ddd6f3; --green:#176b4b; --green-bg:#e6f6ef; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f2eff9; color:var(--ink); font:17px/1.55 ui-serif, Georgia, serif; }
+    main { max-width:680px; margin:0 auto; padding:28px 18px 52px; }
+    article { background:var(--paper); border:1px solid var(--line); border-radius:20px; overflow:hidden; box-shadow:0 12px 30px #41306012; }
+    header { padding:30px 28px 25px; background:linear-gradient(135deg,#f1ecff,#fff); border-bottom:1px solid var(--line); }
+    .eyebrow { margin:0 0 8px; color:var(--violet); font:700 12px/1.2 system-ui,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(29px,7vw,43px); line-height:1.08; letter-spacing:-.04em; }
+    .lede { margin:15px 0 0; color:var(--muted); font-size:19px; }
+    section { padding:25px 28px 0; }
+    h2 { margin:0 0 10px; font:700 21px/1.2 system-ui,sans-serif; letter-spacing:-.02em; }
+    p { margin:0 0 14px; }
+    .principle { padding:16px 18px; border-left:4px solid var(--violet); background:var(--lavender); border-radius:0 12px 12px 0; }
+    .principle strong { color:var(--violet-dark); }
+    .card { margin:2px 28px 0; padding:21px; background:#fff; border:1px solid var(--line); border-radius:14px; }
+    .meta { color:var(--muted); font:600 13px/1.35 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.06em; }
+    label { display:block; margin-top:14px; font:700 14px/1.3 system-ui,sans-serif; }
+    input, textarea { width:100%; margin-top:6px; padding:11px 12px; border:1px solid #bdb5d5; border-radius:9px; color:var(--ink); background:#fff; font:16px/1.4 system-ui,sans-serif; }
+    textarea { min-height:74px; resize:vertical; }
+    button { margin-top:15px; padding:11px 15px; border:0; border-radius:9px; background:var(--violet); color:white; cursor:pointer; font:700 15px/1 system-ui,sans-serif; }
+    button:hover { background:var(--violet-dark); }
+    .feedback { display:none; margin-top:13px; padding:12px; border-radius:9px; font:15px/1.4 system-ui,sans-serif; }
+    .good { display:block; background:var(--green-bg); color:var(--green); }
+    .try { display:block; background:#fff3df; color:#704a05; }
+    ol { padding-left:22px; margin:10px 0 0; }
+    li { margin:7px 0; }
+    .timer { display:flex; align-items:center; gap:14px; margin-top:12px; padding:13px; background:#f8f6fc; border-radius:10px; font-family:system-ui,sans-serif; }
+    #clock { min-width:48px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--violet-dark); }
+    .timer button { margin:0; }
+    .source { padding:25px 28px 30px; color:var(--muted); font:14px/1.45 system-ui,sans-serif; }
+    a { color:var(--violet-dark); }
+    @media (max-width:480px) { header,section { padding-left:20px; padding-right:20px; } .card { margin-left:20px; margin-right:20px; } .source { padding-left:20px; padding-right:20px; } }
+  </style>
+</head>
+<body>
+<main><article>
+  <header>
+    <p class="eyebrow">Calm Execution · Lesson 09</p>
+    <h1>Name the two-minute finish line</h1>
+    <p class="lede">Make the opening step have a visible ending, so starting does not immediately become another decision.</p>
+  </header>
+
+  <section>
+    <h2>One skill</h2>
+    <p class="principle"><strong>At your usual cue, do the same prepared action until one observable condition is true—then stop or freely continue.</strong></p>
+    <p>Your cue, setup, fallback, and one blocked detour stay exactly as they are. Today only adds an end marker to the two-minute opening action.</p>
+    <p>This is a practical design experiment, not a demand to do more. Repeating an action in a stable context can help make it cue-driven over time; this lesson keeps that context simple and inspectable. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section><h2>What counts as a finish line?</h2>
+    <p>It describes a result you can see, not a feeling or a larger task:</p>
+    <ul>
+      <li>“The document is open and I have written three rough bullet points.”</li>
+      <li>“The notebook is open and I have copied the next problem.”</li>
+      <li>“The project is open and I have run the existing test once.”</li>
+    </ul>
+    <p>“Feel ready,” “make progress,” and “work for a while” are not finish lines: they leave the ending open for negotiation.</p>
+  </section>
+
+  <section><h2>10-minute applied exercise</h2></section>
+  <div class="card">
+    <p class="meta">Plan → check → trial</p>
+    <label for="cue">1. Keep your existing cue</label>
+    <input id="cue" placeholder="After I finish my first coffee…">
+    <label for="finish">2. Write one visible finish line for the same two-minute action</label>
+    <textarea id="finish" placeholder="…the draft is open and I have written three rough bullets."></textarea>
+    <button id="check" type="button">Check my finish line</button>
+    <div id="feedback" class="feedback" aria-live="polite"></div>
+    <ol>
+      <li>Do the one-barrier setup you already chose.</li>
+      <li>At the cue (or your one fallback if the primary cue was missed), block the same detour and begin.</li>
+      <li>Stop when the visible finish line is true. Record: <code>finish line reached? y/n</code> and <code>started? y/n</code>.</li>
+    </ol>
+    <div class="timer"><span id="clock">2:00</span><button id="timerButton" type="button">Start 2-minute trial</button></div>
+  </div>
+
+  <section>
+    <h2>Tomorrow’s rule</h2>
+    <p>Use this finish line for one attempt only. If it was unclear or too large, change <em>only the finish line</em> after the attempt. Do not compensate with extra time, a longer session, or self-criticism.</p>
+    <p><strong>Ask your teacher:</strong> “Is this finish line observable enough?” Bring your exact sentence and what happened at the cue.</p>
+  </section>
+
+  <footer class="source">Source: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012), PMC</a>. Accessed and verified 2026-07-29.</footer>
+</article></main>
+<script>
+  const feedback = document.getElementById('feedback');
+  document.getElementById('check').addEventListener('click', () => {
+    const cue = document.getElementById('cue').value.trim();
+    const finish = document.getElementById('finish').value.trim();
+    const visibleWords = /open|written|write|typed|type|copied|copy|run|saved|sent|listed|read|highlighted|outline|bullet|line|problem|page|file|test/i;
+    feedback.className = 'feedback ' + (cue && finish && visibleWords.test(finish) ? 'good' : 'try');
+    feedback.textContent = cue && finish && visibleWords.test(finish)
+      ? 'Good: your plan has a cue and a checkable ending. Test it once; the result is data, not a grade.'
+      : 'Make it more checkable: name an object or visible result (for example, “three bullets are written”), and keep the same cue.';
+  });
+  let remaining = 120, running = false, interval;
+  const clock = document.getElementById('clock'), timerButton = document.getElementById('timerButton');
+  function showTime() { clock.textContent = Math.floor(remaining / 60) + ':' + String(remaining % 60).padStart(2, '0'); }
+  timerButton.addEventListener('click', () => {
+    if (running) { clearInterval(interval); running = false; timerButton.textContent = 'Resume trial'; return; }
+    if (remaining === 0) remaining = 120;
+    running = true; timerButton.textContent = 'Pause trial';
+    interval = setInterval(() => { remaining--; showTime(); if (remaining === 0) { clearInterval(interval); running = false; timerButton.textContent = 'Finish line: check it now'; } }, 1000);
+  });
+</script>
+</body>
+</html>
