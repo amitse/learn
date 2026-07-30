@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 10 — Choose Your Post-Start Step</title>
+  <style>
+    :root { --ink:#252334; --muted:#68657a; --paper:#fbfaff; --lavender:#ede7ff; --violet:#6845bf; --violet-dark:#482b92; --line:#ddd6f3; --green:#176b4b; --green-bg:#e6f6ef; --amber:#714b08; --amber-bg:#fff3df; }
+    * { box-sizing:border-box; } body { margin:0; background:#f2eff9; color:var(--ink); font:17px/1.55 ui-serif,Georgia,serif; }
+    main { max-width:680px; margin:auto; padding:28px 18px 52px; } article { overflow:hidden; background:var(--paper); border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 30px #41306012; }
+    header { padding:30px 28px 25px; background:linear-gradient(135deg,#f1ecff,#fff); border-bottom:1px solid var(--line); } .eyebrow,.meta { margin:0 0 8px; color:var(--violet); font:700 12px/1.25 system-ui,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(29px,7vw,43px); line-height:1.08; letter-spacing:-.04em; } .lede { margin:15px 0 0; color:var(--muted); font-size:19px; }
+    section { padding:25px 28px 0; } h2 { margin:0 0 10px; font:700 21px/1.2 system-ui,sans-serif; letter-spacing:-.02em; } p { margin:0 0 14px; }
+    .principle { padding:16px 18px; border-left:4px solid var(--violet); border-radius:0 12px 12px 0; background:var(--lavender); } .principle strong { color:var(--violet-dark); }
+    .card { margin:2px 28px 0; padding:21px; background:#fff; border:1px solid var(--line); border-radius:14px; } label { display:block; margin-top:14px; font:700 14px/1.3 system-ui,sans-serif; }
+    input { width:100%; margin-top:6px; padding:11px 12px; border:1px solid #bdb5d5; border-radius:9px; color:var(--ink); font:16px/1.4 system-ui,sans-serif; } button { margin:15px 8px 0 0; padding:11px 15px; border:0; border-radius:9px; background:var(--violet); color:#fff; cursor:pointer; font:700 15px/1 system-ui,sans-serif; } button:hover { background:var(--violet-dark); } .secondary { background:#6c687d; } .secondary:hover { background:#4c495a; }
+    .feedback { display:none; margin-top:13px; padding:12px; border-radius:9px; font:15px/1.4 system-ui,sans-serif; } .good { display:block; background:var(--green-bg); color:var(--green); } .try { display:block; background:var(--amber-bg); color:var(--amber); }
+    ol { padding-left:22px; margin:10px 0 0; } li { margin:7px 0; } code { font:14px/1.3 ui-monospace,SFMono-Regular,monospace; } .timer { display:flex; align-items:center; gap:12px; margin-top:16px; padding:13px; border-radius:10px; background:#f8f6fc; font-family:system-ui,sans-serif; } #clock { min-width:42px; color:var(--violet-dark); font-weight:800; font-variant-numeric:tabular-nums; } .source { padding:25px 28px 30px; color:var(--muted); font:14px/1.45 system-ui,sans-serif; } a { color:var(--violet-dark); }
+    @media (max-width:480px) { header,section { padding-left:20px; padding-right:20px; } .card { margin-left:20px; margin-right:20px; } .source { padding-left:20px; padding-right:20px; } }
+  </style>
+</head>
+<body><main><article>
+  <header><p class="eyebrow">Calm Execution · Lesson 10</p><h1>Choose your post-start step</h1><p class="lede">After the finish line, make a small choice—not an automatic demand to keep going.</p></header>
+  <section><h2>One skill</h2><p class="principle"><strong>When your two-minute finish line is true, deliberately choose: stop, or do one pre-defined five-minute continuation.</strong></p><p>Stopping counts. Continuing is an option you decide in advance, not a debt created by starting. Keep your cue, setup, fallback, detour block, and finish line unchanged.</p><p>This is a practical experiment in keeping the ritual bounded and repeatable. Repeating a behaviour in a stable context can make it more cue-driven over time; the point here is to protect that stable, small opening rather than demand a longer session. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p></section>
+  <section><h2>The choice has only two valid answers</h2><ul><li><strong>Stop:</strong> record the start and leave without explaining or compensating.</li><li><strong>Continue:</strong> do one named, five-minute next step, then stop or freely choose again.</li></ul><p>“Keep working until I feel done” is not a continuation plan; it reopens the decision. Name one small action you can see yourself doing.</p></section>
+  <section><h2>10-minute applied exercise</h2></section>
+  <div class="card"><p class="meta">Pre-choose → try → record</p>
+    <label for="step">1. If I choose to continue, my one five-minute step is:</label><input id="step" placeholder="e.g., turn the three bullets into rough sentences">
+    <button id="check" type="button">Check my continuation</button><div id="feedback" class="feedback" aria-live="polite"></div>
+    <ol><li>At your usual cue, use your existing ritual through the same two-minute finish line.</li><li>Then press one choice below. Either choice is a successful use of the skill.</li><li>Record: <code>finish line reached? y/n · chose stop/continue · started? y/n</code>.</li></ol>
+    <button id="stop" class="secondary" type="button">I choose stop</button><button id="continue" type="button">I choose 5-minute continuation</button><div id="choice" class="feedback" aria-live="polite"></div>
+    <div class="timer"><span id="clock">5:00</span><button id="timerButton" type="button">Start 5-minute timer</button></div>
+  </div>
+  <section><h2>Tomorrow’s rule</h2><p>Test the same two-option choice once. If continuing feels too large or vague, shrink only the five-minute step. Do not turn a stop into a miss, add catch-up work, or use guilt to extend the session.</p><p><strong>Ask your teacher:</strong> “Is my continuation step concrete enough to choose calmly?” Bring the exact sentence and which option you chose.</p></section>
+  <footer class="source">Source: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012), PMC</a>. Accessed and verified 2026-07-30.</footer>
+</article></main>
+<script>
+  const feedback = document.getElementById('feedback'), choice = document.getElementById('choice');
+  document.getElementById('check').addEventListener('click', () => { const step = document.getElementById('step').value.trim(); const concrete = /write|type|read|edit|outline|list|sort|open|run|draft|review|copy|send|test|line|bullet|paragraph/i; feedback.className = 'feedback ' + (step && concrete.test(step) ? 'good' : 'try'); feedback.textContent = step && concrete.test(step) ? 'Good: this names a visible next move. It remains optional after the finish line.' : 'Name one visible five-minute action (for example, “write two rough sentences”), not an outcome or a feeling.'; });
+  document.getElementById('stop').addEventListener('click', () => { choice.className='feedback good'; choice.textContent='Stop chosen. Record it; the bounded start is complete.'; });
+  document.getElementById('continue').addEventListener('click', () => { const step=document.getElementById('step').value.trim(); choice.className='feedback ' + (step ? 'good' : 'try'); choice.textContent=step ? 'Continue chosen for one named five-minute step. Start the timer when you begin.' : 'First name the five-minute step, then choose continue.'; });
+  let remaining=300, running=false, interval; const clock=document.getElementById('clock'), timerButton=document.getElementById('timerButton'); function show(){clock.textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');} timerButton.addEventListener('click',()=>{if(running){clearInterval(interval);running=false;timerButton.textContent='Resume timer';return;}if(remaining===0)remaining=300;running=true;timerButton.textContent='Pause timer';interval=setInterval(()=>{remaining--;show();if(remaining===0){clearInterval(interval);running=false;timerButton.textContent='Five minutes complete';}},1000);});
+</script>
+</body></html>
