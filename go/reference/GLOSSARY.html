@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Shutdown Admission Tests (Lesson 23) <span class="new-badge">new</span></h2>
+<h2>Graceful-Shutdown Deadline Tests (Lesson 24) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>shutdown deadline</td><td>server-close timeout / AbortSignal timeout</td><td>The maximum time <code>http.Server.Shutdown(ctx)</code> waits for active connections to become idle. The listener closes first; if draining exceeds the context deadline, Shutdown returns the context error.</td></tr>
+  <tr><td>context.DeadlineExceeded</td><td>timeout rejection</td><td>The context error returned when a deadline passes. In a shutdown test, assert it with <code>errors.Is(err, context.DeadlineExceeded)</code> so the assertion remains correct if the error is wrapped.</td></tr>
+  <tr><td>bounded drain</td><td>grace period for in-flight requests</td><td>A shutdown policy that allows active work a finite time to finish rather than waiting forever. It does not forcibly cancel a handler merely because <code>Shutdown</code> returns.</td></tr>
+</table>
+
+<h2>Shutdown Admission Tests (Lesson 23)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>listener-close signal</td><td>server-close spy callback</td><td>A test channel closed by a <code>net.Listener</code> wrapper when its <code>Close</code> method is called. It establishes the exact boundary at which a server has stopped accepting new TCP connections, without guessing via <code>time.Sleep</code>.</td></tr>
