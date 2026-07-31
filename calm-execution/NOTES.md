@@ -13,4 +13,5 @@
 - Lesson 8 added one reversible, two-minute block for the first predictable digital detour; record `detour blocked?` and `started?` while keeping the cue, action, and fallback stable.
 - Lesson 9 added one observable finish line for the same two-minute action; record `finish line reached?` and `started?`, while keeping cue, setup, fallback, and detour block stable.
 - Lesson 10 added a deliberate post-finish-line choice: stop, or one pre-defined five-minute continuation; record `chose stop/continue` while keeping the bounded two-minute start intact.
+- Lesson 11 added a compact seven-day evidence review: count intentional starts toward the 20-in-30-day aim, inspect one earliest system link (`cue`, `setup`, `action`, or `no clear pattern`), and test only one adjustment.
 - Increase difficulty only when the basic start ritual is reliable.

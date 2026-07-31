@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 11 — Run a Seven-Day Evidence Review</title>
+  <style>
+    :root { --ink:#252334; --muted:#68657a; --paper:#fbfaff; --lavender:#ede7ff; --violet:#6845bf; --violet-dark:#482b92; --line:#ddd6f3; --green:#176b4b; --green-bg:#e6f6ef; --amber:#714b08; --amber-bg:#fff3df; }
+    * { box-sizing:border-box; } body { margin:0; background:#f2eff9; color:var(--ink); font:17px/1.55 ui-serif,Georgia,serif; }
+    main { max-width:680px; margin:auto; padding:28px 18px 52px; } article { overflow:hidden; background:var(--paper); border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 30px #41306012; }
+    header { padding:30px 28px 25px; background:linear-gradient(135deg,#f1ecff,#fff); border-bottom:1px solid var(--line); } .eyebrow,.meta { margin:0 0 8px; color:var(--violet); font:700 12px/1.25 system-ui,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(29px,7vw,43px); line-height:1.08; letter-spacing:-.04em; } .lede { margin:15px 0 0; color:var(--muted); font-size:19px; }
+    section { padding:25px 28px 0; } h2 { margin:0 0 10px; font:700 21px/1.2 system-ui,sans-serif; letter-spacing:-.02em; } p { margin:0 0 14px; }
+    .principle { padding:16px 18px; border-left:4px solid var(--violet); border-radius:0 12px 12px 0; background:var(--lavender); } .principle strong { color:var(--violet-dark); }
+    .card { margin:2px 28px 0; padding:21px; background:#fff; border:1px solid var(--line); border-radius:14px; } .days { display:grid; grid-template-columns:repeat(7,1fr); gap:7px; margin:13px 0; } .day { padding:10px 4px; border:1px solid #cfc6e6; border-radius:9px; text-align:center; font:700 13px/1.25 system-ui,sans-serif; cursor:pointer; } .day input { display:block; margin:0 auto 5px; accent-color:var(--violet); }
+    label { display:block; margin-top:14px; font:700 14px/1.3 system-ui,sans-serif; } select { width:100%; margin-top:6px; padding:11px 12px; border:1px solid #bdb5d5; border-radius:9px; color:var(--ink); background:#fff; font:16px/1.4 system-ui,sans-serif; } button { margin:15px 8px 0 0; padding:11px 15px; border:0; border-radius:9px; background:var(--violet); color:#fff; cursor:pointer; font:700 15px/1 system-ui,sans-serif; } button:hover { background:var(--violet-dark); }
+    .count { margin:12px 0 0; padding:12px; border-radius:9px; background:#f8f6fc; font:700 16px/1.4 system-ui,sans-serif; } .feedback { display:none; margin-top:13px; padding:12px; border-radius:9px; font:15px/1.4 system-ui,sans-serif; } .good { display:block; background:var(--green-bg); color:var(--green); } .try { display:block; background:var(--amber-bg); color:var(--amber); }
+    ol { padding-left:22px; margin:10px 0 0; } li { margin:7px 0; } code { font:14px/1.3 ui-monospace,SFMono-Regular,monospace; } .source { padding:25px 28px 30px; color:var(--muted); font:14px/1.45 system-ui,sans-serif; } a { color:var(--violet-dark); }
+    @media (max-width:480px) { header,section { padding-left:20px; padding-right:20px; } .card { margin-left:20px; margin-right:20px; } .source { padding-left:20px; padding-right:20px; } .days { gap:4px; } .day { font-size:11px; padding:8px 2px; } }
+  </style>
+</head>
+<body><main><article>
+  <header><p class="eyebrow">Calm Execution · Lesson 11</p><h1>Run a seven-day evidence review</h1><p class="lede">Count starts, then inspect one link in the system—without turning either into a verdict.</p></header>
+  <section><h2>One skill</h2><p class="principle"><strong>Once a week, count intentional starts from the last seven records and choose one system link to inspect next.</strong></p><p>An intentional start means you began the pre-chosen two-minute action—at the primary cue or the one fallback cue. A stop after the finish line still counts. This count is simply progress toward the 20-in-30-day mission, not a streak to defend or a reason to add catch-up work.</p><p>Repeated behaviour in a stable context can become more cue-driven over time; this review is a practical way to see whether your small, stable ritual is getting used. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p></section>
+  <section><h2>Keep the review narrow</h2><p>Do not diagnose your character from seven days. Read the records in order: <strong>cue → setup → action</strong>. Choose the earliest link that most often broke, or choose “no clear pattern.” One review produces one small experiment, not a redesign.</p></section>
+  <section><h2>10-minute applied exercise</h2></section>
+  <div class="card"><p class="meta">Look back → count → select one link</p>
+    <p>Open your last seven one-line records. Tick a day only if <code>started? y</code>.</p>
+    <div class="days" aria-label="Intentional starts in the last seven records">
+      <label class="day"><input class="start" type="checkbox">Day 1</label><label class="day"><input class="start" type="checkbox">Day 2</label><label class="day"><input class="start" type="checkbox">Day 3</label><label class="day"><input class="start" type="checkbox">Day 4</label><label class="day"><input class="start" type="checkbox">Day 5</label><label class="day"><input class="start" type="checkbox">Day 6</label><label class="day"><input class="start" type="checkbox">Day 7</label>
+    </div>
+    <p id="count" class="count" aria-live="polite">0 intentional starts in these 7 records.</p>
+    <label for="link">Which earliest link will you inspect on the next attempt?</label>
+    <select id="link"><option value="">Choose one…</option><option value="cue">Cue — make the same event more noticeable</option><option value="setup">Setup — prepare one object before the cue</option><option value="action">Action — shrink or clarify the physical opening step</option><option value="unclear">No clear pattern — keep the ritual unchanged for one more attempt</option></select>
+    <button id="review" type="button">Complete my review</button><div id="feedback" class="feedback" aria-live="polite"></div>
+    <ol><li>Copy the count into today’s record: <code>7-day starts: __ / 7</code>.</li><li>Use the one selected experiment at your next cue; keep all other parts of the ritual stable.</li><li>Tomorrow, record the usual evidence: <code>cue? · setup? · started? · finish line? · stop/continue</code>.</li></ol>
+  </div>
+  <section><h2>Tomorrow’s rule</h2><p>Use the review to alter only one link. If you selected “no clear pattern,” change nothing yet. A quiet, usable ritual is more valuable than a complicated system that creates pressure.</p><p><strong>Ask your teacher:</strong> “Here are my seven start results. Which single link is worth testing next?” You can share only the yes/no fields—no self-judgment required.</p></section>
+  <footer class="source">Source: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012), PMC</a>. URL fetched and verified 2026-07-31.</footer>
+</article></main>
+<script>
+  const starts = [...document.querySelectorAll('.start')], count = document.getElementById('count'), feedback = document.getElementById('feedback');
+  function updateCount() { const n = starts.filter(box => box.checked).length; count.textContent = n + ' intentional start' + (n === 1 ? '' : 's') + ' in these 7 records.'; }
+  starts.forEach(box => box.addEventListener('change', updateCount));
+  document.getElementById('review').addEventListener('click', () => { const link = document.getElementById('link').value; if (!link) { feedback.className='feedback try'; feedback.textContent='Choose one link—or “no clear pattern”—before completing the review.'; return; } const message = { cue:'Good. At the next attempt, make the same cue more noticeable; do not add another cue.', setup:'Good. Before the cue, prepare one object that makes the first action available.', action:'Good. At the next cue, make only the physical opening action smaller or clearer.', unclear:'Good. Keep the ritual unchanged for one more attempt. “Unclear” is useful data, not a failure.' }[link]; feedback.className='feedback good'; feedback.textContent=message + ' Record the count as information, not a score.'; });
+</script>
+</body></html>
