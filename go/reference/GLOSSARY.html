@@ -45,6 +45,14 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
+<h2>Server Lifecycle Ownership (Lesson 25) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>lifecycle owner</td><td>application/server wrapper</td><td>The function responsible for one component's start, normal stop, and terminal result. Here <code>Run</code> owns <code>Serve</code> and decides that an intentional server close is not an error.</td></tr>
+  <tr><td>http.ErrServerClosed</td><td>expected <code>close</code> completion</td><td>The sentinel error returned by <code>http.Server.Serve</code> after <code>Shutdown</code> or <code>Close</code>. Check it with <code>errors.Is</code>; a lifecycle wrapper normally translates it to <code>nil</code>.</td></tr>
+  <tr><td>terminal result channel</td><td>one-shot async completion</td><td>A <code>chan error</code> carrying the one final result of a goroutine. A capacity of one lets the serving goroutine send that result without depending on the receiver's exact scheduling.</td></tr>
+</table>
+
 <h2>Graceful-Shutdown Deadline Tests (Lesson 24) <span class="new-badge">new</span></h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
