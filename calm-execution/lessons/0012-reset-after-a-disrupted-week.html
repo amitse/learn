@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 12 — Reset After a Disrupted Week</title>
+  <style>
+    :root { --ink:#252334; --muted:#68657a; --paper:#fbfaff; --lavender:#ede7ff; --violet:#6845bf; --violet-dark:#482b92; --line:#ddd6f3; --green:#176b4b; --green-bg:#e6f6ef; --amber:#714b08; --amber-bg:#fff3df; }
+    * { box-sizing:border-box; } body { margin:0; background:#f2eff9; color:var(--ink); font:17px/1.55 ui-serif,Georgia,serif; }
+    main { max-width:680px; margin:auto; padding:28px 18px 52px; } article { overflow:hidden; background:var(--paper); border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 30px #41306012; }
+    header { padding:30px 28px 25px; background:linear-gradient(135deg,#f1ecff,#fff); border-bottom:1px solid var(--line); } .eyebrow,.meta { margin:0 0 8px; color:var(--violet); font:700 12px/1.25 system-ui,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(29px,7vw,43px); line-height:1.08; letter-spacing:-.04em; } .lede { margin:15px 0 0; color:var(--muted); font-size:19px; }
+    section { padding:25px 28px 0; } h2 { margin:0 0 10px; font:700 21px/1.2 system-ui,sans-serif; letter-spacing:-.02em; } p { margin:0 0 14px; }
+    .principle { padding:16px 18px; border-left:4px solid var(--violet); border-radius:0 12px 12px 0; background:var(--lavender); } .principle strong { color:var(--violet-dark); }
+    .card { margin:2px 28px 0; padding:21px; background:#fff; border:1px solid var(--line); border-radius:14px; } label { display:block; margin-top:14px; font:700 14px/1.3 system-ui,sans-serif; }
+    input, select { width:100%; margin-top:6px; padding:11px 12px; border:1px solid #bdb5d5; border-radius:9px; color:var(--ink); background:#fff; font:16px/1.4 system-ui,sans-serif; } button { margin:15px 8px 0 0; padding:11px 15px; border:0; border-radius:9px; background:var(--violet); color:#fff; cursor:pointer; font:700 15px/1 system-ui,sans-serif; } button:hover { background:var(--violet-dark); }
+    .feedback { display:none; margin-top:13px; padding:12px; border-radius:9px; font:15px/1.4 system-ui,sans-serif; } .good { display:block; background:var(--green-bg); color:var(--green); } .try { display:block; background:var(--amber-bg); color:var(--amber); }
+    ol { padding-left:22px; margin:10px 0 0; } li { margin:7px 0; } code { font:14px/1.3 ui-monospace,SFMono-Regular,monospace; } .source { padding:25px 28px 30px; color:var(--muted); font:14px/1.45 system-ui,sans-serif; } a { color:var(--violet-dark); }
+    @media (max-width:480px) { header,section { padding-left:20px; padding-right:20px; } .card { margin-left:20px; margin-right:20px; } .source { padding-left:20px; padding-right:20px; } }
+  </style>
+</head>
+<body><main><article>
+  <header><p class="eyebrow">Calm Execution · Lesson 12</p><h1>Reset after a disrupted week</h1><p class="lede">Return to the smallest ritual with one decision—not a catch-up plan.</p></header>
+  <section><h2>One skill</h2><p class="principle"><strong>After disruption, write one reset card: reuse your smallest ritual and choose at most one adjustment for the next attempt.</strong></p><p>A disrupted week does not require compensating for missed days. Your next useful move is one ordinary attempt: the same primary cue, prepared opening action, and two-minute finish line. If your seven-day review named a clear earliest break, change only that one link; if it did not, change nothing.</p><p>In a cited habit-formation study, missing one opportunity did not seriously impair later gains in automaticity. That does not predict any individual outcome or make disruption harmless; it is a reason to treat this reset as a calm practical experiment rather than a verdict. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p></section>
+  <section><h2>What stays small</h2><p>Do not redesign the ritual, add reminders, extend the session, or schedule catch-up work. A reset card makes tomorrow’s decision before tomorrow arrives:</p><p><code>After [primary cue], I will [two-minute action] until [finish line].<br>One test: [one adjustment / no change].</code></p></section>
+  <section><h2>8-minute applied exercise</h2></section>
+  <div class="card"><p class="meta">Reuse → choose one test → save</p>
+    <label for="cue">1. My existing primary cue is:</label><input id="cue" placeholder="e.g., After I put down my breakfast bowl">
+    <label for="action">2. My same two-minute action and finish line:</label><input id="action" placeholder="e.g., Open the brief and write one rough bullet">
+    <label for="change">3. My one test for the next attempt:</label><select id="change"><option value="">Choose one…</option><option>Make the existing cue more noticeable</option><option>Prepare one object before the cue</option><option>Shrink or clarify the opening action</option><option>No change — repeat the same small ritual</option></select>
+    <button id="make" type="button">Make my reset card</button><div id="feedback" class="feedback" aria-live="polite"></div>
+    <ol><li>Copy the card into the place you keep your start record.</li><li>At the next primary cue, perform one ordinary two-minute attempt.</li><li>Record the normal evidence: <code>cue? · setup? · started? · finish line? · stop/continue</code>.</li></ol>
+  </div>
+  <section><h2>Tomorrow’s rule</h2><p>One reset attempt is enough. A start after disruption counts toward the mission exactly as any other intentional start does. If it misses, use the existing bounded fallback rule—not a new recovery system—and review the earliest break later.</p><p><strong>Ask your teacher:</strong> “Here is my reset card. Is it preserving the same ritual and changing only one link?”</p></section>
+  <footer class="source">Source: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012), PMC</a>. URL fetched and verified 2026-08-01.</footer>
+</article></main>
+<script>
+  const feedback = document.getElementById('feedback');
+  document.getElementById('make').addEventListener('click', () => {
+    const cue = document.getElementById('cue').value.trim();
+    const action = document.getElementById('action').value.trim();
+    const change = document.getElementById('change').value;
+    if (!cue || !action || !change) { feedback.className='feedback try'; feedback.textContent='Complete the cue, the same small action with a finish line, and one test (or “No change”) first.'; return; }
+    feedback.className='feedback good';
+    feedback.innerHTML='<strong>Reset card ready:</strong><br>After '+escapeHtml(cue)+', I will '+escapeHtml(action)+'.<br><strong>One test:</strong> '+escapeHtml(change)+'.<br>Use it once at the next cue—no catch-up required.';
+  });
+  function escapeHtml(text) { const node=document.createElement('div'); node.textContent=text; return node.innerHTML; }
+</script>
+</body></html>
