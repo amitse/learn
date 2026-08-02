@@ -15,4 +15,5 @@
 - Lesson 10 added a deliberate post-finish-line choice: stop, or one pre-defined five-minute continuation; record `chose stop/continue` while keeping the bounded two-minute start intact.
 - Lesson 11 added a compact seven-day evidence review: count intentional starts toward the 20-in-30-day aim, inspect one earliest system link (`cue`, `setup`, `action`, or `no clear pattern`), and test only one adjustment.
 - Lesson 12 added a reset card for a disrupted week: retain the existing primary cue, two-minute action, and finish line; make at most one chosen adjustment (or none), then take one ordinary attempt with no catch-up work.
+- Lesson 13 added a one-variable experiment card: hold the existing ritual stable, name one link to test (or no change), run one ordinary attempt, then read the existing evidence before changing anything else.
 - Increase difficulty only when the basic start ritual is reliable.
