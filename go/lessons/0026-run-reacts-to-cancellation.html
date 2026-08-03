@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 26 — Let Run React to Cancellation | Go for TS Devs</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#74aaf5;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:10px;color:var(--muted)}a{color:#7edce0}footer{margin-top:2.5rem;font-size:.85rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}</style></head><body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div><h1>Let <code>Run</code> react to cancellation</h1><p class="lede">Lesson 25 gave <code>Run</code> ownership of <code>Serve</code>'s terminal result. Now give it one input for “please stop,” so <code>main</code> supplies a signal and <code>Run</code> performs the HTTP shutdown.</p>
+<h2>One cancellation input; a fresh drain deadline</h2><p>A cancellation context answers <em>when to begin stopping</em>. It is already done by the time <code>Run</code> receives it. <code>Shutdown</code>, however, needs a separate live context that gives active handlers time to drain. Do not pass the already-cancelled stop context into <code>Shutdown</code>.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>const stop = new AbortController()
+process.on("SIGTERM", () =&gt; stop.abort())
+
+await once(stop.signal, "abort")
+await server.close() // its own grace period</pre></div><div class="card"><div class="lang go">Go</div><pre>stop, cancel := signal.NotifyContext(
+    context.Background(), syscall.SIGINT, syscall.SIGTERM,
+)
+defer cancel()
+
+err := Run(stop, srv, ln, 5*time.Second)</pre></div></div>
+<div class="callout"><strong>Two contexts, two jobs:</strong> <code>stop</code> tells the lifecycle owner to begin shutdown. <code>drainCtx</code> bounds how long graceful shutdown may wait.</div>
+<h2>The lifecycle boundary</h2><pre>func Run(stop context.Context, srv *http.Server, ln net.Listener, grace time.Duration) error {
+    served := make(chan error, 1)
+    go func() { served &lt;- srv.Serve(ln) }()
+
+    select {
+    case err := &lt;-served:
+        return normalServeResult(err)
+    case &lt;-stop.Done():
+        drainCtx, cancel := context.WithTimeout(context.Background(), grace)
+        defer cancel()
+
+        if err := srv.Shutdown(drainCtx); err != nil {
+            return err
+        }
+        return normalServeResult(&lt;-served)
+    }
+}
+
+func normalServeResult(err error) error {
+    if errors.Is(err, http.ErrServerClosed) { return nil }
+    return err
+}</pre>
+<p><span class="step">1</span><code>Serve</code> still runs concurrently because it blocks.</p><p><span class="step">2</span>The <code>select</code> waits for either an unexpected serve result or the stop signal.</p><p><span class="step">3</span>Once <code>stop.Done()</code> is closed, create a new timeout context for the drain.</p><p><span class="step">4</span>After a successful <code>Shutdown</code>, wait for <code>Serve</code> to finish and preserve Lesson 25’s <code>ErrServerClosed → nil</code> rule.</p>
+<h2>Keep signal plumbing at the edge</h2><p><code>signal.NotifyContext</code> belongs in <code>main</code>, where the process meets the OS. <code>Run</code> only depends on <code>context.Context</code>, so a test can cancel it directly—no real signal required. The standard library documents that <a href="https://pkg.go.dev/os/signal#NotifyContext" target="_blank"><code>NotifyContext</code></a> cancels its context when a listed signal arrives; always call its returned <code>stop</code> function to restore normal signal behavior.</p>
+<pre>func main() {
+    stop, cancel := signal.NotifyContext(context.Background(),
+        syscall.SIGINT, syscall.SIGTERM)
+    defer cancel()
+
+    if err := Run(stop, srv, ln, cfg.ShutdownTimeout); err != nil {
+        log.Fatal(err)
+    }
+}</pre>
+<h2>Quick check</h2><section class="quiz"><p class="score" id="score">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="The stop context is already cancelled. A fresh drain context gives Shutdown a live, bounded grace period for in-flight work."><p><strong>1.</strong> Why not call <code>srv.Shutdown(stop)</code> after receiving <code>&lt;-stop.Done()</code>?</p><div class="options"><button class="option" data-choice="a">Shutdown only accepts contexts created by signal.NotifyContext</button><button class="option" data-choice="b">The stop context is already cancelled; draining needs a fresh deadline</button><button class="option" data-choice="c">Shutdown cannot be called from Run</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="Run sees only context cancellation, not OS signals. That keeps it testable and leaves process-specific wiring in main."><p><strong>2.</strong> Why should <code>Run</code> accept a <code>context.Context</code> rather than listen for SIGTERM itself?</p><div class="options"><button class="option" data-choice="a">It separates process signal wiring from a testable lifecycle boundary</button><button class="option" data-choice="b">Contexts make Serve non-blocking</button><button class="option" data-choice="c">SIGTERM can only be handled in tests</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="A successful Shutdown makes Serve return ErrServerClosed. The lifecycle owner still waits for that goroutine and translates the expected terminal result to nil."><p><strong>3.</strong> After <code>Shutdown</code> returns nil, what should <code>Run</code> do?</p><div class="options"><button class="option" data-choice="a">Call Serve a second time</button><button class="option" data-choice="b">Return immediately without checking the serving goroutine</button><button class="option" data-choice="c">Receive Serve’s result and normalize ErrServerClosed</button></div><div class="feedback"></div></div></section>
+<div class="callout"><strong>Ask your teacher:</strong> ask for the smallest deterministic test that cancels <code>Run</code> and proves a request drains before it returns.</div><h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/os/signal#NotifyContext" target="_blank">Go standard library: signal.NotifyContext</a></li><li><a href="https://pkg.go.dev/context#WithTimeout" target="_blank">Go standard library: context.WithTimeout</a></li><li><a href="https://pkg.go.dev/net/http#Server.Shutdown" target="_blank">Go standard library: http.Server.Shutdown</a></li><li><a href="https://pkg.go.dev/net/http#Server.Serve" target="_blank">Go standard library: http.Server.Serve</a></li></ul><footer class="muted">Lesson 26 · Go for TypeScript Devs · 2026-08-03</footer></main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: the stop signal and drain deadline have distinct roles.':'Review the feedback, then trace stop → Shutdown → Serve result.'):'keep going'}`})));</script></body></html>

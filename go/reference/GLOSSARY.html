@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Server Lifecycle Ownership (Lesson 25) <span class="new-badge">new</span></h2>
+<h2>Cancellation-Driven Lifecycle (Lesson 26) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>stop context</td><td><code>AbortSignal</code> for application stop</td><td>A context whose cancellation means “begin shutdown.” Created at the process edge with <code>signal.NotifyContext</code>, then passed into <code>Run</code> so lifecycle code does not depend directly on OS signals.</td></tr>
+  <tr><td>drain context</td><td>independent server-close grace timeout</td><td>A fresh, live timeout context passed to <code>http.Server.Shutdown</code>. It bounds how long active requests may finish. It must not be the already-cancelled stop context.</td></tr>
+  <tr><td>signal.NotifyContext</td><td><code>process.on("SIGTERM", () =&gt; controller.abort())</code></td><td>Creates a context cancelled when one of the listed OS signals arrives. Call its returned stop function (usually with <code>defer</code>) to restore default signal behaviour and release resources.</td></tr>
+</table>
+
+<h2>Server Lifecycle Ownership (Lesson 25)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>lifecycle owner</td><td>application/server wrapper</td><td>The function responsible for one component's start, normal stop, and terminal result. Here <code>Run</code> owns <code>Serve</code> and decides that an intentional server close is not an error.</td></tr>
