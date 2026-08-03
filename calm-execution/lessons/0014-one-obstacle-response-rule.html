@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 14 — Write One Obstacle–Response Rule</title>
+  <style>
+    :root{--ink:#252334;--muted:#68657a;--paper:#fbfaff;--lav:#ede7ff;--violet:#6845bf;--deep:#482b92;--line:#ddd6f3;--good:#176b4b;--goodbg:#e6f6ef;--warn:#714b08;--warnbg:#fff3df}*{box-sizing:border-box}body{margin:0;background:#f2eff9;color:var(--ink);font:17px/1.55 ui-serif,Georgia,serif}main{max-width:680px;margin:auto;padding:28px 18px 52px}article{overflow:hidden;background:var(--paper);border:1px solid var(--line);border-radius:20px;box-shadow:0 12px 30px #41306012}header{padding:30px 28px 25px;background:linear-gradient(135deg,#f1ecff,#fff);border-bottom:1px solid var(--line)}.eyebrow,.meta{margin:0 0 8px;color:var(--violet);font:700 12px/1.25 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase}h1{margin:0;font-size:clamp(29px,7vw,43px);line-height:1.08;letter-spacing:-.04em}.lede{margin:15px 0 0;color:var(--muted);font-size:19px}section{padding:25px 28px 0}h2{margin:0 0 10px;font:700 21px/1.2 system-ui,sans-serif;letter-spacing:-.02em}p{margin:0 0 14px}.principle{padding:16px 18px;border-left:4px solid var(--violet);border-radius:0 12px 12px 0;background:var(--lav)}.principle strong{color:var(--deep)}.card{margin:2px 28px 0;padding:21px;background:#fff;border:1px solid var(--line);border-radius:14px}label{display:block;margin-top:14px;font:700 14px/1.3 system-ui,sans-serif}input,select{width:100%;margin-top:6px;padding:11px 12px;border:1px solid #bdb5d5;border-radius:9px;color:var(--ink);background:#fff;font:16px/1.4 system-ui,sans-serif}button{margin:15px 8px 0 0;padding:11px 15px;border:0;border-radius:9px;background:var(--violet);color:#fff;cursor:pointer;font:700 15px/1 system-ui,sans-serif}button:hover{background:var(--deep)}.feedback{display:none;margin-top:13px;padding:12px;border-radius:9px;font:15px/1.4 system-ui,sans-serif}.good{display:block;background:var(--goodbg);color:var(--good)}.try{display:block;background:var(--warnbg);color:var(--warn)}ol{padding-left:22px;margin:10px 0 0}li{margin:7px 0}code{font:14px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace}.source{margin:28px;padding:16px 0 0;border-top:1px solid var(--line);color:var(--muted);font:14px/1.45 system-ui,sans-serif}a{color:var(--deep)}@media(max-width:480px){main{padding:12px 10px 32px}header,section{padding-left:20px;padding-right:20px}.card{margin-left:20px;margin-right:20px;padding:17px}}
+  </style>
+</head>
+<body><main><article>
+  <header><p class="eyebrow">Calm Execution · Lesson 14</p><h1>Write one obstacle–response rule</h1><p class="lede">Decide one calm response before a predictable obstacle asks you to improvise.</p></header>
+  <section><h2>One skill</h2><p class="principle"><strong>For one predictable obstacle, write: “If [observable obstacle], then [same small response].”</strong></p><p>Keep your primary cue, two-minute action, and finish line unchanged. This is not a second routine; it is one pre-decided response that protects the existing routine when a known obstacle appears.</p><p>Habit research distinguishes automatic, cue-triggered responses from merely frequent behaviour. Here, use an if–then rule as a practical way to make one response unambiguous—not as a guarantee that it will become automatic. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p></section>
+  <section><h2>Make the obstacle observable</h2><p><strong>Useful:</strong> “If my meeting runs past my primary cue, then at my existing fallback cue I open the brief and write one bullet.”</p><p><strong>Too vague:</strong> “If I feel unmotivated, then try harder.” Feelings are real, but they are difficult to recognize consistently and the response adds pressure.</p><p>Choose one event you can notice. The response should reuse your established two-minute action or your single fallback cue—not add reminders, punishment, or catch-up work.</p></section>
+  <section><h2>10-minute applied exercise</h2></section>
+  <div class="card"><p class="meta">Notice → respond → record</p>
+    <label for="obstacle">1. Name one predictable, observable obstacle</label><input id="obstacle" placeholder="e.g., My meeting runs past my primary cue">
+    <label for="response">2. Write the calm response that preserves your ritual</label><input id="response" placeholder="e.g., At my fallback cue, open the brief and write one bullet">
+    <label for="record">3. What will you record after the attempt?</label><select id="record"><option value="">Choose one…</option><option>Whether the obstacle occurred, whether I used the response, and whether I started</option><option>How guilty I felt and how many minutes I made up</option><option>A new list of rules for every possible problem</option></select>
+    <button id="check" type="button">Check my rescue rule</button><div id="feedback" class="feedback" aria-live="polite"></div>
+    <ol><li>Write the checked rule beside your existing start record.</li><li>Use it only if that specific obstacle occurs on one ordinary attempt.</li><li>Record: <code>obstacle occurred? · response used? · started?</code>, plus your usual fields.</li></ol>
+  </div>
+  <section><h2>Tomorrow’s boundary</h2><p>If the obstacle does not happen, do your ordinary primary-cue ritual; do not manufacture a test. If it happens and the response does not help, review the earliest break later and change only this rule—or make no change—on the next attempt.</p><p><strong>Ask your teacher:</strong> “Is this an observable obstacle, or have I accidentally created a second routine?”</p></section>
+  <footer class="source">Source: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012), PMC</a>. URL fetched and verified 2026-08-03.</footer>
+</article></main>
+<script>
+  const feedback=document.getElementById('feedback');
+  document.getElementById('check').addEventListener('click',()=>{
+    const obstacle=document.getElementById('obstacle').value.trim();
+    const response=document.getElementById('response').value.trim();
+    const record=document.getElementById('record').value;
+    if(!obstacle||!response||!record){feedback.className='feedback try';feedback.textContent='Name one observable obstacle, one specific response, and the evidence you will record.';return}
+    if(!record.startsWith('Whether')){feedback.className='feedback try';feedback.textContent='Choose the evidence option: obstacle occurred, response used, and started. This keeps the rule calm and inspectable.';return}
+    feedback.className='feedback good';
+    feedback.innerHTML='<strong>Rescue rule ready.</strong><br><strong>If:</strong> '+escapeHtml(obstacle)+'<br><strong>Then:</strong> '+escapeHtml(response)+'<br>Use it only when that obstacle occurs; otherwise keep the ordinary ritual unchanged.';
+  });
+  function escapeHtml(text){const node=document.createElement('div');node.textContent=text;return node.innerHTML}
+</script>
+</body></html>
