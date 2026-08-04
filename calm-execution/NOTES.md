@@ -17,4 +17,5 @@
 - Lesson 12 added a reset card for a disrupted week: retain the existing primary cue, two-minute action, and finish line; make at most one chosen adjustment (or none), then take one ordinary attempt with no catch-up work.
 - Lesson 13 added a one-variable experiment card: hold the existing ritual stable, name one link to test (or no change), run one ordinary attempt, then read the existing evidence before changing anything else.
 - Lesson 14 added one bounded obstacle–response rule: for one predictable, observable obstacle, use one pre-decided response that preserves the existing ritual; optionally record `obstacle occurred?`, `response used?`, and `started?`.
+- Lesson 15 added a three-fact obstacle-response reading practice: read `obstacle occurred?`, `response used?`, then `started?`; if a response was used but starting missed, return to the existing earliest-break order before making at most one adjustment.
 - Increase difficulty only when the basic start ritual is reliable.
