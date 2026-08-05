@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 27 — Test Run Drains an Active Request | Go for TypeScript Devs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#74aaf5;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.83rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:10px;color:var(--muted)}a{color:#70dce0}footer{border-top:1px solid var(--border);margin-top:2.5rem;padding-top:1rem;font-size:.85rem}@media(max-width:680px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}pre{font-size:.77rem}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Test <code>Run</code> drains an active request</h1>
+<p class="lede">Your lifecycle owner now separates “stop” from its drain deadline. Prove that contract without <code>time.Sleep</code>: start one request, cancel <code>Run</code>, show it has <em>not</em> returned, then release the handler.</p>
+
+<h2>The contract to prove</h2>
+<p><code>http.Server.Shutdown</code> closes listeners and waits for active connections to become idle. The test should establish the exact event order with channels—not hope that the scheduler has caught up.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>const started = deferred&lt;void&gt;()
+const release = deferred&lt;void&gt;()
+app.get("/hold", async () =&gt; {
+  started.resolve()
+  await release.promise
+  return "ok"
+})
+// abort, prove close still pending,
+// then release.resolve()</pre></div><div class="card"><div class="lang go">Go</div><pre>started := make(chan struct{})
+release := make(chan struct{})
+handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    close(started)
+    &lt;-release
+    w.WriteHeader(http.StatusOK)
+})
+// cancel, prove Run is pending,
+// then close(release)</pre></div></div>
+<div class="callout"><strong>One concept:</strong> a <em>coordination channel</em> is evidence, not a delay. <code>started</code> proves the handler is active; <code>release</code> gives the test control over when it can finish.</div>
+
+<h2>A deterministic lifecycle test</h2>
+<pre>func TestRunDrainsActiveRequest(t *testing.T) {
+    started := make(chan struct{})
+    release := make(chan struct{})
+    srv := &amp;http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        close(started)                 // evidence: this request is active
+        &lt;-release                       // test controls completion
+        w.WriteHeader(http.StatusOK)
+    })}
+
+    ln, err := net.Listen("tcp", "127.0.0.1:0")
+    if err != nil { t.Fatal(err) }
+    t.Cleanup(func() { _ = ln.Close() })
+
+    stop, cancel := context.WithCancel(context.Background())
+    t.Cleanup(cancel)
+    runDone := make(chan error, 1)
+    go func() { runDone &lt;- Run(stop, srv, ln, time.Second) }()
+
+    go func() { _, _ = http.Get("http://" + ln.Addr().String()) }()
+    &lt;-started                           // never cancel before the request is active
+
+    cancel()                            // begin graceful shutdown
+    select {
+    case err := &lt;-runDone:
+        t.Fatalf("Run returned before request drained: %v", err)
+    default:                             // correct: Run is still waiting
+    }
+
+    close(release)                       // now the handler may finish
+    if err := &lt;-runDone; err != nil {
+        t.Fatalf("Run() = %v, want nil", err)
+    }
+}</pre>
+<p><span class="step">1</span>Start <code>Run</code> and put its one terminal result in a buffered channel.</p>
+<p><span class="step">2</span>Launch the request, then receive from <code>started</code>. Now cancellation cannot race ahead of handler entry.</p>
+<p><span class="step">3</span>Cancel and use a non-blocking <code>select</code>. If <code>Run</code> has already returned, it violated the drain contract.</p>
+<p><span class="step">4</span>Release the handler and require <code>Run</code> to return <code>nil</code>.</p>
+
+<h2>Why no timeout in the assertion?</h2>
+<p>A timeout turns a correctness check into a timing bet: a busy CI worker can make a correct program look broken, and a too-short delay can let a broken program look fine. The handler’s <code>release</code> channel gives an unambiguous boundary instead. Keep the production grace period (<code>time.Second</code> here) as a safety guard; it is not the test’s synchronization mechanism.</p>
+<pre>// This asks “has Run returned right now?”—it never waits.
+select {
+case err := &lt;-runDone:
+    t.Fatalf("returned too early: %v", err)
+default:
+    // Run is correctly waiting for the active handler.
+}</pre>
+
+<h2>Quick check</h2>
+<section class="quiz"><p class="score" id="score">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="Receiving from started establishes that the request is inside the handler before cancellation begins."><p><strong>1.</strong> Why wait for <code>&lt;-started</code> before calling <code>cancel()</code>?</p><div class="options"><button class="option" data-choice="a">It makes HTTP requests faster</button><button class="option" data-choice="b">It proves the request is active, eliminating an ordering race</button><button class="option" data-choice="c">Shutdown requires every handler to close a channel</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="A default case makes the select immediate. Receiving runDone there means Run returned while the handler was deliberately blocked."><p><strong>2.</strong> What does the <code>default</code> branch in the select test?</p><div class="options"><button class="option" data-choice="a">Whether the request succeeded</button><button class="option" data-choice="b">Whether the listener has a port</button><button class="option" data-choice="c">Whether Run returns prematurely, without waiting</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="release is controlled evidence of handler completion. Closing it permits the active request to drain, so Shutdown and Run can finish."><p><strong>3.</strong> Why does the test close <code>release</code> only after the non-blocking select?</p><div class="options"><button class="option" data-choice="a">To prove Run waits for active work before allowing it to finish</button><button class="option" data-choice="b">Because Shutdown closes all channels itself</button><button class="option" data-choice="c">To cancel the stop context</button></div><div class="feedback"></div></div></section>
+<div class="callout"><strong>Ask your teacher:</strong> ask how to change this test to prove that a new request is rejected after shutdown begins.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/net/http#Server.Shutdown" target="_blank">Go standard library: http.Server.Shutdown</a></li><li><a href="https://pkg.go.dev/context#WithCancel" target="_blank">Go standard library: context.WithCancel</a></li><li><a href="https://pkg.go.dev/net#Listen" target="_blank">Go standard library: net.Listen</a></li><li><a href="https://go.dev/doc/effective_go#channels" target="_blank">Effective Go: Channels</a></li></ul>
+<footer class="muted">Lesson 27 · Go for TypeScript Devs · 2026-08-05</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: your test observes lifecycle order without timing guesses.':'Review the feedback, then trace active → cancel → pending → release.'):'keep going'}`})));</script></body></html>

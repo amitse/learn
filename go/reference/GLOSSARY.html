@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Cancellation-Driven Lifecycle (Lesson 26) <span class="new-badge">new</span></h2>
+<h2>Lifecycle Drain Test (Lesson 27) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>coordination channel</td><td>deferred Promise used as a test gate</td><td>A channel whose close or receive establishes a known event ordering in a concurrent test. Here <code>started</code> proves a handler is active and <code>release</code> controls when it may finish, so the test needs no sleep.</td></tr>
+  <tr><td>non-blocking select</td><td>immediate promise-settlement check</td><td>A <code>select</code> with a <code>default</code> case. It checks immediately whether <code>Run</code> has returned; receiving a result while an intentionally blocked request is active proves an early-return bug.</td></tr>
+  <tr><td>lifecycle drain test</td><td>server-close integration test</td><td>A test of the outer <code>Run</code> boundary: start an active request, trigger cancellation, prove <code>Run</code> remains pending, release the request, then require a successful terminal result.</td></tr>
+</table>
+
+<h2>Cancellation-Driven Lifecycle (Lesson 26)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>stop context</td><td><code>AbortSignal</code> for application stop</td><td>A context whose cancellation means “begin shutdown.” Created at the process edge with <code>signal.NotifyContext</code>, then passed into <code>Run</code> so lifecycle code does not depend directly on OS signals.</td></tr>
