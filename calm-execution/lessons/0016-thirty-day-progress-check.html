@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 16 — Run a 30-Day Progress Check</title>
+  <style>
+    :root { --ink:#20232b; --muted:#5e6472; --paper:#fffdf9; --wash:#f4f0ff; --violet:#6647b8; --line:#ded7ed; --green:#16634d; --greenwash:#e7f6ed; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#ebe8f0; color:var(--ink); font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+    article { background:var(--paper); border-radius:18px; box-shadow:0 12px 34px #30274718; overflow:hidden; }
+    header { padding:34px 28px 26px; background:linear-gradient(135deg,#f4efff,#fffaf1); border-bottom:1px solid var(--line); }
+    .eyebrow { color:var(--violet); font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    h1 { font-size:clamp(1.8rem,6vw,2.7rem); line-height:1.08; margin:.45rem 0 .75rem; letter-spacing:-.045em; }
+    h2 { font-size:1.2rem; line-height:1.25; margin:0 0 .65rem; }
+    p { margin:.5rem 0; } .lede { max-width:58ch; font-size:1.08rem; color:var(--muted); }
+    section { padding:25px 28px; border-bottom:1px solid #eeeaf2; } section:last-child { border:0; }
+    .rule { border-left:4px solid var(--violet); background:var(--wash); padding:14px 16px; border-radius:0 10px 10px 0; font-weight:650; }
+    .steps { padding-left:1.35rem; margin:.6rem 0; } .steps li { padding:.25rem 0 .25rem .25rem; }
+    .card { padding:18px; border:1px solid var(--line); border-radius:13px; background:#fff; }
+    label { display:block; font-weight:700; margin:.9rem 0 .28rem; }
+    input, select { width:100%; padding:.72rem .8rem; font:inherit; color:var(--ink); border:1px solid #bdb4d1; border-radius:9px; background:#fff; }
+    button { margin-top:15px; border:0; border-radius:9px; padding:.75rem 1rem; background:var(--violet); color:white; font:inherit; font-weight:800; cursor:pointer; }
+    button:hover { background:#51379a; } #feedback { display:none; margin-top:15px; padding:13px; border-radius:9px; background:var(--greenwash); color:var(--green); font-weight:650; }
+    .tiny { color:var(--muted); font-size:.9rem; } a { color:#4e3594; } footer { color:var(--muted); font-size:.9rem; }
+    @media (max-width:480px) { main { padding:0; } article { border-radius:0; min-height:100vh; } header,section { padding-left:20px; padding-right:20px; } }
+  </style>
+</head>
+<body>
+<main><article>
+  <header>
+    <div class="eyebrow">Calm Execution · Lesson 16</div>
+    <h1>Run a 30-Day Progress Check</h1>
+    <p class="lede">Use the record to choose the next calm experiment—not to grade yourself or create catch-up work.</p>
+  </header>
+
+  <section>
+    <h2>One skill: make a count useful</h2>
+    <p>Your mission names <strong>20 intentional starts in 30 days</strong>. A count is helpful only if it leads to a clear next move. It is not a streak, a verdict, or a reason to make today’s opening step bigger.</p>
+    <div class="rule">Count starts → read one recurring link → retain the ritual or test one named change.</div>
+    <p class="tiny">The course’s cue-based design is consistent with a review of habit research describing habits as cue-triggered responses learned in a stable context. That does not make this check a guarantee; treat your own record as the evidence for your system. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a></p>
+  </section>
+
+  <section>
+    <h2>The 10-minute check</h2>
+    <ol class="steps">
+      <li><strong>Count:</strong> read up to 30 daily records and count each <code>started? yes</code>. A fallback start counts. Stopping at the two-minute finish line still counts.</li>
+      <li><strong>Read:</strong> look only for the earliest repeated break: cue, setup, action, or obstacle-response use. “No clear pattern” is an allowed result.</li>
+      <li><strong>Decide:</strong> retain the current ritual if it is readable or the pattern is unclear. Otherwise name <em>one</em> small link to test on the next ordinary attempt.</li>
+    </ol>
+    <p><strong>Do not:</strong> compensate for a low count, add reminders, add a second routine, or lengthen the two-minute baseline.</p>
+  </section>
+
+  <section>
+    <h2>Practice now · 5–20 minutes</h2>
+    <div class="card">
+      <p>Open your existing start record. Complete this compact decision card, then make the next attempt exactly as planned.</p>
+      <label for="count">Intentional starts in the records you checked</label>
+      <input id="count" type="number" min="0" max="30" inputmode="numeric" placeholder="0–30">
+      <label for="link">What did the records show?</label>
+      <select id="link">
+        <option value="">Choose one…</option>
+        <option>Keep the ritual; no clear repeated break</option>
+        <option>Cue was the earliest repeated break</option>
+        <option>Setup was the earliest repeated break</option>
+        <option>Action was the earliest repeated break</option>
+        <option>Obstacle response was not used when needed</option>
+      </select>
+      <label for="next">Tomorrow’s decision (retain it, or name one small test)</label>
+      <input id="next" maxlength="140" placeholder="e.g., Keep the same ritual" autocomplete="off">
+      <button id="check" type="button">Check my decision</button>
+      <div id="feedback" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What success looks like</h2>
+    <p>A completed check produces one sentence and preserves the ordinary start ritual. The mission is reliable beginning without urgency, guilt, or punishment—not a perfect number.</p>
+    <footer>Bring your decision or a confusing record back to your teacher for a calm review.</footer>
+  </section>
+</article></main>
+<script>
+  document.getElementById('check').addEventListener('click', function () {
+    const count = document.getElementById('count').value;
+    const link = document.getElementById('link').value;
+    const next = document.getElementById('next').value.trim();
+    const box = document.getElementById('feedback');
+    if (count === '' || !link || !next) {
+      box.textContent = 'Complete all three fields: count, observed link, and one next decision.';
+    } else if (/catch.?up|extra|longer|punish|more reminders/i.test(next)) {
+      box.textContent = 'Try again: keep this decision bounded. Retain the ritual or test one small link—no catch-up, expansion, or punishment.';
+    } else {
+      box.textContent = 'Good: you turned the count into a bounded system decision. Your next job is one ordinary attempt, not a bigger plan.';
+    }
+    box.style.display = 'block';
+  });
+</script>
+</body>
+</html>

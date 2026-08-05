@@ -18,4 +18,5 @@
 - Lesson 13 added a one-variable experiment card: hold the existing ritual stable, name one link to test (or no change), run one ordinary attempt, then read the existing evidence before changing anything else.
 - Lesson 14 added one bounded obstacle–response rule: for one predictable, observable obstacle, use one pre-decided response that preserves the existing ritual; optionally record `obstacle occurred?`, `response used?`, and `started?`.
 - Lesson 15 added a three-fact obstacle-response reading practice: read `obstacle occurred?`, `response used?`, then `started?`; if a response was used but starting missed, return to the existing earliest-break order before making at most one adjustment.
+- Lesson 16 added a 30-day progress check: count intentional starts toward the 20-start aim, inspect one repeated earliest break (or no clear pattern), then retain the ritual or test one bounded link without catch-up work.
 - Increase difficulty only when the basic start ritual is reliable.
