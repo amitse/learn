@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 17 — Close with a Carry-Forward Plan</title>
+  <style>
+    :root { --ink:#20232b; --muted:#5e6472; --paper:#fffdf9; --wash:#f4f0ff; --violet:#6647b8; --line:#ded7ed; --green:#16634d; --greenwash:#e7f6ed; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#ebe8f0; color:var(--ink); font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+    article { background:var(--paper); border-radius:18px; box-shadow:0 12px 34px #30274718; overflow:hidden; }
+    header { padding:34px 28px 26px; background:linear-gradient(135deg,#f4efff,#fffaf1); border-bottom:1px solid var(--line); }
+    .eyebrow { color:var(--violet); font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    h1 { font-size:clamp(1.8rem,6vw,2.7rem); line-height:1.08; margin:.45rem 0 .75rem; letter-spacing:-.045em; }
+    h2 { font-size:1.2rem; line-height:1.25; margin:0 0 .65rem; }
+    p { margin:.5rem 0; } .lede { max-width:58ch; font-size:1.08rem; color:var(--muted); }
+    section { padding:25px 28px; border-bottom:1px solid #eeeaf2; } section:last-child { border:0; }
+    .rule { border-left:4px solid var(--violet); background:var(--wash); padding:14px 16px; border-radius:0 10px 10px 0; font-weight:650; }
+    .steps { padding-left:1.35rem; margin:.6rem 0; } .steps li { padding:.25rem 0 .25rem .25rem; }
+    .card { padding:18px; border:1px solid var(--line); border-radius:13px; background:#fff; }
+    label { display:block; font-weight:700; margin:.9rem 0 .28rem; }
+    input, select { width:100%; padding:.72rem .8rem; font:inherit; color:var(--ink); border:1px solid #bdb4d1; border-radius:9px; background:#fff; }
+    button { margin-top:15px; border:0; border-radius:9px; padding:.75rem 1rem; background:var(--violet); color:white; font:inherit; font-weight:800; cursor:pointer; }
+    button:hover { background:#51379a; } #feedback { display:none; margin-top:15px; padding:13px; border-radius:9px; background:var(--greenwash); color:var(--green); font-weight:650; }
+    .tiny { color:var(--muted); font-size:.9rem; } a { color:#4e3594; } footer { color:var(--muted); font-size:.9rem; }
+    @media (max-width:480px) { main { padding:0; } article { border-radius:0; min-height:100vh; } header,section { padding-left:20px; padding-right:20px; } }
+  </style>
+</head>
+<body>
+<main><article>
+  <header>
+    <div class="eyebrow">Calm Execution · Lesson 17</div>
+    <h1>Close with a Carry-Forward Plan</h1>
+    <p class="lede">End the 30-day practice by keeping one useful part—not by grading the month or designing a bigger system.</p>
+  </header>
+
+  <section>
+    <h2>One skill: choose a sustainable next repetition</h2>
+    <p>Read the month as evidence. Pick <strong>one</strong> component that made beginning more workable: the primary cue, setup, two-minute action, visible finish line, fallback, or one obstacle response. Then choose a modest frequency for the next two weeks.</p>
+    <div class="rule">Keep one component → choose a realistic frequency → make the next ordinary attempt.</div>
+    <p class="tiny">A review of habit research describes habits as cue-triggered responses that develop through repetition in a stable context. This is not a promise that any plan will become automatic; use your own record to decide what is worth retaining. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a></p>
+  </section>
+
+  <section>
+    <h2>The 10-minute closing review</h2>
+    <ol class="steps">
+      <li><strong>Notice:</strong> scan your records for one component that was clear or helpful. A low count does not erase a useful component.</li>
+      <li><strong>Keep:</strong> write that one component exactly enough to use it again—for example, “After I make tea, open the project brief.”</li>
+      <li><strong>Set a floor:</strong> choose a frequency you can try for the next 14 days: daily, weekdays, or three named days. The two-minute opening remains enough.</li>
+      <li><strong>Return:</strong> make the next attempt as an ordinary repetition. No catch-up, punishment, or expanded productivity plan is required.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Practice now · 5–20 minutes</h2>
+    <div class="card">
+      <p>Open your start record. Complete this carry-forward card, then place it beside the object you use for the next start.</p>
+      <label for="component">One component I will keep</label>
+      <select id="component">
+        <option value="">Choose one…</option>
+        <option>My primary cue</option>
+        <option>My pre-cue setup</option>
+        <option>My two-minute opening action</option>
+        <option>My visible finish line</option>
+        <option>My single fallback cue</option>
+        <option>My one obstacle-response rule</option>
+      </select>
+      <label for="sentence">Write it as a concrete instruction</label>
+      <input id="sentence" maxlength="150" placeholder="e.g., After tea, open the project brief" autocomplete="off">
+      <label for="frequency">For the next 14 days, I will try it…</label>
+      <select id="frequency">
+        <option value="">Choose a modest frequency…</option>
+        <option>daily</option>
+        <option>on weekdays</option>
+        <option>on three named days each week</option>
+      </select>
+      <button id="check" type="button">Check my carry-forward plan</button>
+      <div id="feedback" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What success looks like</h2>
+    <p>Success is a small plan you can repeat without waiting for urgency: one retained component, one modest frequency, and one next attempt. You may ask your teacher to review a confusing record or help make the instruction more concrete.</p>
+    <footer>This practice is about reliable beginnings, not a final judgment about your motivation or worth.</footer>
+  </section>
+</article></main>
+<script>
+  document.getElementById('check').addEventListener('click', function () {
+    const component = document.getElementById('component').value;
+    const sentence = document.getElementById('sentence').value.trim();
+    const frequency = document.getElementById('frequency').value;
+    const box = document.getElementById('feedback');
+    if (!component || !sentence || !frequency) {
+      box.textContent = 'Complete all three fields: one component, a concrete instruction, and a modest frequency.';
+    } else if (/catch.?up|punish|every hour|longer|perfect|double/i.test(sentence)) {
+      box.textContent = 'Try again: keep one ordinary component. Remove catch-up, punishment, or expansion language.';
+    } else if (sentence.length < 10) {
+      box.textContent = 'Make the instruction a little more concrete: name an observable event or a physical first action.';
+    } else {
+      box.textContent = 'Good: this preserves one usable piece of evidence. Put the card where the next cue can meet it, then make one ordinary attempt.';
+    }
+    box.style.display = 'block';
+  });
+</script>
+</body>
+</html>
