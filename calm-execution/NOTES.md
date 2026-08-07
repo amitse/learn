@@ -20,4 +20,5 @@
 - Lesson 15 added a three-fact obstacle-response reading practice: read `obstacle occurred?`, `response used?`, then `started?`; if a response was used but starting missed, return to the existing earliest-break order before making at most one adjustment.
 - Lesson 16 added a 30-day progress check: count intentional starts toward the 20-start aim, inspect one repeated earliest break (or no clear pattern), then retain the ritual or test one bounded link without catch-up work.
 - Lesson 17 closed the initial 30-day practice with a carry-forward card: retain one useful ritual component, write it as a concrete instruction, select a modest 14-day frequency, and make one ordinary next attempt without treating results as a verdict.
+- Lesson 18 added a two-record carry-forward check: read `cue occurred?` then `two-minute action started?`, and retain the plan or test one bounded adjustment without catch-up work.
 - Increase difficulty only when the basic start ritual is reliable.
