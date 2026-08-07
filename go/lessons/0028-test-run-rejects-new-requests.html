@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 28 — Test Run Rejects New Requests | Go for TypeScript Devs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7777;--yellow:#ffd166;--go:#00acd7;--ts:#74aaf5;--code:#0a0d13}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.82rem;line-height:1.52}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--accent);color:#061316;font-weight:800;margin-right:.35rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:10px;color:var(--muted)}a{color:#67dce2}.score{color:var(--yellow);font-weight:700}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Test <code>Run</code> rejects new requests</h1>
+<p class="lede">Lesson 27 proved that <code>Run</code> drains an active request. Now prove the complementary public contract: once cancellation starts shutdown, an existing request may finish—but a <em>new TCP connection</em> cannot enter.</p>
+<h2>The boundary is listener closure</h2>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>server.close() // stop accepting connections
+// existing request may finish
+
+// Force a fresh connection before testing:
+await fetch(url, { agent: freshAgent })</pre></div><div class="card"><div class="lang go">Go</div><pre>srv.Shutdown(ctx) // closes listener first
+// existing handler may finish
+
+transport := &amp;http.Transport{
+  DisableKeepAlives: true,
+}</pre></div></div>
+<div class="callout"><strong>One concept:</strong> test admission at the observable listener-close boundary—not immediately after <code>cancel()</code>. Cancellation asks <code>Run</code> to begin shutdown; the wrapped listener proves it has actually stopped accepting connections.</div>
+<h2>Make listener closure observable</h2>
+<pre>type closeObservedListener struct {
+    net.Listener
+    closed chan struct{}
+    once   sync.Once
+}
+
+func (l *closeObservedListener) Close() error {
+    l.once.Do(func() { close(l.closed) })
+    return l.Listener.Close()
+}</pre>
+<p>This is a narrow test wrapper: embedding keeps the ordinary <code>net.Listener</code> methods, while overriding <code>Close</code> adds one fact the test can wait for. <code>sync.Once</code> makes cleanup safe if the listener is closed again.</p>
+<h2>One deterministic test</h2>
+<pre>func TestRunRejectsNewRequestsAfterCancel(t *testing.T) {
+    started := make(chan struct{})
+    release := make(chan struct{})
+    srv := &amp;http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        close(started)
+        &lt;-release                         // keep first request active
+        w.WriteHeader(http.StatusOK)
+    })}
+
+    raw, err := net.Listen("tcp", "127.0.0.1:0")
+    if err != nil { t.Fatal(err) }
+    ln := &amp;closeObservedListener{raw, make(chan struct{}), sync.Once{}}
+    t.Cleanup(func() { _ = ln.Close() })
+
+    stop, cancel := context.WithCancel(context.Background())
+    t.Cleanup(cancel)
+    done := make(chan error, 1)
+    go func() { done &lt;- Run(stop, srv, ln, time.Second) }()
+
+    addr := "http://" + ln.Addr().String()
+    go func() { _, _ = http.Get(addr) }()
+    &lt;-started                             // request one is active
+
+    cancel()
+    &lt;-ln.closed                           // listener is definitely closed
+
+    client := &amp;http.Client{Transport: &amp;http.Transport{DisableKeepAlives: true}}
+    if _, err := client.Get(addr); err == nil {
+        t.Fatal("new request succeeded after shutdown began")
+    }
+
+    select {                               // active request still blocks Run
+    case err := &lt;-done:
+        t.Fatalf("Run returned before drain: %v", err)
+    default:
+    }
+    close(release)
+    if err := &lt;-done; err != nil { t.Fatalf("Run() = %v, want nil", err) }
+}</pre>
+<p><span class="step">1</span>Hold request one in the handler, then cancel <code>Run</code>.</p>
+<p><span class="step">2</span>Wait for <code>ln.closed</code>. This is the admission boundary, not a timing guess.</p>
+<p><span class="step">3</span>Use a client that cannot reuse request one's connection. A successful request here is a real regression.</p>
+<p><span class="step">4</span>Release request one and require the lifecycle owner to finish successfully.</p>
+<h2>Why force a fresh connection?</h2>
+<p>HTTP keep-alive can reuse an already-open connection. That would not test whether the closed listener rejects a new connection. <code>DisableKeepAlives: true</code> makes this request dial again, so failure is the expected result after listener closure. The active handler is deliberately retained to show that closed admission and graceful draining happen together.</p>
+<h2>Quick check</h2>
+<section class="quiz"><p class="score" id="score">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="Cancellation is only the trigger. The Close wrapper gives direct evidence that the listener stopped accepting connections."><p><strong>1.</strong> Why wait for <code>&lt;-ln.closed</code> before the second request?</p><div class="options"><button class="option" data-choice="a">It waits for the active handler to finish</button><button class="option" data-choice="b">It establishes the precise point at which admission has stopped</button><button class="option" data-choice="c">It sets the shutdown deadline</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="A reused keep-alive connection could bypass the need to dial the closed listener. Disabling keep-alives makes the test exercise new admission."><p><strong>2.</strong> What does <code>DisableKeepAlives: true</code> protect this test from?</p><div class="options"><button class="option" data-choice="a">A handler data race</button><button class="option" data-choice="b">A context deadline</button><button class="option" data-choice="c">Mistaking a reused connection for a newly admitted request</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="Graceful shutdown has two compatible policies: close admission first, then allow existing work to drain within its grace period."><p><strong>3.</strong> After the new request fails, what should happen to the first blocked request?</p><div class="options"><button class="option" data-choice="a">It may finish; then Run returns nil</button><button class="option" data-choice="b">It must be aborted immediately</button><button class="option" data-choice="c">It must be retried through a new connection</button></div><div class="feedback"></div></div></section>
+<div class="callout"><strong>Ask your teacher:</strong> ask how to refactor this listener wrapper into a reusable test helper without leaking it into production code.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/net/http#Server.Shutdown" target="_blank">Go standard library: http.Server.Shutdown</a></li><li><a href="https://pkg.go.dev/net#Listener" target="_blank">Go standard library: net.Listener</a></li><li><a href="https://pkg.go.dev/net/http#Transport.DisableKeepAlives" target="_blank">Go standard library: Transport.DisableKeepAlives</a></li><li><a href="https://pkg.go.dev/sync#Once" target="_blank">Go standard library: sync.Once</a></li></ul>
+<footer class="muted">Lesson 28 · Go for TypeScript Devs · 2026-08-07</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: you can prove closed admission and an active drain together.':'Review the feedback, then trace cancel → listener close → reject → release.'):'keep going'}`})));</script></body></html>

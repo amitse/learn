@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Lifecycle Drain Test (Lesson 27) <span class="new-badge">new</span></h2>
+<h2>Run Admission Test (Lesson 28) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>admission boundary</td><td>server close has taken effect</td><td>The observable point at which a server stops accepting new TCP connections. In a deterministic test, a listener wrapper closes a channel from <code>Close</code>; waiting for it is stronger than assuming cancellation has already reached <code>Shutdown</code>.</td></tr>
+  <tr><td>close-observed listener</td><td>server-close spy wrapper</td><td>A test-only struct that embeds <code>net.Listener</code> and overrides <code>Close</code> to report listener closure. A <code>sync.Once</code> makes its notification safe when cleanup closes the listener again.</td></tr>
+  <tr><td>fresh-connection assertion</td><td>request with a fresh HTTP agent</td><td>An admission assertion that requires a new TCP connection. <code>http.Transport{DisableKeepAlives: true}</code> prevents connection reuse, so a failure after listener closure proves the closed listener rejected the request.</td></tr>
+</table>
+
+<h2>Lifecycle Drain Test (Lesson 27)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>coordination channel</td><td>deferred Promise used as a test gate</td><td>A channel whose close or receive establishes a known event ordering in a concurrent test. Here <code>started</code> proves a handler is active and <code>release</code> controls when it may finish, so the test needs no sleep.</td></tr>
@@ -69,7 +77,7 @@
   <tr><td>terminal result channel</td><td>one-shot async completion</td><td>A <code>chan error</code> carrying the one final result of a goroutine. A capacity of one lets the serving goroutine send that result without depending on the receiver's exact scheduling.</td></tr>
 </table>
 
-<h2>Graceful-Shutdown Deadline Tests (Lesson 24) <span class="new-badge">new</span></h2>
+<h2>Graceful-Shutdown Deadline Tests (Lesson 24)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>shutdown deadline</td><td>server-close timeout / AbortSignal timeout</td><td>The maximum time <code>http.Server.Shutdown(ctx)</code> waits for active connections to become idle. The listener closes first; if draining exceeds the context deadline, Shutdown returns the context error.</td></tr>
