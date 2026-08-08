@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 19 — Write a Maintenance Rule</title>
+  <style>
+    :root{--ink:#1d2537;--muted:#5c667b;--paper:#f8f7fc;--card:#fff;--violet:#6844bb;--wash:#eee9ff;--line:#ddd7eb;--good:#166542;--goodwash:#e6f6ec;--warn:#8a3f18;--warnwash:#fff0e7}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:auto;padding:28px 18px 56px}.eyebrow{margin:0;color:var(--violet);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.15rem);line-height:1.07;letter-spacing:-.04em;margin:.35rem 0 .8rem}h2{font-size:1.28rem;line-height:1.25;margin:0 0 .55rem}.lede{max-width:58ch;color:var(--muted);font-size:1.1rem}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:20px 0;box-shadow:0 6px 20px #37235c0a}.rule{border-left:5px solid var(--violet);padding:4px 0 4px 15px;font-size:1.08rem;font-weight:750}.soft{background:var(--wash);border-radius:12px;padding:14px 16px}.time{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--wash);color:#4c318d;font-size:.83rem;font-weight:800}ol{padding-left:1.35rem}li+li{margin-top:.45rem}label{display:block;font-weight:750;margin:14px 0 5px}input,select{width:100%;padding:12px;border:1px solid #bdb5d2;border-radius:9px;background:#fff;color:var(--ink);font:inherit}button{border:0;border-radius:9px;background:var(--violet);color:#fff;padding:12px 16px;margin-top:17px;font:800 1rem inherit;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:10px;font-weight:650}.ok{display:block!important;background:var(--goodwash);color:var(--good)}.no{display:block!important;background:var(--warnwash);color:var(--warn)}.tiny,footer{color:var(--muted);font-size:.9rem}a{color:#4d3294}@media(max-width:430px){.wrap{padding:22px 14px 40px}.card{padding:18px}h1{font-size:2.15rem}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Calm Execution · Lesson 19</p>
+  <h1>Write a maintenance rule</h1>
+  <p class="lede">When your cue and two-minute start are working, the next skill is not an upgrade. It is knowing how to leave a workable plan alone.</p>
+
+  <section class="card">
+    <h2>One skill</h2>
+    <p class="rule">Use two working carry-forward records to write one rule: keep the same cue, opening action, and frequency for the next two ordinary attempts.</p>
+    <p>This is a practical maintenance experiment, not a claim that the ritual is permanent. It protects a readable plan from unnecessary redesign. If a later record shows an earliest break, return to the existing one-link review.</p>
+  </section>
+
+  <section class="card">
+    <h2>Why “no change” can be a decision</h2>
+    <p>Habit research distinguishes cue-triggered behaviour from behaviour that is merely frequent, and discusses repetition in stable contexts. That does not guarantee that a plan will become automatic. Here, your own two records are simply enough evidence to test stability before adding complexity.</p>
+    <p class="tiny">Background: Gardner, Lally &amp; Wardle, “Making health habitual.” <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Verified open-access review</a>.</p>
+  </section>
+
+  <section class="card">
+    <span class="time">5–10 minutes</span>
+    <h2>Applied exercise: make a two-attempt maintenance card</h2>
+    <ol>
+      <li>Look at two recent carry-forward records.</li>
+      <li>If each says <strong>cue occurred: yes</strong> and <strong>two-minute action started: yes</strong>, copy the same cue and action onto a small card.</li>
+      <li>Write: <strong>“For my next two ordinary attempts, I will keep this plan unchanged.”</strong></li>
+      <li>Place the card by the object used for the opening action. Make the next attempt normally—no longer session, bonus task, or catch-up work.</li>
+    </ol>
+    <div class="soft"><strong>Example:</strong> “After I close lunch, I open the outline and write its title for two minutes. For my next two ordinary attempts, I will keep this plan unchanged.”</div>
+  </section>
+
+  <section class="card" aria-labelledby="planner">
+    <h2 id="planner">Build and check your rule</h2>
+    <p class="tiny">Immediate feedback only; nothing is stored.</p>
+    <label for="evidence">What do your two records show?</label>
+    <select id="evidence"><option value="">Choose one…</option><option value="working">The cue occurred and I started both times</option><option value="cue">A cue did not occur</option><option value="start">A cue occurred, but I did not start</option><option value="none">I do not have two records yet</option></select>
+    <label for="cue">Same concrete cue</label>
+    <input id="cue" autocomplete="off" placeholder="e.g. After I close lunch">
+    <label for="action">Same two-minute opening action</label>
+    <input id="action" autocomplete="off" placeholder="e.g. Open the outline and write its title">
+    <label for="rule">Your next-two-attempt rule</label>
+    <input id="rule" autocomplete="off" placeholder="e.g. Keep this plan unchanged for two attempts">
+    <button id="check" type="button">Check my maintenance rule</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tomorrow’s rule</h2>
+    <p class="rule">If both links worked twice, retain the plan. If they did not, do not force maintenance—read the earliest break and test one small link instead.</p>
+  </section>
+  <footer>Ask your teacher to help read a confusing record. The aim remains a calm, intentional beginning—not urgency, guilt, punishment, or a bigger system.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('check').addEventListener('click',()=>{const e=$('evidence').value,c=$('cue').value.trim(),a=$('action').value.trim(),r=$('rule').value.trim(),f=$('feedback');if(!e||!c||!a||!r){f.className='no';f.textContent='Complete all four fields: the two-record reading, one cue, one two-minute action, and one rule.';return}if(e==='working'){if(/catch.?up|longer|more|double|perfect|every day/i.test(r)){f.className='no';f.textContent='Keep the rule smaller: retain the existing plan for two ordinary attempts. Remove expansion or catch-up language.'}else{f.className='ok';f.textContent='Good maintenance decision: two working records support leaving the plan unchanged for the next two ordinary attempts. No upgrade is required.'}}else if(e==='cue'){f.className='no';f.textContent='Do not write a maintenance rule yet. The cue is the earliest break; keep the action stable and test one small cue adjustment once.'}else if(e==='start'){f.className='no';f.textContent='Do not write a maintenance rule yet. The cue occurred, so inspect setup or clarify the same two-minute opening action—one adjustment only.'}else{f.className='no';f.textContent='No maintenance decision is needed yet. Make two ordinary attempts with the existing plan, then read the two facts.'}});
+</script>
+</body>
+</html>

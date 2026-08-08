@@ -21,4 +21,5 @@
 - Lesson 16 added a 30-day progress check: count intentional starts toward the 20-start aim, inspect one repeated earliest break (or no clear pattern), then retain the ritual or test one bounded link without catch-up work.
 - Lesson 17 closed the initial 30-day practice with a carry-forward card: retain one useful ritual component, write it as a concrete instruction, select a modest 14-day frequency, and make one ordinary next attempt without treating results as a verdict.
 - Lesson 18 added a two-record carry-forward check: read `cue occurred?` then `two-minute action started?`, and retain the plan or test one bounded adjustment without catch-up work.
+- Lesson 19 added a two-attempt maintenance rule: when two carry-forward records show both cue and start, keep the same cue, two-minute action, and frequency for the next two ordinary attempts; otherwise return to one-link review.
 - Increase difficulty only when the basic start ritual is reliable.
