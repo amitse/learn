@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 20 — Run a Four-Record Check</title>
+  <style>
+    :root{--ink:#1d2537;--muted:#5c667b;--paper:#f8f7fc;--card:#fff;--violet:#6844bb;--wash:#eee9ff;--line:#ddd7eb;--good:#166542;--goodwash:#e6f6ec;--warn:#8a3f18;--warnwash:#fff0e7}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:auto;padding:28px 18px 56px}.eyebrow{margin:0;color:var(--violet);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.15rem);line-height:1.07;letter-spacing:-.04em;margin:.35rem 0 .8rem}h2{font-size:1.28rem;line-height:1.25;margin:0 0 .55rem}.lede{max-width:58ch;color:var(--muted);font-size:1.1rem}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:20px 0;box-shadow:0 6px 20px #37235c0a}.rule{border-left:5px solid var(--violet);padding:4px 0 4px 15px;font-size:1.08rem;font-weight:750}.soft{background:var(--wash);border-radius:12px;padding:14px 16px}.time{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--wash);color:#4c318d;font-size:.83rem;font-weight:800}ol{padding-left:1.35rem}li+li{margin-top:.45rem}label{display:block;font-weight:750;margin:14px 0 5px}select,input{width:100%;padding:12px;border:1px solid #bdb5d2;border-radius:9px;background:#fff;color:var(--ink);font:inherit}button{border:0;border-radius:9px;background:var(--violet);color:#fff;padding:12px 16px;margin-top:17px;font:800 1rem inherit;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:10px;font-weight:650}.ok{display:block!important;background:var(--goodwash);color:var(--good)}.no{display:block!important;background:var(--warnwash);color:var(--warn)}.tiny,footer{color:var(--muted);font-size:.9rem}strong{font-weight:800}@media(max-width:430px){.wrap{padding:22px 14px 40px}.card{padding:18px}h1{font-size:2.15rem}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Calm Execution · Lesson 20</p>
+  <h1>Run a four-record check</h1>
+  <p class="lede">After two ordinary maintenance attempts, use four small records to choose restraint or one bounded refinement—not a bigger system.</p>
+
+  <section class="card">
+    <h2>One skill</h2>
+    <p class="rule">Read four carry-forward records in order: cue, then start. Retain the plan if it remains workable; otherwise name the earliest clear break and test one link once.</p>
+    <p>This is a practical reading exercise, not a score or a diagnosis. Four records cannot prove a permanent habit. They can help you make the next attempt less speculative.</p>
+  </section>
+
+  <section class="card">
+    <span class="time">10–15 minutes</span>
+    <h2>Applied exercise: make one four-record decision</h2>
+    <ol>
+      <li>Place your four most recent carry-forward records in front of you.</li>
+      <li>For each one, mark only <strong>cue occurred?</strong> and <strong>two-minute action started?</strong></li>
+      <li>If cue and start are both yes in all four, write: <strong>“Keep my current cue, action, and frequency for the next two ordinary attempts.”</strong></li>
+      <li>If a cue is no, write one small cue test. If a cue is yes but start is no, write one small setup <em>or</em> opening-action test. Change nothing else.</li>
+      <li>Make the next ordinary attempt. Do not add catch-up work, a longer session, or a penalty.</li>
+    </ol>
+    <div class="soft"><strong>Example:</strong> Four records show the cue occurred each time, but one start was missed. Decision: “For one attempt, put the outline beside my keyboard before lunch. Keep the cue and two-minute action the same.”</div>
+  </section>
+
+  <section class="card" aria-labelledby="checker">
+    <h2 id="checker">Check your decision</h2>
+    <p class="tiny">Immediate feedback only; nothing is stored.</p>
+    <label for="pattern">What do the four records show?</label>
+    <select id="pattern"><option value="">Choose one…</option><option value="all">Cue and start were yes in all four</option><option value="cue">At least one cue was no</option><option value="start">Cue was yes, but at least one start was no</option><option value="unclear">I do not have four readable records</option></select>
+    <label for="decision">Your next decision</label>
+    <input id="decision" autocomplete="off" placeholder="e.g. Keep this plan for two ordinary attempts">
+    <button id="check" type="button">Check my four-record decision</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tomorrow’s rule</h2>
+    <p class="rule">Four workable records support keeping the plan small. An earliest clear break supports one small test. An unclear record supports no new complexity.</p>
+  </section>
+  <footer>Ask your teacher to help read a confusing record. The aim remains a calm, intentional beginning—not urgency, guilt, punishment, or a bigger system.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('check').addEventListener('click',()=>{const p=$('pattern').value,d=$('decision').value.trim(),f=$('feedback');if(!p||!d){f.className='no';f.textContent='Choose the four-record pattern and write one next decision.';return}if(/catch.?up|punish|longer|double|more hours|every day|perfect/i.test(d)){f.className='no';f.textContent='Keep the decision bounded. Remove catch-up, punishment, expansion, or perfection language.';return}if(p==='all'){f.className='ok';f.textContent='Good: four workable records support retaining the same small plan for two ordinary attempts. No upgrade is needed.'}else if(p==='cue'){f.className='ok';f.textContent='Good direction: the cue is the earliest clear break. Test one small cue adjustment once while keeping the action and frequency stable.'}else if(p==='start'){f.className='ok';f.textContent='Good direction: the cue occurred. Test one setup or opening-action adjustment once—not both.'}else{f.className='ok';f.textContent='Good restraint: make ordinary attempts with the current plan until you have four readable records. No redesign is needed now.'}});
+</script>
+</body>
+</html>

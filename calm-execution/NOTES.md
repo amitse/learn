@@ -22,4 +22,5 @@
 - Lesson 17 closed the initial 30-day practice with a carry-forward card: retain one useful ritual component, write it as a concrete instruction, select a modest 14-day frequency, and make one ordinary next attempt without treating results as a verdict.
 - Lesson 18 added a two-record carry-forward check: read `cue occurred?` then `two-minute action started?`, and retain the plan or test one bounded adjustment without catch-up work.
 - Lesson 19 added a two-attempt maintenance rule: when two carry-forward records show both cue and start, keep the same cue, two-minute action, and frequency for the next two ordinary attempts; otherwise return to one-link review.
+- Lesson 20 added a four-record check: read cue then start across four carry-forward attempts; retain a workable plan for two more ordinary attempts, test only the earliest clear link once, or retain the plan when records are unclear.
 - Increase difficulty only when the basic start ritual is reliable.
