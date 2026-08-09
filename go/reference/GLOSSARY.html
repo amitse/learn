@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Run Admission Test (Lesson 28) <span class="new-badge">new</span></h2>
+<h2>Resource Cleanup Order (Lesson 29) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>dependency cleanup order</td><td><code>await server.close(); await db.end()</code></td><td>The lifecycle rule that a shared dependency stays available while HTTP work drains, then is released after the HTTP lifecycle returns. For a database pool: stop admission → drain handlers → close the pool.</td></tr>
+  <tr><td>application lifecycle owner</td><td>composition root / bootstrap</td><td>The process-edge code, commonly <code>main</code>, that constructs shared dependencies, injects them into routes, waits for the HTTP lifecycle owner, and then cleans dependencies up.</td></tr>
+  <tr><td>deferred cleanup</td><td><code>try/finally</code> resource release</td><td>A cleanup action registered with <code>defer</code> immediately after successful acquisition. In <code>main</code>, <code>defer pool.Close()</code> executes when the function returns—after a preceding <code>Run</code> call has drained.</td></tr>
+</table>
+
+<h2>Run Admission Test (Lesson 28)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>admission boundary</td><td>server close has taken effect</td><td>The observable point at which a server stops accepting new TCP connections. In a deterministic test, a listener wrapper closes a channel from <code>Close</code>; waiting for it is stronger than assuming cancellation has already reached <code>Shutdown</code>.</td></tr>
