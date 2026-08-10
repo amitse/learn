@@ -23,4 +23,5 @@
 - Lesson 18 added a two-record carry-forward check: read `cue occurred?` then `two-minute action started?`, and retain the plan or test one bounded adjustment without catch-up work.
 - Lesson 19 added a two-attempt maintenance rule: when two carry-forward records show both cue and start, keep the same cue, two-minute action, and frequency for the next two ordinary attempts; otherwise return to one-link review.
 - Lesson 20 added a four-record check: read cue then start across four carry-forward attempts; retain a workable plan for two more ordinary attempts, test only the earliest clear link once, or retain the plan when records are unclear.
+- Lesson 21 added a stability boundary: revise only when the same earliest break appears in at least two readable records; otherwise retain the plan for two ordinary attempts.
 - Increase difficulty only when the basic start ritual is reliable.

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 21 — Write a Stability Boundary</title>
+  <style>
+    :root{--ink:#1d2537;--muted:#5c667b;--paper:#f8f7fc;--card:#fff;--violet:#6844bb;--wash:#eee9ff;--line:#ddd7eb;--good:#166542;--goodwash:#e6f6ec;--warn:#8a3f18;--warnwash:#fff0e7}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:auto;padding:28px 18px 56px}.eyebrow{margin:0;color:var(--violet);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.15rem);line-height:1.07;letter-spacing:-.04em;margin:.35rem 0 .8rem}h2{font-size:1.28rem;line-height:1.25;margin:0 0 .55rem}.lede{max-width:58ch;color:var(--muted);font-size:1.1rem}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:20px 0;box-shadow:0 6px 20px #37235c0a}.rule{border-left:5px solid var(--violet);padding:4px 0 4px 15px;font-size:1.08rem;font-weight:750}.soft{background:var(--wash);border-radius:12px;padding:14px 16px}.time{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--wash);color:#4c318d;font-size:.83rem;font-weight:800}ol{padding-left:1.35rem}li+li{margin-top:.45rem}label{display:block;font-weight:750;margin:14px 0 5px}select,input{width:100%;padding:12px;border:1px solid #bdb5d2;border-radius:9px;background:#fff;color:var(--ink);font:inherit}button{border:0;border-radius:9px;background:var(--violet);color:#fff;padding:12px 16px;margin-top:17px;font:800 1rem inherit;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:10px;font-weight:650}.ok{display:block!important;background:var(--goodwash);color:var(--good)}.no{display:block!important;background:var(--warnwash);color:var(--warn)}.tiny,footer{color:var(--muted);font-size:.9rem}strong{font-weight:800}@media(max-width:430px){.wrap{padding:22px 14px 40px}.card{padding:18px}h1{font-size:2.15rem}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Calm Execution · Lesson 21</p>
+  <h1>Write a stability boundary</h1>
+  <p class="lede">Decide in advance when a pattern is clear enough to test one revision—and when variation deserves no new complexity.</p>
+
+  <section class="card">
+    <h2>One skill</h2>
+    <p class="rule">Revise one link only when the same earliest break appears in at least two readable records. Otherwise, keep the current plan for two ordinary attempts.</p>
+    <p>This is a practical experiment for protecting a small ritual from constant tinkering, not a scientific cutoff. Repetition in a stable context is relevant to habit practice, but your records—not a universal number—guide this boundary. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2>Applied exercise: make your boundary card</h2>
+    <ol>
+      <li>Read your latest four carry-forward records in order: <strong>cue</strong>, then <strong>start</strong>.</li>
+      <li>Circle the earliest break in each readable miss: <em>cue</em>, or <em>setup/opening action</em>.</li>
+      <li>Write this boundary somewhere visible: <strong>“I revise one link only after the same earliest break appears twice. Until then, I keep my plan for two ordinary attempts.”</strong></li>
+      <li>If one break meets that boundary, name one small test for that link only. If it does not, schedule two ordinary attempts with the plan unchanged.</li>
+    </ol>
+    <div class="soft"><strong>Example:</strong> Two readable records missed at the cue; one had a successful start; one is incomplete. The cue is the repeated earliest break. Test one cue adjustment once—such as placing the cue note by the kettle. Keep the two-minute action and frequency unchanged.</div>
+  </section>
+
+  <section class="card" aria-labelledby="checker">
+    <h2 id="checker">Check your boundary decision</h2>
+    <p class="tiny">Immediate feedback only; nothing is stored.</p>
+    <label for="pattern">What does your record set show?</label>
+    <select id="pattern"><option value="">Choose one…</option><option value="repeat-cue">The cue was the earliest break in two or more readable records</option><option value="repeat-start">Cue occurred, but setup/opening action was the earliest break twice or more</option><option value="mixed">The breaks are mixed, isolated, or incomplete</option><option value="working">The cue and start worked in all readable records</option></select>
+    <label for="decision">Write your next decision</label>
+    <input id="decision" autocomplete="off" placeholder="e.g. Test one cue adjustment once">
+    <button id="check" type="button">Check my stability boundary</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tomorrow’s rule</h2>
+    <p class="rule">A repeated, same earliest break earns one small test. Mixed, isolated, incomplete, or working records earn restraint.</p>
+  </section>
+  <footer>Ask your teacher to help classify a confusing record. The aim remains a calm, intentional beginning—not urgency, guilt, punishment, or a bigger system.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('check').addEventListener('click',()=>{const p=$('pattern').value,d=$('decision').value.trim(),f=$('feedback');if(!p||!d){f.className='no';f.textContent='Choose the record pattern and write one next decision.';return}if(/catch.?up|punish|longer|double|more hours|perfect|redesign|every day/i.test(d)){f.className='no';f.textContent='Keep it bounded. Remove catch-up, punishment, expansion, or redesign language.';return}if(p==='repeat-cue'){f.className='ok';f.textContent='Clear enough: test one small cue adjustment once. Keep the action, finish line, and frequency stable.'}else if(p==='repeat-start'){f.className='ok';f.textContent='Clear enough: test one setup or opening-action adjustment once—not both. Keep the cue and frequency stable.'}else if(p==='mixed'){f.className='ok';f.textContent='Good restraint: the boundary is not met. Keep the plan unchanged for two ordinary attempts, then read the records again.'}else{f.className='ok';f.textContent='Good restraint: working records do not require an upgrade. Keep the same small plan for two ordinary attempts.'}});
+</script>
+</body>
+</html>
