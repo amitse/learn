@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 22 — Compare One Bounded Test</title>
+  <style>
+    :root{--ink:#1d2537;--muted:#5c667b;--paper:#f8f7fc;--card:#fff;--violet:#6844bb;--wash:#eee9ff;--line:#ddd7eb;--good:#166542;--goodwash:#e6f6ec;--warn:#8a3f18;--warnwash:#fff0e7}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:auto;padding:28px 18px 56px}.eyebrow{margin:0;color:var(--violet);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.15rem);line-height:1.07;letter-spacing:-.04em;margin:.35rem 0 .8rem}h2{font-size:1.28rem;line-height:1.25;margin:0 0 .55rem}.lede{max-width:58ch;color:var(--muted);font-size:1.1rem}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:20px 0;box-shadow:0 6px 20px #37235c0a}.rule{border-left:5px solid var(--violet);padding:4px 0 4px 15px;font-size:1.08rem;font-weight:750}.soft{background:var(--wash);border-radius:12px;padding:14px 16px}.time{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--wash);color:#4c318d;font-size:.83rem;font-weight:800}ol{padding-left:1.35rem}li+li{margin-top:.45rem}label{display:block;font-weight:750;margin:14px 0 5px}select,input{width:100%;padding:12px;border:1px solid #bdb5d2;border-radius:9px;background:#fff;color:var(--ink);font:inherit}button{border:0;border-radius:9px;background:var(--violet);color:#fff;padding:12px 16px;margin-top:17px;font:800 1rem inherit;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:10px;font-weight:650}.ok{display:block!important;background:var(--goodwash);color:var(--good)}.no{display:block!important;background:var(--warnwash);color:var(--warn)}.tiny,footer{color:var(--muted);font-size:.9rem}strong{font-weight:800}@media(max-width:430px){.wrap{padding:22px 14px 40px}.card{padding:18px}h1{font-size:2.15rem}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Calm Execution · Lesson 22</p>
+  <h1>Compare one bounded test</h1>
+  <p class="lede">After changing one link once, read the before-and-after records without turning one outcome into a verdict.</p>
+
+  <section class="card">
+    <h2>One skill</h2>
+    <p class="rule">Compare the one link you tested, then choose: retain it for two ordinary attempts, return to the prior plan, or gather two more records.</p>
+    <p>This is a practical record-reading experiment, not proof that one result caused an outcome. Habit practice is often discussed in relation to repeated behaviour in stable contexts; individual records still need cautious interpretation. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section class="card">
+    <span class="time">10–15 minutes</span>
+    <h2>Applied exercise: make a one-test comparison</h2>
+    <ol>
+      <li>Find the last change you made. It must name <strong>one</strong> link: cue, setup, or opening action.</li>
+      <li>Put one readable record from before the test beside the test record. For each, read <strong>cue occurred?</strong> then <strong>two-minute action started?</strong>.</li>
+      <li>Write one neutral comparison: <strong>“Before: __. Test: __. The tested link was __. Next: __.”</strong></li>
+      <li>Choose one calm next move: retain the test for two ordinary attempts if it looks workable; return to the prior plan if it clearly added friction; or gather two more records if the comparison is mixed or incomplete.</li>
+    </ol>
+    <div class="soft"><strong>Example:</strong> Before: cue missed. Test: cue note by kettle; cue occurred and action started. The tested link was the cue. Next: retain this cue setup for two ordinary attempts. This is a reason to continue observing—not a claim that the note solved everything.</div>
+  </section>
+
+  <section class="card" aria-labelledby="checker">
+    <h2 id="checker">Check your next move</h2>
+    <p class="tiny">Immediate feedback only; nothing is stored.</p>
+    <label for="result">What does your comparison show?</label>
+    <select id="result"><option value="">Choose one…</option><option value="workable">The tested link looks workable in a readable test record</option><option value="friction">The single test clearly added friction or blocked the start</option><option value="unclear">The records are mixed, incomplete, or do not isolate the tested link</option></select>
+    <label for="next">Write your next move</label>
+    <input id="next" autocomplete="off" placeholder="e.g. Retain the cue note for two ordinary attempts">
+    <button id="check" type="button">Check my comparison</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tomorrow’s rule</h2>
+    <p class="rule">One comparison can guide the next small observation. It does not earn an upgrade, catch-up work, or a new system.</p>
+  </section>
+  <footer>Ask your teacher to help read a confusing before-and-after pair. The aim remains a calm, intentional beginning—not urgency, guilt, punishment, or a bigger system.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('check').addEventListener('click',()=>{const r=$('result').value,n=$('next').value.trim(),f=$('feedback');if(!r||!n){f.className='no';f.textContent='Choose the comparison result and write one next move.';return}if(/catch.?up|punish|longer|double|more hours|perfect|redesign|upgrade/i.test(n)){f.className='no';f.textContent='Keep it bounded. Remove catch-up, punishment, expansion, redesign, or upgrade language.';return}if(r==='workable'){f.className='ok';f.textContent='Good: retain only the tested link for two ordinary attempts, while keeping the rest of the ritual stable.'}else if(r==='friction'){f.className='ok';f.textContent='Good: return to the prior workable plan. Do not replace it with several new changes.'}else{f.className='ok';f.textContent='Good restraint: gather two ordinary records with the current plan before deciding whether to revise.'}});
+</script>
+</body>
+</html>
