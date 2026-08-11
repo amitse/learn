@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 30 — Test Resource Cleanup After HTTP Drains</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#43d17a;--red:#ff7185;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:850px;margin:auto;padding:46px 22px 70px}.eyebrow{color:var(--accent);font-weight:800;text-transform:uppercase;font-size:.76rem;letter-spacing:.12em}h1{font-size:clamp(2rem,5vw,3.25rem);line-height:1.05;margin:.35rem 0 1rem}h2{margin:2.5rem 0 .6rem;font-size:1.35rem}p,.lede{color:var(--muted)}.lede{font-size:1.13rem}.card,.code,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:18px 0}.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-weight:700}.flow span{padding:7px 10px;border:1px solid var(--border);border-radius:7px;color:var(--accent)}.flow b{color:var(--muted)}pre{margin:0;overflow:auto;color:#e8eaf0;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}code{color:#bcecf0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--border);vertical-align:top}th{color:var(--accent)}.ts{color:#8bbcf4}.go{color:#79e3e8}.callout{border-left:4px solid var(--accent);padding:10px 16px;background:#13242b}.quiz button{display:block;width:100%;text-align:left;margin:8px 0;padding:11px;border-radius:8px;border:1px solid var(--border);background:#202431;color:var(--text);cursor:pointer}.quiz button:hover{border-color:var(--accent)}#feedback{min-height:1.5em;font-weight:700}.good{color:var(--green)}.bad{color:var(--red)}a{color:#72dce1}footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
+</style></head><body><main class="wrap"><div class="eyebrow">Go HTTP server • under 10 minutes</div><h1>Test resource cleanup<br>after HTTP drains</h1><p class="lede">Your server’s shutdown order is now a policy. Prove it with one fake resource: while an in-flight handler is blocked, its dependency must still be open; only after the handler releases may cleanup close it.</p>
+<h2>The one contract</h2><div class="flow"><span>cancel stop context</span><b>→</b><span>listener closes</span><b>→</b><span>handler drains</span><b>→</b><span><code>Run</code> returns</span><b>→</b><span>resource closes</span></div><p>Lesson 29 placed <code>pool.Close()</code> after <code>Run</code>. This lesson tests that ordering without Postgres. A fake is better here: it exposes exactly the event we care about, so no sleep and no database setup are needed.</p>
+<h2>TS ↔ Go: the same lifecycle assertion</h2><table><tr><th>TypeScript idea</th><th>Go test primitive</th></tr><tr><td class="ts">A deferred Promise says “request entered.”</td><td class="go"><code>started := make(chan struct{})</code>; handler closes it.</td></tr><tr><td class="ts">A fake <code>db.end()</code> records a call.</td><td class="go">A fake <code>Close()</code> closes <code>closed</code>.</td></tr><tr><td class="ts">Inspect whether a Promise settled.</td><td class="go">A non-blocking <code>select</code> checks whether a channel closed.</td></tr></table>
+<h2>Build the smallest observable fake</h2><div class="code"><pre>type fakeResource struct {
+    closed chan struct{}
+    once   sync.Once
+}
+
+func newFakeResource() *fakeResource {
+    return &fakeResource{closed: make(chan struct{})}
+}
+
+func (r *fakeResource) Close() {
+    r.once.Do(func() { close(r.closed) })
+}</pre></div><p><code>sync.Once</code> makes cleanup idempotent, like a real pool’s close operation should be. The channel is not production behavior; it is an observation point owned by the test.</p>
+<h2>Practice: prove the ordering</h2><p>Assume <code>Run(stop, srv, ln, grace)</code> is the lifecycle owner from lessons 25–28. The application edge calls <code>resource.Close()</code> only after <code>Run</code> returns.</p><div class="code"><pre>started := make(chan struct{})
+release := make(chan struct{})
+resource := newFakeResource()
+
+mux.HandleFunc("GET /work", func(w http.ResponseWriter, r *http.Request) {
+    close(started)
+    &lt;-release                 // keep HTTP work active
+    w.WriteHeader(http.StatusNoContent)
+})
+
+runDone := make(chan error, 1)
+go func() { runDone &lt;- Run(stop, srv, ln, time.Second) }()
+
+// Send a request, then wait until its handler is active.
+&lt;-started
+cancel()                      // shutdown begins
+
+select {
+case &lt;-resource.closed:
+    t.Fatal("resource closed before HTTP drained")
+default:
+    // Correct: active handler can still use the resource.
+}
+
+close(release)                // permit handler and Run to finish
+if err := &lt;-runDone; err != nil { t.Fatal(err) }
+resource.Close()
+
+select {
+case &lt;-resource.closed:
+    // Correct: cleanup follows the drain.
+default:
+    t.Fatal("resource was not closed after Run returned")
+}</pre></div><div class="callout"><strong>Two assertions, two moments:</strong> before releasing the handler, closure is forbidden; after <code>Run</code> returns and cleanup runs, closure is required. The test proves order—not elapsed time.</div>
+<h2>Quick check</h2><div class="quiz"><p><strong>When is it safe for the application edge to call <code>resource.Close()</code>?</strong></p><button data-ok="0">Immediately after cancellation, because new requests are rejected.</button><button data-ok="1">After <code>Run</code> returns, because active handlers have drained or shutdown has reached its terminal result.</button><button data-ok="0">Inside the handler, just before it writes its response.</button><p id="feedback" aria-live="polite"></p></div>
+<h2>Use this tomorrow</h2><ol><li>Give a dependency a test-only observation channel or counter.</li><li>Block a real handler with <code>release</code>.</li><li>Trigger cancellation and assert the dependency has <em>not</em> closed.</li><li>Release the handler, wait for the lifecycle owner, then assert cleanup.</li></ol>
+<p>Ask me a follow-up if you want to turn this outline into a compiling <code>_test.go</code> file for your project.</p>
+<h2>Sources</h2><ul><li><a href="https://pkg.go.dev/net/http#Server.Shutdown">Go <code>http.Server.Shutdown</code> documentation</a> — closes listeners then waits for idle connections.</li><li><a href="https://go.dev/blog/context">Go blog: Go Concurrency Patterns: Context</a> — cancellation as a propagation mechanism.</li><li><a href="https://pkg.go.dev/sync#Once">Go <code>sync.Once</code> documentation</a> — one-time actions.</li><li><a href="https://go.dev/doc/tutorial/add-a-test">Go tutorial: Add a test</a> — standard testing conventions.</li></ul><footer>Lesson 30 · Mission: ship an HTTP server in Go that behaves predictably in production.</footer></main><script>document.querySelectorAll('.quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('#feedback');const ok=b.dataset.ok==='1';f.textContent=ok?'Correct. The dependency must outlive every handler that may use it.':'Not quite. Closing admission is not the same as draining active work; wait for Run’s terminal result.';f.className=ok?'good':'bad';}));</script></body></html>

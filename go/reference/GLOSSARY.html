@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Resource Cleanup Order (Lesson 29) <span class="new-badge">new</span></h2>
+<h2>Resource-Cleanup Ordering Test (Lesson 30) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>observable fake resource</td><td>fake client with a recorded <code>close()</code></td><td>A test double whose <code>Close</code> method reports closure—often by closing a channel. It lets a lifecycle test assert resource-cleanup order without a real database.</td></tr>
+  <tr><td>two-phase ordering assertion</td><td>assert promise pending, then settled</td><td>A pair of checks around a controlled handler: before release, the resource must remain open; after the HTTP lifecycle returns and cleanup runs, it must be closed. Together they prove order rather than merely eventual cleanup.</td></tr>
+  <tr><td>idempotent cleanup</td><td>safe repeated <code>close()</code></td><td>Cleanup that can be invoked more than once without changing the result or panicking. A fake can use <code>sync.Once</code> around <code>close(ch)</code> to mirror this property.</td></tr>
+</table>
+
+<h2>Resource Cleanup Order (Lesson 29)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>dependency cleanup order</td><td><code>await server.close(); await db.end()</code></td><td>The lifecycle rule that a shared dependency stays available while HTTP work drains, then is released after the HTTP lifecycle returns. For a database pool: stop admission → drain handlers → close the pool.</td></tr>
