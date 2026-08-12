@@ -25,4 +25,5 @@
 - Lesson 20 added a four-record check: read cue then start across four carry-forward attempts; retain a workable plan for two more ordinary attempts, test only the earliest clear link once, or retain the plan when records are unclear.
 - Lesson 21 added a stability boundary: revise only when the same earliest break appears in at least two readable records; otherwise retain the plan for two ordinary attempts.
 - Lesson 22 added a cautious one-test comparison: place one readable pre-test record beside the bounded test record, read cue then start, and retain the test for two ordinary attempts, return to the prior plan if it clearly added friction, or gather two more records when mixed or incomplete.
+- Lesson 23 added a three-record consolidation decision: read one test record and two ordinary records, keep the current plan for workable, mixed, or incomplete evidence, and name one new bounded test only when the same earliest break appears in at least two readable records.
 - Increase difficulty only when the basic start ritual is reliable.
