@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 24 — Run a Retain-or-Test Triage</title>
+  <style>
+    :root{--ink:#1d2537;--muted:#5c667b;--paper:#f8f7fc;--card:#fff;--violet:#6844bb;--wash:#eee9ff;--line:#ddd7eb;--good:#166542;--goodwash:#e6f6ec;--warn:#8a3f18;--warnwash:#fff0e7}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:auto;padding:28px 18px 56px}.eyebrow{margin:0;color:var(--violet);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.15rem);line-height:1.07;letter-spacing:-.04em;margin:.35rem 0 .8rem}h2{font-size:1.28rem;line-height:1.25;margin:0 0 .55rem}.lede{max-width:58ch;color:var(--muted);font-size:1.1rem}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:20px 0;box-shadow:0 6px 20px #37235c0a}.rule{border-left:5px solid var(--violet);padding:4px 0 4px 15px;font-size:1.08rem;font-weight:750}.soft{background:var(--wash);border-radius:12px;padding:14px 16px}.time{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--wash);color:#4c318d;font-size:.83rem;font-weight:800}ol{padding-left:1.35rem}li+li{margin-top:.45rem}label{display:block;font-weight:750;margin:14px 0 5px}select,input{width:100%;padding:12px;border:1px solid #bdb5d2;border-radius:9px;background:#fff;color:var(--ink);font:inherit}button{border:0;border-radius:9px;background:var(--violet);color:#fff;padding:12px 16px;margin-top:17px;font:800 1rem inherit;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:10px;font-weight:650}.ok{display:block!important;background:var(--goodwash);color:var(--good)}.no{display:block!important;background:var(--warnwash);color:var(--warn)}.tiny,footer{color:var(--muted);font-size:.9rem}strong{font-weight:800}@media(max-width:430px){.wrap{padding:22px 14px 40px}.card{padding:18px}h1{font-size:2.15rem}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Calm Execution · Lesson 24</p>
+  <h1>Run a retain-or-test triage</h1>
+  <p class="lede">Use a small set of ordinary records to choose between restraint and exactly one new bounded test.</p>
+
+  <section class="card">
+    <h2>One skill</h2>
+    <p class="rule">Sort the records by their earliest break. Retain the plan unless the same readable break appears at least twice.</p>
+    <p>This is a practical decision rule for your own records, not a diagnosis or proof of why a start happened. It fits the course’s cue-based approach; habit research discusses how repeated behaviour in stable contexts can become more cue-driven. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section class="card">
+    <span class="time">10–15 minutes</span>
+    <h2>Applied exercise: make a triage slip</h2>
+    <ol>
+      <li>Gather the latest <strong>four to six ordinary records</strong>. Do not add a new tracking field.</li>
+      <li>For each readable record, read: <strong>cue occurred?</strong>, then <strong>two-minute action started?</strong>. Label it <strong>none</strong>, <strong>cue</strong>, or <strong>start-side</strong>.</li>
+      <li>Make one decision: <strong>retain</strong> if records are working, mixed, or incomplete. Name <strong>one bounded test</strong> only if cue or start-side is the same earliest break in at least two records.</li>
+      <li>Write the next ordinary attempt. A retained plan is complete; it does not need a reward, catch-up session, or upgrade.</li>
+    </ol>
+    <div class="soft"><strong>Example:</strong> none, cue, none, start-side. No break repeats, so retain the current plan and collect ordinary evidence. <strong>Not:</strong> change both the cue and setup to cover every possibility.</div>
+  </section>
+
+  <section class="card" aria-labelledby="checker">
+    <h2 id="checker">Check your triage</h2>
+    <p class="tiny">Immediate feedback only; nothing is stored.</p>
+    <label for="pattern">What does your small set show?</label>
+    <select id="pattern"><option value="">Choose one…</option><option value="retain">Working, mixed, or incomplete records; no same earliest break appears twice</option><option value="cue">Cue is the same earliest break in at least two readable records</option><option value="start">Start-side is the same earliest break in at least two readable records</option></select>
+    <label for="decision">Write one next decision</label>
+    <input id="decision" autocomplete="off" placeholder="e.g. Retain the current cue and make one ordinary attempt">
+    <button id="check" type="button">Check my decision</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tomorrow’s rule</h2>
+    <p class="rule">No repeated earliest break? Keep the plan. One repeated break? Test one matching link once.</p>
+  </section>
+  <footer>Ask your teacher to help classify a record that is hard to read. The aim is still one calm, intentional beginning—not urgency, guilt, punishment, or a larger system.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('check').addEventListener('click',()=>{const p=$('pattern').value,d=$('decision').value.trim(),f=$('feedback');if(!p||!d){f.className='no';f.textContent='Choose the record pattern and write one next decision.';return}if(/catch.?up|punish|longer|double|more hours|perfect|redesign|upgrade|multiple|both/i.test(d)){f.className='no';f.textContent='Keep it bounded. Remove catch-up, punishment, expansion, redesign, upgrade, or multiple-change language.';return}if(p==='retain'){f.className='ok';f.textContent='Good restraint: retain the current plan and make one ordinary attempt. Mixed or incomplete evidence is not a reason to add complexity.'}else if(p==='cue'){f.className='ok';f.textContent='Good: a repeated cue break supports one cue test. Keep the action and all other links stable.'}else{f.className='ok';f.textContent='Good: a repeated start-side break supports one setup or opening-action test—not both. Keep the cue and the rest stable.'}});
+</script>
+</body>
+</html>
