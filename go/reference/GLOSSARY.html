@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Resource-Cleanup Ordering Test (Lesson 30) <span class="new-badge">new</span></h2>
+<h2>Unexpected Serve-Failure Test (Lesson 31) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>unexpected serve failure</td><td>failed <code>server.listen()</code> or server error</td><td>A non-shutdown error from <code>http.Server.Serve</code>, such as a listener <code>Accept</code> failure. It must remain an error at the <code>Run</code> boundary; only intentional closure is normal completion.</td></tr>
+  <tr><td>failing listener</td><td>minimal startup-failure fake</td><td>A test <code>net.Listener</code> whose <code>Accept</code> returns a chosen sentinel error. It makes the unexpected-serving branch deterministic without a port, sleep, or real network traffic.</td></tr>
+  <tr><td>narrow sentinel normalization</td><td>handle only the expected close condition</td><td>The lifecycle rule to translate only <code>http.ErrServerClosed</code> to <code>nil</code>. Other errors must propagate so the application edge can report an infrastructure failure.</td></tr>
+</table>
+
+<h2>Resource-Cleanup Ordering Test (Lesson 30)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>observable fake resource</td><td>fake client with a recorded <code>close()</code></td><td>A test double whose <code>Close</code> method reports closure—often by closing a channel. It lets a lifecycle test assert resource-cleanup order without a real database.</td></tr>

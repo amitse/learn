@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 31 — Test an Unexpected Serve Failure</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7788;--yellow:#ffd166;--go:#55d9df;--ts:#74aaf5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:#0a0d13;border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:9px;color:var(--muted)}a{color:#74dce1}footer{margin-top:3rem;font-size:.88rem}
+@media(max-width:650px){.compare{grid-template-columns:1fr}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Test an unexpected<br><code>Serve</code> failure</h1>
+<p class="lede">Graceful shutdown is success. A listener failure is not. Add one narrow, no-network test that proves your <code>Run</code> boundary preserves the difference—so process-edge code can log a genuine infrastructure failure.</p>
+
+<h2>Only intentional closure becomes <code>nil</code></h2>
+<p>Lessons 25–30 established that <code>Run</code> normalizes <code>http.ErrServerClosed</code> after intentional shutdown. That rule must stay narrow. <a href="https://pkg.go.dev/net/http#Server.Serve" target="_blank" rel="noreferrer"> <code>http.Server.Serve</code></a> otherwise returns a non-nil error when its listener cannot accept connections. Preserve that error.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>try {
+  await server.listen(port)
+} catch (err) {
+  // Do not turn EADDRINUSE
+  // into a normal shutdown.
+  throw err
+}</pre></div><div class="card"><div class="lang go">Go</div><pre>func normalServeResult(err error) error {
+  if errors.Is(err, http.ErrServerClosed) {
+    return nil // intentional stop
+  }
+  return err // infrastructure failure
+}</pre></div></div>
+<div class="callout"><strong>Boundary policy:</strong> normalize the documented sentinel <em>only</em>. Returning every <code>Serve</code> error as <code>nil</code> hides a broken listener, permission problem, or other operational failure.</div>
+
+<h2>Make the failure deterministic with a listener seam</h2>
+<p><code>Serve</code> needs a <code>net.Listener</code>. A tiny fake whose <code>Accept</code> immediately returns a sentinel error makes the failure synchronous and requires no port, sleep, or goroutine coordination.</p>
+<pre>var errAccept = errors.New("listener failed")
+
+type failingListener struct{ err error }
+
+func (l failingListener) Accept() (net.Conn, error) { return nil, l.err }
+func (l failingListener) Close() error              { return nil }
+func (l failingListener) Addr() net.Addr             { return fakeAddr("test") }
+
+type fakeAddr string
+func (a fakeAddr) Network() string { return string(a) }
+func (a fakeAddr) String() string  { return string(a) }</pre>
+<p>This is a narrow fake, not a mock of the entire server: it implements just the three methods required by <a href="https://pkg.go.dev/net#Listener" target="_blank" rel="noreferrer"><code>net.Listener</code></a>. Since <code>Accept</code> fails immediately, <code>Serve</code> returns immediately too.</p>
+
+<h2>The focused test</h2>
+<pre>func TestRunReturnsUnexpectedServeFailure(t *testing.T) {
+    srv := &amp;http.Server{Handler: http.NewServeMux()}
+
+    err := Run(context.Background(), srv,
+        failingListener{err: errAccept}, time.Second)
+
+    if !errors.Is(err, errAccept) {
+        t.Fatalf("Run() error = %v; want errAccept", err)
+    }
+}</pre>
+<p>Use <code>errors.Is</code>, not string comparison: it keeps the test correct if a lower layer wraps the sentinel. This tests the other side of your lifecycle contract without retesting cancellation, admission closure, or HTTP draining.</p>
+
+<h2>Trace the two outcomes</h2>
+<div class="card"><ol><li><strong>Intentional stop:</strong> cancellation → <code>Shutdown</code> → <code>Serve</code> returns <code>http.ErrServerClosed</code> → <code>Run</code> returns <code>nil</code>.</li><li><strong>Unexpected listener failure:</strong> <code>Accept</code> returns <code>errAccept</code> → <code>Serve</code> returns it → <code>Run</code> returns an error.</li></ol></div>
+
+<h2>Quick check</h2><section class="quiz"><p id="score" class="muted">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="ErrServerClosed is the documented result of intentional Shutdown or Close; the lifecycle boundary treats it as normal completion."><p><strong>1.</strong> Which result should <code>Run</code> normalize to <code>nil</code>?</p><div class="options"><button class="option" data-choice="a">Every error returned by Serve</button><button class="option" data-choice="b">Only the expected http.ErrServerClosed result</button><button class="option" data-choice="c">Any error whose message mentions a listener</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="A failing listener makes Accept return a chosen error immediately, so this unit test has no network timing to guess about."><p><strong>2.</strong> Why use <code>failingListener</code>?</p><div class="options"><button class="option" data-choice="a">To create an ephemeral TCP port</button><button class="option" data-choice="b">To simulate a handler timeout</button><button class="option" data-choice="c">To make Accept return a known failure without network setup</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="errors.Is checks an error chain, so the test stays accurate if the sentinel is wrapped with useful context."><p><strong>3.</strong> Why assert <code>errors.Is(err, errAccept)</code>?</p><div class="options"><button class="option" data-choice="a">It supports the error chain rather than comparing text</button><button class="option" data-choice="b">It converts errAccept into ErrServerClosed</button><button class="option" data-choice="c">It starts the server in a goroutine</button></div><div class="feedback"></div></div></section>
+<div class="callout"><strong>Ask your teacher:</strong> ask how to choose a process policy after this error—log and exit, or report it to a supervisor—without putting that policy inside <code>Run</code>.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/net/http#Server.Serve" target="_blank" rel="noreferrer">Go standard library: http.Server.Serve</a></li><li><a href="https://pkg.go.dev/net/http#ErrServerClosed" target="_blank" rel="noreferrer">Go standard library: http.ErrServerClosed</a></li><li><a href="https://pkg.go.dev/net#Listener" target="_blank" rel="noreferrer">Go standard library: net.Listener</a></li><li><a href="https://pkg.go.dev/errors#Is" target="_blank" rel="noreferrer">Go standard library: errors.Is</a></li></ul>
+<footer class="muted">Lesson 31 · Mission: ship an HTTP server in Go that behaves predictably in production.</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: normal shutdown and infrastructure failure are separate outcomes.':'Review the feedback, then trace both outcomes again.'):'keep going'}`})));</script></body></html>
