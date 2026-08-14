@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 32 — Wrap Run Errors at the Application Boundary</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7788;--yellow:#ffd166;--go:#55d9df;--ts:#74aaf5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:#0a0d13;border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:9px;color:var(--muted)}a{color:#74dce1}footer{margin-top:3rem;font-size:.88rem}@media(max-width:650px){.compare{grid-template-columns:1fr}}</style></head><body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div><h1>Wrap <code>Run</code> errors at the<br>application boundary</h1><p class="lede">Lesson 31 proved that an unexpected serving failure reaches <code>Run</code>. Now make it actionable for an operator—add context at the composition root while preserving the original error for tests and callers.</p>
+<h2>Keep mechanism and process policy separate</h2><p><code>Run</code> owns HTTP lifecycle mechanics: serve, react to cancellation, and normalize only <code>http.ErrServerClosed</code>. The application edge owns the human-facing policy: describe what failed, then let <code>main</code> report it and exit. A small <code>runApp</code> seam lets you test that policy without testing <code>log.Fatal</code>, which exits the process.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>try {
+  await runServer()
+} catch (err) {
+  throw new Error(
+    "HTTP server stopped: " + err,
+    { cause: err },
+  )
+}</pre></div><div class="card"><div class="lang go">Go</div><pre>func runApp(/* dependencies */) error {
+  if err := Run(/* ... */); err != nil {
+    return fmt.Errorf(
+      "run HTTP server: %w", err,
+    )
+  }
+  return nil
+}
+
+func main() {
+  if err := runApp(/* ... */); err != nil {
+    log.Fatal(err)
+  }
+}</pre></div></div>
+<div class="callout"><strong>One job per boundary:</strong> <code>Run</code> does not decide whether to log or exit; <code>main</code> does not reinterpret normal shutdown. <code>runApp</code> adds only the operational context that this layer knows.</div>
+<h2><code>%w</code> retains the cause</h2><p><a href="https://pkg.go.dev/fmt#Errorf" target="_blank" rel="noreferrer"><code>fmt.Errorf</code></a> with <code>%w</code> creates a wrapping error. Its message gains useful context, but <a href="https://pkg.go.dev/errors#Is" target="_blank" rel="noreferrer"><code>errors.Is</code></a> can still find the original sentinel. Use <code>%v</code> only when you deliberately do <em>not</em> want an error chain.</p><pre>var errAccept = errors.New("listener failed")
+
+err := runApp(/* fake listener makes Run return errAccept */)
+// err.Error(): "run HTTP server: listener failed"
+
+if !errors.Is(err, errAccept) {
+    t.Fatal("the original operational cause was lost")
+}</pre>
+<h2>Test the boundary—not <code>os.Exit</code></h2><p>Make the test inject the smallest behavior it needs: a function that returns the failure. The real application calls <code>Run</code>; the test passes a known error. This is the same narrow-seam thinking as the failing listener in Lesson 31.</p><pre>func wrapRun(run func() error) error {
+    if err := run(); err != nil {
+        return fmt.Errorf("run HTTP server: %w", err)
+    }
+    return nil
+}
+
+func TestWrapRunPreservesCause(t *testing.T) {
+    errServe := errors.New("accept failed")
+
+    err := wrapRun(func() error { return errServe })
+
+    if !errors.Is(err, errServe) {
+        t.Fatalf("wrapRun() error = %v; want wrapped errServe", err)
+    }
+    if !strings.Contains(err.Error(), "run HTTP server") {
+        t.Fatalf("error lacks operation context: %q", err)
+    }
+}</pre>
+<p>This test has two independent assertions: the message tells an operator <em>which operation</em> failed, and <code>errors.Is</code> preserves <em>why</em> it failed. Avoid asserting the entire message; exact wording is presentation, not the contract.</p>
+<h2>Quick check</h2><section class="quiz"><p id="score" class="muted">Choose an answer for instant feedback.</p><div class="q" data-answer="b" data-explain="Run owns lifecycle mechanics; the process edge owns reporting and exit policy."><p><strong>1.</strong> Where should the choice to log and exit live?</p><div class="options"><button class="option" data-choice="a">Inside every HTTP handler</button><button class="option" data-choice="b">At the application/process edge, such as main</button><button class="option" data-choice="c">Inside Run whenever Serve returns</button></div><div class="feedback"></div></div><div class="q" data-answer="a" data-explain="%w creates an error chain, so errors.Is can still recognize the sentinel cause."><p><strong>2.</strong> Why use <code>fmt.Errorf("run HTTP server: %w", err)</code>?</p><div class="options"><button class="option" data-choice="a">It adds context while retaining the cause</button><button class="option" data-choice="b">It converts every failure into normal shutdown</button><button class="option" data-choice="c">It starts Run in a goroutine</button></div><div class="feedback"></div></div><div class="q" data-answer="c" data-explain="A narrow function seam makes the wrapping behavior deterministic; log.Fatal calls os.Exit and is not the unit under test."><p><strong>3.</strong> What should this focused test call?</p><div class="options"><button class="option" data-choice="a">The binary through a shell command</button><button class="option" data-choice="b">log.Fatal directly</button><button class="option" data-choice="c">A small function that wraps a supplied Run-like function</button></div><div class="feedback"></div></div></section>
+<div class="callout"><strong>Ask your teacher:</strong> ask how to carry a request ID or deployment version into structured logs—without duplicating logging policy inside handlers.</div><h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/fmt#Errorf" target="_blank" rel="noreferrer">Go standard library: fmt.Errorf and %w</a></li><li><a href="https://pkg.go.dev/errors#Is" target="_blank" rel="noreferrer">Go standard library: errors.Is</a></li><li><a href="https://pkg.go.dev/log#Fatal" target="_blank" rel="noreferrer">Go standard library: log.Fatal</a></li><li><a href="https://go.dev/blog/go1.13-errors" target="_blank" rel="noreferrer">Go Blog: Working with Errors in Go 1.13</a></li></ul><footer class="muted">Lesson 32 · Mission: ship an HTTP server in Go that fails visibly and retains useful diagnostics.</footer></main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: context and cause have distinct jobs.':'Review the feedback, then trace the boundary again.'):'keep going'}`})));</script></body></html>

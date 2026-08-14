@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Unexpected Serve-Failure Test (Lesson 31) <span class="new-badge">new</span></h2>
+<h2>Application-Boundary Error Wrapping (Lesson 32) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>application boundary</td><td>bootstrap / top-level <code>main()</code></td><td>The process-edge layer that assembles dependencies and owns operational policy such as adding failure context, logging, and exiting. It should not move HTTP lifecycle mechanics out of <code>Run</code>.</td></tr>
+  <tr><td>error wrapping with <code>%w</code></td><td><code>new Error(message, { cause })</code></td><td><code>fmt.Errorf("operation: %w", err)</code> adds a readable operation while retaining the original error in a chain. Use <code>errors.Is</code> to recognize the retained cause.</td></tr>
+  <tr><td>Run-like function seam</td><td>injected async function</td><td>A small <code>func() error</code> dependency used to test application-boundary behavior deterministically. It permits a test to supply a sentinel failure rather than testing <code>log.Fatal</code>, which exits the process.</td></tr>
+</table>
+
+<h2>Unexpected Serve-Failure Test (Lesson 31)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>unexpected serve failure</td><td>failed <code>server.listen()</code> or server error</td><td>A non-shutdown error from <code>http.Server.Serve</code>, such as a listener <code>Accept</code> failure. It must remain an error at the <code>Run</code> boundary; only intentional closure is normal completion.</td></tr>
