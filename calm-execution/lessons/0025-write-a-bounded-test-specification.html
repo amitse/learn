@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 25 — Write a Bounded Test Specification</title>
+  <style>
+    :root{--ink:#1d2537;--muted:#5c667b;--paper:#f8f7fc;--card:#fff;--violet:#6844bb;--wash:#eee9ff;--line:#ddd7eb;--good:#166542;--goodwash:#e6f6ec;--warn:#8a3f18;--warnwash:#fff0e7}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:auto;padding:28px 18px 56px}.eyebrow{margin:0;color:var(--violet);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.15rem);line-height:1.07;letter-spacing:-.04em;margin:.35rem 0 .8rem}h2{font-size:1.28rem;line-height:1.25;margin:0 0 .55rem}.lede{max-width:58ch;color:var(--muted);font-size:1.1rem}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:20px 0;box-shadow:0 6px 20px #37235c0a}.rule{border-left:5px solid var(--violet);padding:4px 0 4px 15px;font-size:1.08rem;font-weight:750}.soft{background:var(--wash);border-radius:12px;padding:14px 16px}.time{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--wash);color:#4c318d;font-size:.83rem;font-weight:800}ol{padding-left:1.35rem}li+li{margin-top:.45rem}label{display:block;font-weight:750;margin:14px 0 5px}select,input{width:100%;padding:12px;border:1px solid #bdb5d2;border-radius:9px;background:#fff;color:var(--ink);font:inherit}button{border:0;border-radius:9px;background:var(--violet);color:#fff;padding:12px 16px;margin-top:17px;font:800 1rem inherit;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:10px;font-weight:650}.ok{display:block!important;background:var(--goodwash);color:var(--good)}.no{display:block!important;background:var(--warnwash);color:var(--warn)}.tiny,footer{color:var(--muted);font-size:.9rem}strong{font-weight:800}@media(max-width:430px){.wrap{padding:22px 14px 40px}.card{padding:18px}h1{font-size:2.15rem}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Calm Execution · Lesson 25</p>
+  <h1>Write a bounded test specification</h1>
+  <p class="lede">When your triage supports a test, make the change precise enough to keep the next record readable.</p>
+
+  <section class="card">
+    <h2>One skill</h2>
+    <p class="rule">Write one sentence: test one link, name its exact change, and name what stays stable.</p>
+    <p>This is a practical experiment, not proof about why a start succeeds or fails. It preserves the course’s cue-based design; habit research distinguishes cue-triggered habits from merely frequent behaviour in stable contexts. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2>Applied exercise: write tomorrow’s one-line test</h2>
+    <ol>
+      <li>Look at your most recent triage. If no earliest break repeated twice, write <strong>“Retain: no test tomorrow.”</strong> That is a complete result.</li>
+      <li>If <strong>cue</strong> repeated, choose one cue change. If <strong>start-side</strong> repeated, choose <em>one</em>: setup <em>or</em> opening action.</li>
+      <li>Write: <strong>“Test [link]: [exact change]. Keep [stable links] unchanged for one ordinary attempt.”</strong></li>
+      <li>Place the sentence beside the existing record. Make one ordinary attempt; do not add a second change.</li>
+    </ol>
+    <div class="soft"><strong>Example:</strong> “Test setup: place the outline on the desk after lunch. Keep the after-lunch cue and two-minute opening action unchanged for one ordinary attempt.”</div>
+  </section>
+
+  <section class="card" aria-labelledby="checker">
+    <h2 id="checker">Check your specification</h2>
+    <p class="tiny">Immediate feedback only; nothing is stored.</p>
+    <label for="triage">What did your triage support?</label>
+    <select id="triage"><option value="">Choose one…</option><option value="retain">No repeated earliest break — retain</option><option value="cue">Repeated cue break — test cue</option><option value="start">Repeated start-side break — test setup or opening action</option></select>
+    <label for="spec">Your one-sentence next step</label>
+    <input id="spec" autocomplete="off" placeholder="e.g. Test setup: put notebook on desk. Keep cue and action unchanged.">
+    <button id="check" type="button">Check my specification</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tomorrow’s rule</h2>
+    <p class="rule">No repeated break: retain. Repeated break: one named change, one ordinary attempt, stable remainder.</p>
+  </section>
+  <footer>Ask your teacher to help turn a vague change into an observable sentence. The aim remains one calm intentional beginning—not urgency, guilt, punishment, or a larger system.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('check').addEventListener('click',()=>{const t=$('triage').value,s=$('spec').value.trim(),f=$('feedback'),low=s.toLowerCase();if(!t||!s){f.className='no';f.textContent='Choose the triage result and write one next step.';return}if(/catch.?up|punish|longer|double|more hours|perfect|redesign|upgrade|multiple|both|every day/i.test(low)){f.className='no';f.textContent='Keep it bounded: remove catch-up, punishment, expansion, redesign, or multiple-change language.';return}if(t==='retain'){if(/test|change|adjust/i.test(low)){f.className='no';f.textContent='Your triage says retain. Write that the current plan stays unchanged for one ordinary attempt.'}else{f.className='ok';f.textContent='Good restraint: retaining the plan is the complete next step when no break repeats.'}return}if(!/(test|try)/i.test(s)||!/(keep|unchanged|same|stable)/i.test(s)){f.className='no';f.textContent='Make the sentence readable: name the one test and state what stays unchanged.';return}if(t==='cue'&&!/cue|after|when/i.test(low)){f.className='no';f.textContent='A repeated cue break calls for one cue test. Name the observable cue change, then keep the rest stable.';return}if(t==='start'&&!/setup|prepare|desk|open|first action|opening/i.test(low)){f.className='no';f.textContent='A repeated start-side break calls for one setup or opening-action test. Name one, not both.';return}f.className='ok';f.textContent=t==='cue'?'Good: one cue test, with the action and other links held steady.':'Good: one start-side test, with the cue and other links held steady. Make one ordinary attempt, then read the record.';});
+</script>
+</body>
+</html>
