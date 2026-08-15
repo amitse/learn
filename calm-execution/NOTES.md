@@ -28,4 +28,5 @@
 - Lesson 23 added a three-record consolidation decision: read one test record and two ordinary records, keep the current plan for workable, mixed, or incomplete evidence, and name one new bounded test only when the same earliest break appears in at least two readable records.
 - Lesson 24 added a retain-or-test triage across four to six ordinary records: label the earliest break as `none`, `cue`, or `start-side`; retain the plan when records are working, mixed, or incomplete; and test exactly one matching link only when the same readable break appears at least twice.
 - Lesson 25 added a one-sentence bounded test specification: when triage supports a test, name the one link, its exact change, and the stable remainder; when no break repeats, retain the plan for one ordinary attempt.
+- Lesson 26 added a test-fidelity reading order: check `test used?`, then `cue occurred?`, then `two-minute action started?`; retain a readable test for two ordinary attempts, return to the prior plan only when added friction is clear, or gather two ordinary records when evidence is unused, mixed, or incomplete.
 - Increase difficulty only when the basic start ritual is reliable.

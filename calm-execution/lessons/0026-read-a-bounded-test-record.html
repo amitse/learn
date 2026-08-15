@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 26 — Read a Bounded Test Record</title>
+  <style>
+    :root{--ink:#1d2537;--muted:#5c667b;--paper:#f8f7fc;--card:#fff;--violet:#6844bb;--wash:#eee9ff;--line:#ddd7eb;--good:#166542;--goodwash:#e6f6ec;--warn:#8a3f18;--warnwash:#fff0e7}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:auto;padding:28px 18px 56px}.eyebrow{margin:0;color:var(--violet);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.15rem);line-height:1.07;letter-spacing:-.04em;margin:.35rem 0 .8rem}h2{font-size:1.28rem;line-height:1.25;margin:0 0 .55rem}.lede{max-width:58ch;color:var(--muted);font-size:1.1rem}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:20px 0;box-shadow:0 6px 20px #37235c0a}.rule{border-left:5px solid var(--violet);padding:4px 0 4px 15px;font-size:1.08rem;font-weight:750}.soft{background:var(--wash);border-radius:12px;padding:14px 16px}.time{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--wash);color:#4c318d;font-size:.83rem;font-weight:800}ol{padding-left:1.35rem}li+li{margin-top:.45rem}label{display:block;font-weight:750;margin:14px 0 5px}select{width:100%;padding:12px;border:1px solid #bdb5d2;border-radius:9px;background:#fff;color:var(--ink);font:inherit}button{border:0;border-radius:9px;background:var(--violet);color:#fff;padding:12px 16px;margin-top:17px;font:800 1rem inherit;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:10px;font-weight:650}.ok{display:block!important;background:var(--goodwash);color:var(--good)}.no{display:block!important;background:var(--warnwash);color:var(--warn)}.tiny,footer{color:var(--muted);font-size:.9rem}strong{font-weight:800}@media(max-width:430px){.wrap{padding:22px 14px 40px}.card{padding:18px}h1{font-size:2.15rem}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Calm Execution · Lesson 26</p>
+  <h1>Read a bounded test record</h1>
+  <p class="lede">Before judging a test, first check whether the named change actually happened.</p>
+
+  <section class="card">
+    <h2>One skill</h2>
+    <p class="rule">Read test used? → cue occurred? → two-minute action started? Then choose one calm next step.</p>
+    <p>This is a practical reading rule, not proof of what caused an outcome. It keeps the cue-based ritual inspectable; habit research distinguishes cue-triggered habits from merely frequent behaviour. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2>Applied exercise: inspect one real test</h2>
+    <ol>
+      <li>Take your most recent one-sentence test specification and the record from that ordinary attempt.</li>
+      <li>Mark <strong>test used?</strong> yes only if the exact named change happened. If no, do not interpret cue or start as a result of that test.</li>
+      <li>Then read <strong>cue occurred?</strong> and <strong>two-minute action started?</strong>, in that order.</li>
+      <li>Write one next step: <strong>retain the test for two ordinary attempts</strong>, <strong>return to the prior plan</strong> if it clearly added friction, or <strong>gather two ordinary records</strong> if the test was unused, mixed, or incomplete.</li>
+    </ol>
+    <div class="soft"><strong>Example:</strong> “Test used? no — outline was not placed on the desk. Next: gather two ordinary records with the same setup test; no new change today.”</div>
+  </section>
+
+  <section class="card" aria-labelledby="checker">
+    <h2 id="checker">Practice the reading order</h2>
+    <p class="tiny">Immediate feedback only; nothing is stored.</p>
+    <label for="used">Was the exact named test used?</label>
+    <select id="used"><option value="">Choose one…</option><option value="no">No / I cannot tell</option><option value="yes">Yes</option></select>
+    <label for="cue">Did the cue occur?</label>
+    <select id="cue"><option value="">Choose one…</option><option value="no">No</option><option value="yes">Yes</option></select>
+    <label for="start">Did the two-minute action start?</label>
+    <select id="start"><option value="">Choose one…</option><option value="no">No</option><option value="yes">Yes</option></select>
+    <button id="check" type="button">Read this record</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Keep the experiment legible</h2>
+    <p class="rule">An unused test is not a failed person or a failed idea. It is an unreadable test record—keep one plan and gather the next ordinary evidence.</p>
+  </section>
+  <footer>Ask your teacher to help separate an unused test from a test that added friction. The aim remains one calm intentional beginning—not urgency, guilt, punishment, or a larger system.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('check').addEventListener('click',()=>{const u=$('used').value,c=$('cue').value,s=$('start').value,f=$('feedback');if(!u||!c||!s){f.className='no';f.textContent='Read all three facts: test used, cue, then start.';return}if(u==='no'){f.className='ok';f.textContent='Right first conclusion: this does not tell you whether the test helped. Keep the same plan and gather two ordinary records; do not add a new change.';return}if(c==='no'){f.className='ok';f.textContent='The test was used, but the earliest observed break is the cue. Read more ordinary records before deciding whether one cue link needs attention.';return}if(s==='yes'){f.className='ok';f.textContent='The tested attempt was readable and started. Retain the test for two ordinary attempts, then read the small set without upgrading the ritual.';return}f.className='ok';f.textContent='The test was used and the cue occurred, but the start missed. It may have added friction or evidence may be thin; return to the prior plan only if the added friction is clear, otherwise gather two ordinary records.';});
+</script>
+</body>
+</html>
