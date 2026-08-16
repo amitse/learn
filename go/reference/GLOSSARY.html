@@ -45,7 +45,14 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Application-Boundary Error Wrapping (Lesson 32) <span class="new-badge">new</span></h2>
+<h2>Transparent Success Path (Lesson 33) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>transparent success path</td><td>resolved <code>Promise&lt;void&gt;</code></td><td>The application-boundary rule that a successful Run-like function is called once and its <code>nil</code> result passes through unchanged. Contextual wrapping belongs only to the non-<code>nil</code> failure branch.</td></tr>
+  <tr><td>success-path seam</td><td>injected resolving async function</td><td>A small injected <code>func() error</code> used to test normal composition deterministically: record that it was called, return <code>nil</code>, then require a <code>nil</code> result from the wrapper.</td></tr>
+</table>
+
+<h2>Application-Boundary Error Wrapping (Lesson 32)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>application boundary</td><td>bootstrap / top-level <code>main()</code></td><td>The process-edge layer that assembles dependencies and owns operational policy such as adding failure context, logging, and exiting. It should not move HTTP lifecycle mechanics out of <code>Run</code>.</td></tr>

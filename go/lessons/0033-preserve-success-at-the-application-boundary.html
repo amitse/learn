@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 33 — Preserve Success at the Application Boundary</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7788;--yellow:#ffd166;--go:#55d9df;--ts:#74aaf5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:#0a0d13;border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:9px;color:var(--muted)}a{color:#74dce1}footer{margin-top:3rem;font-size:.88rem}@media(max-width:650px){.compare{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Preserve success at the<br>application boundary</h1>
+<p class="lede">Lesson 32 wrapped a failed <code>Run</code> with operator context. The other half of that boundary contract is simpler and just as important: when <code>Run</code> succeeds, pass <code>nil</code> through unchanged.</p>
+
+<h2>One branch, two honest outcomes</h2>
+<p>The application wrapper adds context only when there is an error. It must still call <code>Run</code> exactly once; a clean lifecycle result is not something to decorate, log as a failure, or turn into an error.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>async function runApp(run: () => Promise<void>) {
+  try {
+    await run()
+    // success: resolve normally
+  } catch (err) {
+    throw new Error("run HTTP server", { cause: err })
+  }
+}</pre></div><div class="card"><div class="lang go">Go</div><pre>func wrapRun(run func() error) error {
+    if err := run(); err != nil {
+        return fmt.Errorf("run HTTP server: %w", err)
+    }
+    return nil // success: unchanged
+}</pre></div></div>
+<div class="callout"><strong>Boundary rule:</strong> add the operation name only to a failure. <code>nil</code> already means “the HTTP lifecycle completed normally.” Keeping it transparent lets <code>main</code> exit normally and lets callers compose the function predictably.</div>
+
+<h2>Test the success contract with a tiny seam</h2>
+<p>Use the same injected <code>func() error</code> seam as Lesson 32. A closure can prove two things without starting a server: the dependency was called, and a successful result remains <code>nil</code>.</p>
+<pre>func TestWrapRunPassesSuccessThrough(t *testing.T) {
+    called := false
+
+    err := wrapRun(func() error {
+        called = true
+        return nil // pretend Run completed a clean shutdown
+    })
+
+    if !called {
+        t.Fatal("wrapRun did not call Run")
+    }
+    if err != nil {
+        t.Fatalf("wrapRun() error = %v; want nil", err)
+    }
+}</pre>
+<p>This is not a test of Go's <code>if</code> statement. It locks in a composition rule: the application boundary neither skips the lifecycle owner nor invents a failure after it succeeds. Go represents “no error” with the <code>nil</code> value of the built-in <a href="https://pkg.go.dev/builtin#error" target="_blank" rel="noreferrer"><code>error</code> interface</a>.</p>
+
+<h2>Use the real boundary shape</h2>
+<p>Keep the production edge boring. The testable wrapper returns; <code>main</code> alone chooses the terminal process action for a non-nil result.</p>
+<pre>func main() {
+    if err := wrapRun(func() error {
+        return Run(/* listener, handler, stop context */)
+    }); err != nil {
+        log.Fatal(err)
+    }
+    // nil: main returns; process exits successfully
+}</pre>
+<p><a href="https://pkg.go.dev/log#Fatal" target="_blank" rel="noreferrer"><code>log.Fatal</code></a> exits only in the failure branch. Do not call it after a clean return just to announce success: a server’s normal shutdown is routine control flow, not an operational incident.</p>
+
+<h2>Quick check</h2>
+<section class="quiz"><p id="score" class="muted">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="The wrapper must call its dependency, then return nil because there is no failure to contextualize."><p><strong>1.</strong> If the injected Run-like function returns <code>nil</code>, what should <code>wrapRun</code> return?</p><div class="options"><button class="option" data-choice="a">A new error saying the server stopped</button><button class="option" data-choice="b"><code>nil</code></button><button class="option" data-choice="c">The result of <code>log.Fatal</code></button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="One assertion checks the returned contract; the other ensures the wrapper did not silently bypass its lifecycle dependency."><p><strong>2.</strong> What pair of assertions makes the focused success test useful?</p><div class="options"><button class="option" data-choice="a">Exact log output and a sleep</button><button class="option" data-choice="b">A real HTTP request and port 8080</button><button class="option" data-choice="c">The fake was called, and the returned error is nil</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="Wrapping belongs to the error branch; success needs no causal context and should remain transparent."><p><strong>3.</strong> When should this boundary use <code>fmt.Errorf(... %w ...)</code>?</p><div class="options"><button class="option" data-choice="a">Only when Run returns a non-nil error</button><button class="option" data-choice="b">After every successful shutdown</button><button class="option" data-choice="c">Before calling Run</button></div><div class="feedback"></div></div></section>
+
+<div class="callout"><strong>Ask your teacher:</strong> ask how to distinguish an expected shutdown from a deployment restart in structured operational logs, without adding logging to handlers.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/builtin#error" target="_blank" rel="noreferrer">Go standard library: the built-in error interface</a></li><li><a href="https://pkg.go.dev/fmt#Errorf" target="_blank" rel="noreferrer">Go standard library: fmt.Errorf and %w</a></li><li><a href="https://pkg.go.dev/log#Fatal" target="_blank" rel="noreferrer">Go standard library: log.Fatal</a></li><li><a href="https://go.dev/blog/go1.13-errors" target="_blank" rel="noreferrer">Go Blog: Working with Errors in Go 1.13</a></li></ul>
+<footer class="muted">Lesson 33 · Mission: ship an HTTP server in Go whose lifecycle result is clear to both operators and code.</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: the success path is transparent.':'Review the feedback, then trace the boundary again.'):'keep going'}`})));</script></body></html>
