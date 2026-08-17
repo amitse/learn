@@ -295,6 +295,14 @@
   <dt>Corner-orientation failure</dt><dd>A green-light failure in which the destination corner has white facing Up rather than the selected Right or Left side. U turns reposition this corner but do not change that orientation.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 31 — F2L: Diagnose a Failed Green Light (2026-08-15)</p>
+<h2>F2L Recovery Choice</h2>
+<dl>
+  <dt>Least-disruptive recovery</dt><dd>A priority rule after an F2L green-light failure: insert a different fully ready pair first; otherwise make one controlled normalization through an empty working slot; then re-read. It avoids disturbing protected pairs or guessing with repeated turns.</dd>
+  <dt>Position failure (F2L)</dt><dd>A state where the target pair is not yet at the selected destination positions. If its position template is viable, use its one named <code>0</code>, <code>U</code>, <code>U2</code>, or <code>U′</code> setup, then perform the full green-light check.</dd>
+  <dt>Edge-readiness failure</dt><dd>A green-light failure where the matching edge reaches <code>UF</code> but its front sticker does not agree with the front centre. Do not insert; normalize once through an empty slot and re-read.</dd>
+  <dt>Recovery priority</dt><dd>The order for a failed F2L check: (1) insert any different fully green-lit pair, (2) use a known positional setup where applicable, (3) normalize exactly once through an empty slot, then inspect. Never chain recovery triggers blindly.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 32 — F2L: Choose the Least-Disruptive Recovery (2026-08-17)</p>
 </body>
 </html>
