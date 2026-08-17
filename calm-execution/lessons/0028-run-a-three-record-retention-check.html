@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 28 — Run a Three-Record Retention Check</title>
+<style>
+  :root { --ink:#20212a; --muted:#666779; --paper:#fcfbff; --violet:#6d3ccf; --lav:#f0eaff; --line:#ddd4ef; --good:#176b45; --bad:#9d3340; }
+  * { box-sizing:border-box; } body { margin:0; background:linear-gradient(135deg,#f5f0ff,#fff 45%,#f3fbf8); color:var(--ink); font:17px/1.55 ui-rounded,"Avenir Next",system-ui,sans-serif; }
+  main { max-width:720px; margin:auto; padding:28px 18px 52px; } .eyebrow { color:var(--violet); font-size:.78rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+  h1 { font-size:clamp(2rem,7vw,3.35rem); line-height:1.05; letter-spacing:-.045em; margin:.35rem 0 .8rem; } h2 { font-size:1.15rem; margin:0 0 .65rem; }
+  .lede { color:var(--muted); font-size:1.08rem; max-width:58ch; } .card { background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:20px; margin:18px 0; box-shadow:0 8px 22px #3515640b; }
+  .rule { border-left:5px solid var(--violet); padding:3px 0 3px 15px; font-weight:700; } .small { color:var(--muted); font-size:.9rem; } ol { padding-left:1.3rem; } li+li { margin-top:.5rem; }
+  label { display:block; font-weight:750; margin:13px 0 5px; } select,button { font:inherit; border-radius:10px; padding:10px 12px; } select { width:100%; border:1px solid #b9aed0; background:white; color:var(--ink); } button { border:0; background:var(--violet); color:white; font-weight:800; cursor:pointer; margin-top:15px; } button:hover { filter:brightness(.94); }
+  #feedback { display:none; margin-top:13px; padding:12px; border-radius:10px; font-weight:650; } .ok { background:#e4f7ed; color:var(--good); } .warn { background:#fff0f1; color:var(--bad); }
+  a { color:#5730a9; } footer { color:var(--muted); font-size:.85rem; margin-top:28px; }
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Calm Execution · Lesson 28 · 10 minutes</p>
+<h1>Run a three-record retention check</h1>
+<p class="lede">A retained test does not need a grand verdict. Read three ordinary attempts, then make the smallest justified decision.</p>
+
+<section class="card"><h2>The one skill</h2>
+<p>Classify a retained test across <strong>three readable records</strong> without adding a new change.</p>
+<p class="rule">First confirm the named test was used. Then read cue → two-minute start. Change one link only if the same earliest break appears in at least two records.</p>
+</section>
+
+<section class="card"><h2>Why this is a calm experiment</h2>
+<p>This is a practical way to keep your system inspectable, not a claim that three records prove a cause. Repetition in a stable context is relevant to habit formation, but this tiny check is only evidence for the next modest decision—not a diagnosis or a performance grade. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a></p>
+</section>
+
+<section class="card"><h2>Your 10-minute exercise</h2>
+<ol>
+<li>Put the retained-test record beside the next two ordinary records.</li>
+<li>For each, mark: <em>test used?</em> then <em>cue occurred?</em> then <em>two-minute action started?</em></li>
+<li>Choose one result: <strong>retain</strong> if the test was used and no same break appears twice; <strong>return</strong> only if it clearly added friction; otherwise <strong>gather two more ordinary records</strong>.</li>
+<li>Make one ordinary next attempt. No catch-up and no upgrade.</li>
+</ol>
+<p class="small">If any record is missing or the test was not used, it is incomplete evidence—not a failed test.</p>
+</section>
+
+<section class="card"><h2>Quick decision check</h2>
+<label for="used">Was the exact named test used in all three records?</label>
+<select id="used"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No / unclear</option></select>
+<label for="pattern">Across readable records, what happened?</label>
+<select id="pattern"><option value="">Choose…</option><option value="workable">No repeated earliest break</option><option value="repeat">The same earliest break appeared twice</option><option value="friction">The test clearly added friction</option></select>
+<button type="button" id="check">Get feedback</button>
+<div id="feedback" role="status" aria-live="polite"></div>
+</section>
+
+<section class="card"><h2>Write the next line</h2>
+<p><strong>“For my next ordinary attempt, I will [retain / return / gather evidence], while keeping [cue and two-minute action] unchanged.”</strong></p>
+<p class="small">Ask your teacher if you want help reading an ambiguous record. The aim is a calm, usable next attempt.</p>
+</section>
+<footer>Source: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Making health habitual: the psychology of ‘habit-formation’ and general practice</a> (2012). Accessed 2026-08-17.</footer>
+</main><script>
+const used=document.querySelector('#used'), pattern=document.querySelector('#pattern'), feedback=document.querySelector('#feedback');
+document.querySelector('#check').addEventListener('click',()=>{
+  feedback.style.display='block';
+  if(!used.value||!pattern.value){ feedback.className='warn'; feedback.textContent='Choose both fields first. Incomplete information calls for more ordinary evidence, not a new change.'; return; }
+  if(used.value==='no'){ feedback.className='warn'; feedback.textContent='Gather two more ordinary records. A change that was not clearly used cannot yet be evaluated.'; return; }
+  if(pattern.value==='friction'){ feedback.className='ok'; feedback.textContent='Return to the prior plan for the next ordinary attempt. Keep everything else small and stable.'; return; }
+  if(pattern.value==='repeat'){ feedback.className='ok'; feedback.textContent='The stability boundary is met: specify exactly one matching bounded test; keep the other links stable.'; return; }
+  feedback.className='ok'; feedback.textContent='Retain the test for two more ordinary attempts. Workable evidence supports restraint, not an upgrade.';
+});
+</script></body></html>
