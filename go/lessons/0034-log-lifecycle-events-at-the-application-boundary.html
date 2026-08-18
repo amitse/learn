@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 34 — Log Lifecycle Events at the Application Boundary</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7788;--yellow:#ffd166;--go:#55d9df;--ts:#74aaf5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:#0a0d13;border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:9px;color:var(--muted)}a{color:#74dce1}footer{margin-top:3rem;font-size:.88rem}@media(max-width:650px){.compare{grid-template-columns:1fr}}
+</style></head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Log lifecycle events at the<br>application boundary</h1>
+<p class="lede">Your <code>Run</code> function already owns serving and shutdown; Lesson 33 made its <code>nil</code> success result transparent. Add one useful operator signal without leaking logging policy into routes or handlers: log the lifecycle outcome at the process edge.</p>
+
+<h2>Log where the meaning is known</h2>
+<p>A handler knows request details. <code>Run</code> knows HTTP mechanics. The composition root knows this is <em>the application’s</em> lifecycle, so it is the right place to say whether the process stopped cleanly or failed. Keep the returning function testable; let <code>main</code> choose the terminal action.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>try {
+  await runServer()
+  logger.info("server stopped")
+} catch (err) {
+  logger.error({ err }, "server failed")
+  process.exitCode = 1
+}</pre></div><div class="card"><div class="lang go">Go</div><pre>func runApp(run func() error, log *log.Logger) error {
+  if err := run(); err != nil {
+    return fmt.Errorf("run HTTP server: %w", err)
+  }
+  log.Print("HTTP server stopped")
+  return nil
+}</pre></div></div>
+<div class="callout"><strong>One boundary rule:</strong> the success log comes <em>after</em> <code>run()</code> returns <code>nil</code>. It reports a completed lifecycle; it must not claim that the server stopped before active requests have drained.</div>
+
+<h2>Keep failure policy in <code>main</code></h2>
+<p><code>runApp</code> emits a normal completion event and returns errors to its caller. It does not call <code>log.Fatal</code>: that method exits the process, which makes the behavior hard to test and prevents a caller from choosing another policy.</p>
+<pre>func main() {
+    logger := log.Default()
+
+    if err := runApp(func() error {
+        return Run(/* listener, handler, stop context */)
+    }, logger); err != nil {
+        logger.Print(err)
+        os.Exit(1)
+    }
+}</pre>
+<p><a href="https://pkg.go.dev/log#Logger.Print" target="_blank" rel="noreferrer"><code>Logger.Print</code></a> writes a log record; <a href="https://pkg.go.dev/os#Exit" target="_blank" rel="noreferrer"><code>os.Exit(1)</code></a> is explicitly the process-edge choice after a returned failure. A normal <code>nil</code> return falls off the end of <code>main</code> with status 0.</p>
+
+<h2>Test the observable event, not standard output</h2>
+<p>Inject a <code>*log.Logger</code> configured with a <code>bytes.Buffer</code>. This gives the test a deterministic observation point—no global logger mutation, server, port, or sleep.</p>
+<pre>func TestRunAppLogsCleanStop(t *testing.T) {
+    var output bytes.Buffer
+    logger := log.New(&amp;output, "", 0)
+
+    err := runApp(func() error { return nil }, logger)
+
+    if err != nil {
+        t.Fatalf("runApp() error = %v; want nil", err)
+    }
+    if got := output.String(); !strings.Contains(got, "HTTP server stopped") {
+        t.Fatalf("log = %q; want clean-stop event", got)
+    }
+}</pre>
+<p>Use <code>log.New</code> rather than changing the package-level default logger. The <a href="https://pkg.go.dev/log#New" target="_blank" rel="noreferrer">standard library constructor</a> accepts any <code>io.Writer</code>, and a buffer is an in-memory writer. Set flags to <code>0</code> so timestamps do not make an exact or substring assertion noisy.</p>
+
+<h2>Quick check</h2>
+<section class="quiz"><p id="score" class="muted">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="The composition root understands the whole process lifecycle and owns process policy. Handlers should not decide whether a server stop is normal."><p><strong>1.</strong> Which layer should label a clean server shutdown as an application lifecycle event?</p><div class="options"><button class="option" data-choice="a">Every HTTP handler</button><button class="option" data-choice="b">The application boundary around Run</button><button class="option" data-choice="c">The JSON encoder</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="Run has returned nil only after its lifecycle contract completes. Logging afterward makes the event truthful about a drained, completed lifecycle."><p><strong>2.</strong> When should <code>"HTTP server stopped"</code> be logged?</p><div class="options"><button class="option" data-choice="a">Immediately before calling Run</button><button class="option" data-choice="b">When a request first arrives</button><button class="option" data-choice="c">After Run returns nil</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="A logger backed by bytes.Buffer makes output local and inspectable. It avoids global state and process termination."><p><strong>3.</strong> What is the smallest deterministic test setup for a success lifecycle log?</p><div class="options"><button class="option" data-choice="a">A log.Logger writing to bytes.Buffer and a fake func() error returning nil</button><button class="option" data-choice="b">A real listener on port 8080 and time.Sleep</button><button class="option" data-choice="c">log.Fatal and a shell script that checks the exit</button></div><div class="feedback"></div></div></section>
+
+<div class="callout"><strong>Ask your teacher:</strong> ask how to add a build version to these two lifecycle messages without making it available to every handler.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/log" target="_blank" rel="noreferrer">Go standard library: log package</a></li><li><a href="https://pkg.go.dev/log#New" target="_blank" rel="noreferrer">Go standard library: log.New</a></li><li><a href="https://pkg.go.dev/log#Logger.Print" target="_blank" rel="noreferrer">Go standard library: Logger.Print</a></li><li><a href="https://pkg.go.dev/bytes#Buffer" target="_blank" rel="noreferrer">Go standard library: bytes.Buffer</a></li><li><a href="https://pkg.go.dev/os#Exit" target="_blank" rel="noreferrer">Go standard library: os.Exit</a></li></ul>
+<footer class="muted">Lesson 34 · Mission: ship an HTTP server in Go whose lifecycle is clear to both operators and code.</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: the lifecycle signal has a clear home.':'Review the feedback, then trace the lifecycle boundary again.'):'keep going'}`})));</script></body></html>

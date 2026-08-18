@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Transparent Success Path (Lesson 33) <span class="new-badge">new</span></h2>
+<h2>Lifecycle Logging at the Application Boundary (Lesson 34) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>lifecycle event</td><td>top-level server lifecycle log</td><td>An operator-facing record of the application server's terminal outcome. The application boundary can truthfully emit a clean-stop event only after <code>Run</code> returns <code>nil</code>; request handlers do not own that process-level meaning.</td></tr>
+  <tr><td>isolated logger</td><td>injected logger writing to a test sink</td><td>A <code>*log.Logger</code> constructed with <code>log.New</code> and an explicit writer instead of the package default. In a test, a <code>bytes.Buffer</code> captures its output without global state or a process exit.</td></tr>
+  <tr><td>process-exit policy</td><td><code>process.exitCode = 1</code> at top level</td><td>The application edge's decision to terminate non-zero after a returned lifecycle failure. Keep it in <code>main</code>; a returning boundary function remains testable and reusable.</td></tr>
+</table>
+
+<h2>Transparent Success Path (Lesson 33)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>transparent success path</td><td>resolved <code>Promise&lt;void&gt;</code></td><td>The application-boundary rule that a successful Run-like function is called once and its <code>nil</code> result passes through unchanged. Contextual wrapping belongs only to the non-<code>nil</code> failure branch.</td></tr>
