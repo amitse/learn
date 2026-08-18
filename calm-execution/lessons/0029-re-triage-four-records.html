@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 29 — Re-triage Four Records</title>
+<style>
+  :root { --ink:#202033; --muted:#626278; --paper:#fbfaff; --violet:#6d43c5; --violet-pale:#f0ebff; --line:#ddd7eb; --good:#176b4d; --good-pale:#e9f8f1; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#eeeaf5; color:var(--ink); font:17px/1.58 Georgia, serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  article { background:var(--paper); border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:0 12px 32px rgba(43,27,84,.08); }
+  header { padding:34px 28px 26px; background:linear-gradient(135deg,#f6f1ff,#fff); border-bottom:1px solid var(--line); }
+  .eyebrow { margin:0 0 10px; color:var(--violet); font:700 12px/1.2 system-ui,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+  h1 { margin:0; font-size:clamp(2rem,7vw,3.15rem); line-height:1.03; letter-spacing:-.04em; }
+  .lede { margin:15px 0 0; color:var(--muted); font-size:1.1rem; }
+  section { padding:25px 28px 0; }
+  h2 { margin:0 0 10px; font:700 1.25rem/1.2 system-ui,sans-serif; letter-spacing:-.02em; }
+  p { margin:0 0 15px; }
+  .rule { padding:16px 18px; border-left:4px solid var(--violet); background:var(--violet-pale); border-radius:0 10px 10px 0; }
+  .rule strong { color:#44238c; }
+  .steps { padding-left:1.25rem; margin:0; }
+  .steps li { padding:0 0 10px 5px; }
+  .card { margin:0 28px; padding:20px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+  label { display:block; margin:14px 0 6px; font:700 14px/1.25 system-ui,sans-serif; }
+  textarea { width:100%; min-height:68px; resize:vertical; padding:11px; color:var(--ink); font:16px/1.4 system-ui,sans-serif; border:1px solid #bdb5cf; border-radius:8px; }
+  .choices { display:grid; gap:8px; margin-top:9px; }
+  button { appearance:none; width:100%; padding:11px 13px; background:#fff; color:var(--ink); cursor:pointer; text-align:left; font:600 15px/1.3 system-ui,sans-serif; border:1px solid #bdb5cf; border-radius:8px; }
+  button:hover, button:focus { border-color:var(--violet); outline:3px solid #e5dbff; }
+  #feedback { display:none; margin-top:15px; padding:13px; border-radius:8px; background:var(--good-pale); color:var(--good); font-family:system-ui,sans-serif; }
+  .tiny { color:var(--muted); font:14px/1.45 system-ui,sans-serif; }
+  footer { padding:26px 28px 30px; }
+  a { color:#5430a5; }
+  @media (max-width:480px) { header, section, footer { padding-left:20px; padding-right:20px; } .card { margin-left:20px; margin-right:20px; } }
+</style>
+</head>
+<body>
+<main>
+<article>
+  <header>
+    <p class="eyebrow">Calm Execution · Lesson 29</p>
+    <h1>Re-triage four records</h1>
+    <p class="lede">Use a small, readable sample to choose restraint—or one exact next test.</p>
+  </header>
+
+  <section>
+    <h2>One skill: label the earliest break</h2>
+    <p>This is a practical experiment, not a diagnosis. Take four recent ordinary records from your carry-forward plan. For each record, read only:</p>
+    <ol class="steps">
+      <li><strong>Was the named test used?</strong> If a test is currently retained, note yes/no.</li>
+      <li><strong>Did the cue occur?</strong> If no, label it <strong>cue</strong>.</li>
+      <li><strong>Did the two-minute action start?</strong> If the cue occurred but the action did not start, label it <strong>start-side</strong>. If both occurred, label it <strong>none</strong>.</li>
+    </ol>
+    <p class="rule"><strong>The decision boundary:</strong> retain the current plan when the records are working, mixed, or incomplete. Specify one new bounded test only if the same earliest break appears in at least two readable records.</p>
+  </section>
+
+  <section>
+    <h2>12-minute applied exercise</h2>
+    <ol class="steps">
+      <li>Set a 12-minute timer and open four recent records.</li>
+      <li>Write four labels: <em>none</em>, <em>cue</em>, or <em>start-side</em>. If the current test was not used, write <em>incomplete</em> instead.</li>
+      <li>Choose one calm instruction for the next ordinary attempt: <strong>retain</strong>, or one exact <strong>cue / setup / opening-action</strong> test. Do not change more than one link.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Decision check</h2>
+    <p>Try this sample before you read the answer: <em>none, cue, none, cue</em>. What is the next move?</p>
+  </section>
+  <div class="card">
+    <div class="choices">
+      <button type="button" data-answer="no">Redesign the whole ritual so it cannot miss.</button>
+      <button type="button" data-answer="yes">Write one bounded cue test; keep the action and other links stable.</button>
+      <button type="button" data-answer="no">Add a longer session to compensate for the cue misses.</button>
+    </div>
+    <div id="feedback" role="status" aria-live="polite"></div>
+    <label for="plan">Your next ordinary-attempt instruction</label>
+    <textarea id="plan" placeholder="Example: Test cue: put the cue card beside my mug; keep the same two-minute action and frequency."></textarea>
+    <p class="tiny">A complete instruction names either “retain” or one link, one exact change, and what remains stable.</p>
+  </div>
+
+  <footer>
+    <p><strong>Carry forward:</strong> four records are enough for a modest decision, not a verdict. A repeated cue break supports one cue test. A repeated start-side break supports one setup <em>or</em> opening-action test. Everything else supports keeping the plan readable.</p>
+    <p class="tiny">Ask your teacher if you want help turning a real four-record pattern into one bounded instruction.</p>
+  </footer>
+</article>
+</main>
+<script>
+  const feedback = document.getElementById('feedback');
+  document.querySelectorAll('[data-answer]').forEach(button => button.addEventListener('click', () => {
+    const correct = button.dataset.answer === 'yes';
+    feedback.style.display = 'block';
+    feedback.textContent = correct
+      ? 'Yes. “Cue” is the earliest break twice, so one small cue test is supported. Keep the action and the rest of the plan stable.'
+      : 'Not this time. The same earliest break appears twice, which supports one matching cue test—not a redesign, compensation, or longer session.';
+  }));
+</script>
+</body>
+</html>
