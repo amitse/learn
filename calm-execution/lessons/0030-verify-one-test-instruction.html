@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 30 — Verify One Test Instruction</title>
+<style>
+  :root { --ink:#202033; --muted:#626278; --paper:#fbfaff; --violet:#6d43c5; --pale:#f0ebff; --line:#ddd7eb; --good:#176b4d; --good-pale:#e9f8f1; --warn:#7b4c08; --warn-pale:#fff4dc; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#eeeaf5; color:var(--ink); font:17px/1.58 Georgia,serif; }
+  main { max-width:720px; margin:auto; padding:24px 16px 48px; }
+  article { overflow:hidden; background:var(--paper); border:1px solid var(--line); border-radius:18px; box-shadow:0 12px 32px rgba(43,27,84,.08); }
+  header { padding:34px 28px 26px; background:linear-gradient(135deg,#f6f1ff,#fff); border-bottom:1px solid var(--line); }
+  .eyebrow { margin:0 0 10px; color:var(--violet); font:700 12px/1.2 system-ui,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+  h1 { margin:0; font-size:clamp(2rem,7vw,3.1rem); line-height:1.04; letter-spacing:-.04em; }
+  .lede { margin:15px 0 0; color:var(--muted); font-size:1.1rem; }
+  section { padding:25px 28px 0; }
+  h2 { margin:0 0 10px; font:700 1.25rem/1.2 system-ui,sans-serif; letter-spacing:-.02em; }
+  p { margin:0 0 15px; }
+  .rule { padding:16px 18px; border-left:4px solid var(--violet); background:var(--pale); border-radius:0 10px 10px 0; }
+  .steps { margin:0; padding-left:1.25rem; }
+  .steps li { padding:0 0 10px 5px; }
+  .card { margin:24px 28px 0; padding:20px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+  label { display:block; margin:14px 0 6px; font:700 14px/1.25 system-ui,sans-serif; }
+  textarea { width:100%; min-height:70px; padding:11px; resize:vertical; color:var(--ink); font:16px/1.4 system-ui,sans-serif; border:1px solid #bdb5cf; border-radius:8px; }
+  button { appearance:none; width:100%; margin-top:12px; padding:12px 14px; color:#fff; cursor:pointer; font:700 15px/1.25 system-ui,sans-serif; background:var(--violet); border:0; border-radius:8px; }
+  button:hover, button:focus { background:#5932ab; outline:3px solid #d9ccfa; }
+  #feedback { display:none; margin-top:14px; padding:13px; border-radius:8px; font:15px/1.45 system-ui,sans-serif; }
+  .good { background:var(--good-pale); color:var(--good); }
+  .warn { background:var(--warn-pale); color:var(--warn); }
+  .tiny { color:var(--muted); font:14px/1.45 system-ui,sans-serif; }
+  footer { padding:26px 28px 30px; }
+  a { color:#5430a5; }
+  @media (max-width:480px) { header,section,footer { padding-left:20px; padding-right:20px; } .card { margin-left:20px; margin-right:20px; } }
+</style>
+</head>
+<body>
+<main>
+<article>
+  <header>
+    <p class="eyebrow">Calm Execution · Lesson 30</p>
+    <h1>Verify one test instruction</h1>
+    <p class="lede">Before you interpret a test, check that today’s action actually matched the change you wrote.</p>
+  </header>
+
+  <section>
+    <h2>One skill: separate “not used” from “didn’t work”</h2>
+    <p>This is a practical record-reading exercise, not a diagnosis. A test has evidence only when its <em>exact</em> named change happened. Cue-based practice is relevant here because habits can be linked to stable contextual cues; the useful question for your own system is still concrete: what did you actually do today? <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Source: Gardner, Lally &amp; Wardle (2012)</a>.</p>
+    <p class="rule"><strong>Read in order:</strong> (1) Did I use the exact test? (2) Did the cue occur? (3) Did the two-minute action start? If step 1 is no or unclear, write <strong>incomplete</strong>—not “the test failed.”</p>
+  </section>
+
+  <section>
+    <h2>10-minute applied exercise</h2>
+    <ol class="steps">
+      <li>Open your current one-sentence test specification and one recent attempt record.</li>
+      <li>Underline the exact changed behavior in the specification. Examples: “put cue card beside mug” or “open the document before the cue.”</li>
+      <li>Write one line: <strong>test used? yes/no/unclear · cue? yes/no · started? yes/no</strong>.</li>
+      <li>Choose one next ordinary attempt: if the test was used, keep it stable while you gather evidence; if not, use the same test once without adding another change.</li>
+    </ol>
+  </section>
+
+  <div class="card">
+    <h2>Instruction checker</h2>
+    <p class="tiny">Paste your test instruction and record what happened. You will get immediate feedback about whether it is interpretable.</p>
+    <label for="instruction">Current test instruction</label>
+    <textarea id="instruction" placeholder="Test cue: put the cue card beside my mug; keep the same two-minute action and frequency."></textarea>
+    <label for="used">Did that exact change happen today?</label>
+    <textarea id="used" placeholder="Yes — the cue card was beside my mug before coffee."></textarea>
+    <label for="outcome">Cue and start record</label>
+    <textarea id="outcome" placeholder="Cue: yes. Started: yes."></textarea>
+    <button type="button" id="check">Check my record</button>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </div>
+
+  <footer>
+    <p><strong>Carry forward:</strong> a clear test record may support calm retention; an unused or unclear test supports another ordinary attempt with the same instruction. Neither calls for a redesign, a longer session, or punishment.</p>
+    <p class="tiny">Ask your teacher if you want help making a current test instruction more observable.</p>
+  </footer>
+</article>
+</main>
+<script>
+  const feedback = document.getElementById('feedback');
+  document.getElementById('check').addEventListener('click', () => {
+    const instruction = document.getElementById('instruction').value.trim();
+    const used = document.getElementById('used').value.trim();
+    const outcome = document.getElementById('outcome').value.trim();
+    feedback.style.display = 'block';
+    feedback.className = '';
+    if (!instruction || !used || !outcome) {
+      feedback.classList.add('warn');
+      feedback.textContent = 'Add all three fields. A readable record needs the named test, whether it was used, and the cue/start facts.';
+    } else if (/\b(no|not|didn't|did not|unclear)\b/i.test(used)) {
+      feedback.classList.add('warn');
+      feedback.textContent = 'Good distinction: this is incomplete evidence about the test. Keep the same instruction for one ordinary attempt; do not judge the test from this record.';
+    } else {
+      feedback.classList.add('good');
+      feedback.textContent = 'Readable test record. You confirmed the named change before reading cue and start. Keep the rest of the plan stable while you gather the next ordinary record.';
+    }
+  });
+</script>
+</body>
+</html>
