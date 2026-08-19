@@ -303,6 +303,13 @@
   <dt>Recovery priority</dt><dd>The order for a failed F2L check: (1) insert any different fully green-lit pair, (2) use a known positional setup where applicable, (3) normalize exactly once through an empty slot, then inspect. Never chain recovery triggers blindly.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 32 — F2L: Choose the Least-Disruptive Recovery (2026-08-17)</p>
+<h2>F2L Controlled Recovery</h2>
+<dl>
+  <dt>Controlled recovery cycle</dt><dd>A bounded F2L sequence: read the failure; choose one safe action through an empty working slot; execute it once; then re-read pair identity, matching edge, centre-defined slot, and green light. It ends at the re-read, not at a guessed insertion.</dd>
+  <dt>Recovery boundary</dt><dd>The rule that one normalization trigger is the entire action until fresh observations are made. A second trigger without re-reading is guessing, not recovery.</dd>
+  <dt>Fresh read</dt><dd>The mandatory post-normalization inspection. Because the trigger changes the piece relationship, all previous claims about position, corner orientation, and edge readiness must be checked again.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 33 — F2L: Run One Controlled Recovery (2026-08-19)</p>
 </body>
 </html>
