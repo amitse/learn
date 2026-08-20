@@ -33,4 +33,5 @@
 - Lesson 28 added a three-record retention check: confirm the named test was used in all three records, then read cue and start; retain when no earliest break repeats, return only for clear added friction, or gather two ordinary records when evidence is unused or incomplete.
 - Lesson 29 added a four-record re-triage: label each readable record `none`, `cue`, or `start-side` after confirming test use when applicable; retain working, mixed, or incomplete evidence, and specify exactly one matching bounded test only when the same earliest break appears twice.
 - Lesson 30 added a test-instruction fidelity refresh: compare the exact written change with one actual attempt before reading cue and start; label an unused or unclear test `incomplete` and repeat the same instruction without adding a change.
+- Lesson 31 added a two-record test comparison: confirm the same test was used twice, then retain it for two ordinary attempts when non-frictional, return only for clear added friction, or gather two ordinary records when evidence is unused, mixed, or incomplete.
 - Increase difficulty only when the basic start ritual is reliable.
