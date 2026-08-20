@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 35 — Stamp a Build Version into Lifecycle Logs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7788;--yellow:#ffd166;--go:#55d9df;--ts:#74aaf5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:#0a0d13;border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.steps{counter-reset:step;list-style:none;padding:0}.steps li{position:relative;padding:0 0 1rem 3rem}.steps li:before{counter-increment:step;content:counter(step);position:absolute;left:0;top:.1rem;background:var(--accent);color:#071114;width:1.8rem;height:1.8rem;border-radius:50%;text-align:center;font-weight:800;line-height:1.8rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.option.correct{border-color:var(--green);background:#102a21}.option.wrong{border-color:var(--red);background:#33191e}.feedback{min-height:1.5em;margin-top:9px;color:var(--muted)}a{color:#74dce1}footer{margin-top:3rem;font-size:.88rem}@media(max-width:650px){.compare{grid-template-columns:1fr}}
+</style></head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Stamp a build version into<br>lifecycle logs</h1>
+<p class="lede">Lesson 34 gave the application boundary one honest lifecycle message. Make that message operationally useful: each shipped binary should say <em>which build</em> started and stopped, without making build metadata a handler concern.</p>
+
+<h2>The one idea: a build can supply a variable</h2>
+<p>Keep a package-level <code>string</code> variable with a local-development default. At release build time, Go’s linker can replace its value using <code>-ldflags -X</code>. The application boundary reads it when it writes lifecycle logs.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>// Often supplied at build time
+declare const BUILD_VERSION: string
+
+logger.info({ version: BUILD_VERSION },
+  "HTTP server started")</pre></div><div class="card"><div class="lang go">Go</div><pre>package main
+
+// var, not const: the linker sets it.
+var version = "dev"
+
+logger.Printf("HTTP server started version=%s", version)</pre></div></div>
+<div class="callout"><strong>Boundary rule:</strong> <code>version</code> describes the running process, not an HTTP request. Read it in <code>main</code> or the application wrapper—not in every handler and not via <code>context.Context</code>.</div>
+
+<h2>Ship it in three small steps</h2>
+<ol class="steps">
+<li><strong>Declare a default.</strong> <code>var version = "dev"</code> keeps <code>go run ./cmd/server</code> useful on a laptop.</li>
+<li><strong>Log it at the lifecycle boundary.</strong> Include the value in process-level start and clean-stop messages.</li>
+<li><strong>Override it in the release build.</strong> Pass the variable’s package path and name to the linker.</li>
+</ol>
+<pre>go build \
+  -ldflags "-X main.version=v1.4.0" \
+  -o api \
+  ./cmd/server</pre>
+<p>The linker’s <a href="https://pkg.go.dev/cmd/link#hdr-Command_Line" target="_blank" rel="noreferrer"><code>-X importpath.name=value</code> flag</a> changes a string variable at link time. In this small <code>package main</code> example the name is <code>main.version</code>. A variable in another package needs that package’s full import path instead.</p>
+
+<h2>Keep the log and the policy separate</h2>
+<pre>var version = "dev"
+
+func main() {
+    logger := log.Default()
+    logger.Printf("HTTP server starting version=%s", version)
+
+    if err := runApp(runServer, logger); err != nil {
+        logger.Printf("HTTP server failed version=%s err=%v", version, err)
+        os.Exit(1)
+    }
+}
+
+func runApp(run func() error, logger *log.Logger) error {
+    if err := run(); err != nil {
+        return fmt.Errorf("run HTTP server: %w", err)
+    }
+    logger.Printf("HTTP server stopped version=%s", version)
+    return nil
+}</pre>
+<p>The version makes an event identifiable across deploys; it does not change Lesson 34’s policy. <code>runApp</code> still returns failures, and <code>main</code> still chooses the non-zero exit. If the version must be supplied to a helper, pass it explicitly as a parameter so the dependency remains visible.</p>
+
+<h2>Test the default; verify the stamped binary once</h2>
+<p>A unit test can inject a buffer-backed logger and assert <code>version=dev</code> in the normal lifecycle output. The linker flag is a build concern, so the useful final check is simply to run the produced binary and inspect its startup log.</p>
+<pre>func TestRunAppLogsDefaultVersion(t *testing.T) {
+    var output bytes.Buffer
+    logger := log.New(&amp;output, "", 0)
+
+    if err := runApp(func() error { return nil }, logger); err != nil {
+        t.Fatalf("runApp() error = %v", err)
+    }
+    if !strings.Contains(output.String(), "version=dev") {
+        t.Fatalf("log = %q; want default version", output.String())
+    }
+}</pre>
+<p>For a release artifact, build it with <code>-ldflags</code>, start it, and require its first lifecycle line to contain the expected release or commit identifier. This checks the hand-off between CI and the binary instead of pretending the linker is ordinary application logic.</p>
+
+<h2>Quick check</h2>
+<section class="quiz"><p id="score" class="muted">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="-X modifies a string variable at link time. A const is compiled as a constant and cannot be set this way."><p><strong>1.</strong> Which declaration can a release build stamp with <code>-X</code>?</p><div class="options"><button class="option" data-choice="a">const version = "dev"</button><button class="option" data-choice="b">var version = "dev"</button><button class="option" data-choice="c">type version string</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="The lifecycle boundary knows that this is process metadata and already owns the process-level messages. Handlers should stay about requests."><p><strong>2.</strong> Where does <code>version</code> belong for this server?</p><div class="options"><button class="option" data-choice="a">In every request context</button><button class="option" data-choice="b">In each JSON response type</button><button class="option" data-choice="c">At the application lifecycle boundary</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="The default keeps local builds identifiable. CI can override it with a linker flag for a release artifact."><p><strong>3.</strong> Why keep <code>var version = "dev"</code>?</p><div class="options"><button class="option" data-choice="a">So local builds have an honest fallback</button><button class="option" data-choice="b">So handlers can mutate it per request</button><button class="option" data-choice="c">Because -X works only with dev</button></div><div class="feedback"></div></div></section>
+
+<div class="callout"><strong>Ask your teacher:</strong> ask how to stamp a Git commit SHA in CI while keeping release versions human-readable.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/cmd/link#hdr-Command_Line" target="_blank" rel="noreferrer">Go linker command-line documentation: <code>-X</code></a></li><li><a href="https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies" target="_blank" rel="noreferrer">Go command documentation: <code>go build</code></a></li><li><a href="https://pkg.go.dev/log#Logger.Printf" target="_blank" rel="noreferrer">Go standard library: <code>log.Logger.Printf</code></a></li></ul>
+<footer class="muted">Lesson 35 · Mission: ship an HTTP server in Go whose lifecycle messages identify the deployed build.</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: you can identify the binary behind a lifecycle event.':'Review the feedback, then trace build metadata to the application boundary again.'):'keep going'}`})));</script></body></html>

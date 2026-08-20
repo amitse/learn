@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Lifecycle Logging at the Application Boundary (Lesson 34) <span class="new-badge">new</span></h2>
+<h2>Build Version Stamping (Lesson 35) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>linker flag <code>-X</code></td><td>bundler-injected build constant</td><td>A Go linker option in the form <code>-X importpath.name=value</code> that assigns a string variable while producing a binary. For a small <code>package main</code> example, <code>-X main.version=v1.4.0</code> stamps the <code>version</code> variable.</td></tr>
+  <tr><td>build version</td><td><code>BUILD_VERSION</code></td><td>Static identity of a compiled artifact, such as a release tag or commit SHA. It belongs in application-boundary lifecycle logs so an operator can identify the binary that emitted an event.</td></tr>
+  <tr><td>development fallback</td><td>local default build constant</td><td>A source default such as <code>var version = "dev"</code>. It makes local builds truthful when no release pipeline has stamped a value; it must be a <code>var</code>, not a <code>const</code>, for linker substitution.</td></tr>
+</table>
+
+<h2>Lifecycle Logging at the Application Boundary (Lesson 34)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>lifecycle event</td><td>top-level server lifecycle log</td><td>An operator-facing record of the application server's terminal outcome. The application boundary can truthfully emit a clean-stop event only after <code>Run</code> returns <code>nil</code>; request handlers do not own that process-level meaning.</td></tr>
