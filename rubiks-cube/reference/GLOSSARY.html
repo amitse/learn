@@ -310,6 +310,13 @@
   <dt>Fresh read</dt><dd>The mandatory post-normalization inspection. Because the trigger changes the piece relationship, all previous claims about position, corner orientation, and edge readiness must be checked again.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 33 — F2L: Run One Controlled Recovery (2026-08-19)</p>
+<h2>F2L Fresh-Read Decisions</h2>
+<dl>
+  <dt>Fresh-read fork</dt><dd>The post-normalization decision rule: re-identify the pair, matching edge, centre-defined slot, and empty workspace; then choose exactly one next action—insert a fully green-lit pair, make a named U setup for a viable positional template, or normalize once and re-read.</dd>
+  <dt>Positional route</dt><dd>A verified position template showing that one exact <code>0</code>, <code>U</code>, <code>U2</code>, or <code>U′</code> setup can carry a selected pair to its right-side (<code>UFR + UF</code>) or left-side (<code>UFL + UF</code>) destination positions. It is not insertion authorization.</dd>
+  <dt>Action label (F2L)</dt><dd>The deliberately named next action after a fresh read: <strong>insert</strong>, <strong>named U setup</strong>, or <strong>normalize</strong>. Selecting one prevents accidental trigger chaining and requires a new green-light check after any state-changing move.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 34 — F2L: Choose the Next Action After a Fresh Read (2026-08-21)</p>
 </body>
 </html>
