@@ -35,4 +35,5 @@
 - Lesson 30 added a test-instruction fidelity refresh: compare the exact written change with one actual attempt before reading cue and start; label an unused or unclear test `incomplete` and repeat the same instruction without adding a change.
 - Lesson 31 added a two-record test comparison: confirm the same test was used twice, then retain it for two ordinary attempts when non-frictional, return only for clear added friction, or gather two ordinary records when evidence is unused, mixed, or incomplete.
 - Lesson 32 added a four-record test retention check: confirm test use, then read cue and start; retain when no earliest break repeats twice, and write only one matching bounded test when it does.
+- Lesson 33 added a five-record stability check: confirm test use when applicable, label cue/start-side/none, retain the same small plan for two ordinary attempts when no earliest break repeats twice, and specify only one matching bounded test when it does.
 - Increase difficulty only when the basic start ritual is reliable.
