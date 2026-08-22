@@ -317,6 +317,14 @@
   <dt>Action label (F2L)</dt><dd>The deliberately named next action after a fresh read: <strong>insert</strong>, <strong>named U setup</strong>, or <strong>normalize</strong>. Selecting one prevents accidental trigger chaining and requires a new green-light check after any state-changing move.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 34 — F2L: Choose the Next Action After a Fresh Read (2026-08-21)</p>
+<h2>F2L Read-to-Insert Loop</h2>
+<dl>
+  <dt>Read-to-insert loop</dt><dd>A bounded F2L workflow: identify the corner-edge pair and centre-defined empty slot; select the working side from the corner’s white direction; name one viable <code>0</code>, <code>U</code>, <code>U2</code>, or <code>U′</code> setup; verify the full green light; then insert once only if authorized.</dd>
+  <dt>Trigger gate</dt><dd>The final authorization boundary before an F2L insertion trigger. A right trigger requires the corner at <code>UFR</code> with white facing Right and a matching edge at <code>UF</code> whose front sticker matches the front centre; the left trigger mirrors this at <code>UFL</code> with white facing Left. Position alone never opens the gate.</dd>
+  <dt>Deliberate 0 setup</dt><dd>A named choice to make no U-layer turn because the pair already occupies the destination positions. It is still followed by both green-light checks before a trigger is used.</dd>
+  <dt>Not authorized (F2L)</dt><dd>The correct conclusion when either green-light check fails after a planned setup. Stop instead of appending a trigger; insert a different ready pair if available, or normalize once through an empty working slot and take a fresh read.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 35 — F2L: Run a Complete Read-to-Insert Loop (2026-08-22)</p>
 </body>
 </html>
