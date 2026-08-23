@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 36 — Stamp a Git Commit into Lifecycle Logs</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa1b8;--accent:#00adb5;--green:#55d68a;--red:#ff7788;--yellow:#ffd166;--go:#55d9df;--ts:#74aaf5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:.35rem 0 .7rem}h2{margin:2.25rem 0 .7rem;color:var(--accent);font-size:1.3rem}.lede,.muted{color:var(--muted)}.card,.callout,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:1.2rem 0}.callout{border-left:4px solid var(--yellow)}.callout strong{color:var(--yellow)}a{color:#74dfe4}code,pre{font-family:"SFMono-Regular",Consolas,monospace}code{background:var(--surface2);padding:.12em .35em;border-radius:4px;color:#b9edf0}pre{white-space:pre;overflow:auto;background:#0a0d13;border:1px solid var(--border);border-radius:10px;padding:18px;color:#d8e4f0;font-size:.84rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lang{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}.ts{color:var(--ts)}.go{color:var(--go)}.compare pre{margin:0}.steps{counter-reset:step;list-style:none;padding:0}.steps li{position:relative;padding:0 0 1rem 3rem}.steps li:before{counter-increment:step;content:counter(step);position:absolute;left:0;top:.1rem;background:var(--accent);color:#071114;width:1.8rem;height:1.8rem;border-radius:50%;text-align:center;font-weight:800;line-height:1.8rem}.options{display:grid;gap:8px;margin-top:12px}.option{cursor:pointer;text-align:left;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:inherit}.option:hover{border-color:var(--accent)}.option:disabled{cursor:default}.correct{border-color:var(--green)!important;background:#123222}.wrong{border-color:var(--red)!important;background:#3a1720}.feedback{min-height:1.6em;margin-top:10px;color:var(--muted)}footer{margin-top:42px;font-size:.85rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head>
+<body><main class="wrap">
+<div class="eyebrow">Go for TypeScript devs · under 10 minutes</div>
+<h1>Stamp a Git commit into<br>lifecycle logs</h1>
+<p class="lede">A release version answers “what release?” A commit SHA answers the sharper question: <em>exactly which source revision produced this binary?</em> Add it beside Lesson 35’s version at the application boundary.</p>
+
+<h2>The one idea: record both identities</h2>
+<p>Keep one linker-set string for a human release label and one for the immutable source revision. Give each a truthful local fallback, then log both once when the process starts, stops, or fails.</p>
+<div class="compare"><div class="card"><div class="lang ts">Node / TypeScript</div><pre>// CI commonly injects both values.
+logger.info({
+  version: process.env.BUILD_VERSION,
+  revision: process.env.GIT_SHA,
+}, "HTTP server starting")</pre></div><div class="card"><div class="lang go">Go</div><pre>// Both must be vars for -X.
+var version = "dev"
+var revision = "none"
+
+logger.Printf(
+  "HTTP server starting version=%s revision=%s",
+  version, revision,
+)</pre></div></div>
+<div class="callout"><strong>Why two fields?</strong> <code>v1.4.0</code> is readable and may be rebuilt. A full commit SHA identifies the exact source revision. They describe the binary, so they remain process metadata—not request context or response data.</div>
+
+<h2>Build one identifiable binary</h2>
+<p>In CI, resolve the commit once and hand its value to the linker. The <a href="https://pkg.go.dev/cmd/link#hdr-Command_Line" target="_blank" rel="noreferrer">Go linker’s <code>-X</code> option</a> sets a string variable named as <code>importpath.name</code>. For values declared in <code>package main</code>, that is <code>main.version</code> and <code>main.revision</code>.</p>
+<pre># Resolve these in the CI checkout, not at request time.
+VERSION=v1.4.0
+REVISION=$(git rev-parse HEAD)
+
+go build \
+  -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" \
+  -o api \
+  ./cmd/server</pre>
+<p><code>git rev-parse HEAD</code> prints the object name of the commit named by <code>HEAD</code>; using the full value avoids short-SHA ambiguity. The <a href="https://git-scm.com/docs/git-rev-parse" target="_blank" rel="noreferrer">Git documentation for <code>rev-parse</code></a> describes this revision-resolution command.</p>
+
+<h2>Make the boundary log the pair</h2>
+<pre>var version = "dev"
+var revision = "none"
+
+func main() {
+    logger := log.Default()
+    logger.Printf("HTTP server starting version=%s revision=%s", version, revision)
+
+    if err := runApp(runServer, logger); err != nil {
+        logger.Printf("HTTP server failed version=%s revision=%s err=%v", version, revision, err)
+        os.Exit(1)
+    }
+}
+
+func runApp(run func() error, logger *log.Logger) error {
+    if err := run(); err != nil {
+        return fmt.Errorf("run HTTP server: %w", err)
+    }
+    logger.Printf("HTTP server stopped version=%s revision=%s", version, revision)
+    return nil
+}</pre>
+<p>This extends—not replaces—the prior lifecycle contract: <code>runApp</code> still returns an error, and <code>main</code> still owns the exit decision. The additional fields only identify the artifact that emitted the event.</p>
+
+<h2>Test the source defaults; smoke-test the build hand-off</h2>
+<ol class="steps"><li><strong>Unit test the local defaults.</strong> Use the existing buffer-backed logger and require both <code>version=dev</code> and <code>revision=none</code> in a clean-stop log.</li><li><strong>Build a stamped artifact in CI.</strong> Pass values only through <code>-ldflags</code>; do not mutate package globals in a test.</li><li><strong>Run the artifact once.</strong> Require its startup line to contain the expected version and SHA. That validates the real CI → linker → binary hand-off.</li></ol>
+<pre>func TestRunAppLogsLocalBuildIdentity(t *testing.T) {
+    var output bytes.Buffer
+    logger := log.New(&amp;output, "", 0)
+
+    if err := runApp(func() error { return nil }, logger); err != nil {
+        t.Fatalf("runApp() error = %v", err)
+    }
+    got := output.String()
+    if !strings.Contains(got, "version=dev") ||
+        !strings.Contains(got, "revision=none") {
+        t.Fatalf("log = %q; want local build identity", got)
+    }
+}</pre>
+
+<h2>Quick check</h2>
+<section class="quiz"><p id="score" class="muted">Choose an answer for instant feedback.</p>
+<div class="q" data-answer="b" data-explain="A version is a friendly release label; the full commit SHA distinguishes the exact source revision used to make the binary."><p><strong>1.</strong> Why log a commit SHA in addition to <code>v1.4.0</code>?</p><div class="options"><button class="option" data-choice="a">It lets handlers identify users.</button><button class="option" data-choice="b">It identifies the exact source revision behind the binary.</button><button class="option" data-choice="c">It replaces error wrapping.</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="c" data-explain="Both values are build-time process metadata. The application boundary already owns the lifecycle messages that identify the running binary."><p><strong>2.</strong> Where should <code>revision</code> be read for this server?</p><div class="options"><button class="option" data-choice="a">From every request context.</button><button class="option" data-choice="b">From each JSON response struct.</button><button class="option" data-choice="c">At the application lifecycle boundary.</button></div><div class="feedback"></div></div>
+<div class="q" data-answer="a" data-explain="The linker sets string variables with -X. Keeping defaults gives local builds an explicit identity; CI overrides them in the artifact build."><p><strong>3.</strong> What is the correct declaration for a linker-stamped revision?</p><div class="options"><button class="option" data-choice="a">var revision = "none"</button><button class="option" data-choice="b">const revision = "none"</button><button class="option" data-choice="c">func revision() string</button></div><div class="feedback"></div></div></section>
+
+<div class="callout"><strong>Ask your teacher:</strong> ask how to expose this same build identity safely from a narrow readiness endpoint, and when it should remain logs-only.</div>
+<h2>References</h2><ul class="muted"><li><a href="https://pkg.go.dev/cmd/link#hdr-Command_Line" target="_blank" rel="noreferrer">Go linker command-line documentation: <code>-X</code></a></li><li><a href="https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies" target="_blank" rel="noreferrer">Go command documentation: <code>go build</code></a></li><li><a href="https://git-scm.com/docs/git-rev-parse" target="_blank" rel="noreferrer">Git documentation: <code>git rev-parse</code></a></li></ul>
+<footer class="muted">Lesson 36 · Mission: ship an HTTP server in Go whose lifecycle logs identify the exact deployed artifact.</footer>
+</main><script>let answered=0,correct=0;document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(q.dataset.done)return;q.dataset.done='1';answered++;const good=b.dataset.choice===q.dataset.answer;q.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.choice===q.dataset.answer)x.classList.add('correct')});if(!good)b.classList.add('wrong');if(good)correct++;q.querySelector('.feedback').textContent=(good?'✓ Correct. ':'✗ Not quite. ')+q.dataset.explain;document.getElementById('score').textContent=`${correct}/${answered} correct — ${answered===3?(correct===3?'Excellent: you can trace an operational event to the exact source revision.':'Review the feedback, then separate release label, revision, and request data again.'):'keep going'}`})));</script></body></html>

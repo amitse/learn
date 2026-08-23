@@ -45,7 +45,14 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Build Version Stamping (Lesson 35) <span class="new-badge">new</span></h2>
+<h2>Git Commit Build Identity (Lesson 36) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>revision / commit SHA</td><td><code>GIT_SHA</code> build value</td><td>The immutable Git object name for the exact source commit that produced a binary. Resolve it in CI with <code>git rev-parse HEAD</code>, then log it with a human-readable release version so an operator can trace a lifecycle event to both a release and precise source.</td></tr>
+  <tr><td>build identity pair</td><td><code>BUILD_VERSION</code> + <code>GIT_SHA</code></td><td>Two static fields describing the process artifact: a readable version such as <code>v1.4.0</code> plus a source revision. Keep local fallbacks such as <code>var version = "dev"</code> and <code>var revision = "none"</code>; stamp both with separate linker <code>-X</code> flags in CI.</td></tr>
+</table>
+
+<h2>Build Version Stamping (Lesson 35)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>linker flag <code>-X</code></td><td>bundler-injected build constant</td><td>A Go linker option in the form <code>-X importpath.name=value</code> that assigns a string variable while producing a binary. For a small <code>package main</code> example, <code>-X main.version=v1.4.0</code> stamps the <code>version</code> variable.</td></tr>
