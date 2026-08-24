@@ -325,6 +325,15 @@
   <dt>Not authorized (F2L)</dt><dd>The correct conclusion when either green-light check fails after a planned setup. Stop instead of appending a trigger; insert a different ready pair if available, or normalize once through an empty working slot and take a fresh read.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 35 — F2L: Run a Complete Read-to-Insert Loop (2026-08-22)</p>
+<h2>F2L Attempt Audit</h2>
+<dl>
+  <dt>Observation log (F2L)</dt><dd>A one-line record of a single F2L attempt: the named plan, first observed mismatch, diagnostic label, and one change for the next attempt. It turns a physical attempt into evidence rather than a vague impression.</dd>
+  <dt>Planning error (F2L)</dt><dd>The first mismatch occurs before the expected destination positions: the pair, centre-defined slot, working side, or named U setup was misread or predicted incorrectly.</dd>
+  <dt>Green-light failure</dt><dd>Destination positions were reached, but either the corner white-direction or the edge-centre check fails. It blocks insertion; re-read or normalize once through an empty working slot rather than forcing a trigger.</dd>
+  <dt>Execution error (F2L)</dt><dd>Both green-light checks passed before an authorized trigger, but the expected insertion did not result. Audit the hold or move execution only after re-establishing an understandable state.</dd>
+  <dt>First mismatch</dt><dd>The earliest point at which an F2L attempt differs from its named plan. It is the diagnostic target because later errors can be consequences of it.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 36 — F2L: Audit One F2L Read-to-Insert Attempt (2026-08-24)</p>
 </body>
 </html>
