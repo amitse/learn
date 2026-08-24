@@ -37,4 +37,5 @@
 - Lesson 32 added a four-record test retention check: confirm test use, then read cue and start; retain when no earliest break repeats twice, and write only one matching bounded test when it does.
 - Lesson 33 added a five-record stability check: confirm test use when applicable, label cue/start-side/none, retain the same small plan for two ordinary attempts when no earliest break repeats twice, and specify only one matching bounded test when it does.
 - Lesson 34 added a six-record continuity check: confirm test use when applicable, label cue/start-side/none, retain the same small plan for two ordinary attempts when no earliest break repeats twice, and specify only one matching bounded test when it does.
+- Lesson 35 added a maintenance handoff: turn the six-record decision into one written next instruction—retain the same concrete plan for two ordinary attempts, gather two records when incomplete, or run one already-specified matching test when a break repeats—without expansion or catch-up work.
 - Increase difficulty only when the basic start ritual is reliable.
