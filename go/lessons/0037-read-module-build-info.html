@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 37 — Read Module Build Info</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b5;--accent:#00adb5;--good:#49c779;--bad:#ff6b6b;--ts:#4b91e8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:880px;margin:auto;padding:42px 20px 70px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:.35rem 0 .8rem}h2{margin:2.2rem 0 .7rem;font-size:1.3rem}.lede,.muted{color:var(--muted)}.goal{border-left:3px solid var(--accent);padding:12px 16px;background:var(--surface);border-radius:0 8px 8px 0;margin:1.4rem 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin:16px 0}.label{font-weight:800;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}.ts{color:var(--ts)}pre{overflow:auto;background:#11141d;border:1px solid var(--border);padding:15px;border-radius:8px;color:#d9f3f4;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#242938;padding:.1em .3em;border-radius:4px}table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid var(--border);padding:10px;text-align:left;vertical-align:top}th{color:var(--accent)}.steps{counter-reset:item;padding:0}.steps li{list-style:none;counter-increment:item;margin:12px 0;padding-left:42px;position:relative}.steps li:before{content:counter(item);position:absolute;left:0;top:0;background:var(--accent);color:#071417;border-radius:50%;font-weight:800;width:26px;height:26px;text-align:center;line-height:26px}button{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:5px 5px 0 0;text-align:left;cursor:pointer;font:inherit}button:hover{border-color:var(--accent)}button.correct{border-color:var(--good);background:#123121}button.wrong{border-color:var(--bad);background:#351c23}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.good{color:var(--good)}.bad{color:var(--bad)}a{color:var(--accent)}footer{border-top:1px solid var(--border);margin-top:34px;padding-top:16px;color:var(--muted);font-size:.9rem}@media(max-width:650px){.grid{grid-template-columns:1fr}main{padding-top:27px}}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">Go · Lesson 37 · under 10 minutes</div>
+<h1>Read module build info</h1>
+<p class="lede">Your lifecycle logs already carry linker-stamped <code>version</code> and <code>revision</code>. Now learn the small diagnostic tool Go can embed automatically: <code>runtime/debug.ReadBuildInfo</code>.</p>
+<div class="goal"><strong>Tangible win:</strong> add a safe “best available” module version to one startup log, without making a handler depend on build metadata.</div>
+
+<h2>One concept: metadata has two sources</h2>
+<div class="grid"><section class="card"><div class="label ts">TypeScript mental model</div><p>A bundler or CI typically replaces a source value such as <code>BUILD_VERSION</code>. Your code reads the injected value at runtime.</p></section><section class="card"><div class="label">Go</div><p>Go supports linker-stamped variables, and may also record module/build settings in the executable. <code>ReadBuildInfo</code> reads the latter if it is available.</p></section></div>
+<table><tr><th>Source</th><th>Best for</th><th>Important limit</th></tr><tr><td>linker <code>-X main.version=…</code></td><td>Your explicit release contract</td><td>Only values your build command supplies</td></tr><tr><td><code>debug.ReadBuildInfo()</code></td><td>Diagnostic module and VCS settings</td><td>It can return <code>ok == false</code>; settings can vary by build mode</td></tr></table>
+<p>Do not treat build info as request data. It still belongs at the application boundary—near startup logs—not in a response or handler.</p>
+
+<h2>Use it defensively</h2>
+<p>The function returns <code>(*debug.BuildInfo, bool)</code>. The boolean is the contract: only inspect the value when it is true. <code>Main.Version</code> is often <code>"(devel)"</code> for local builds, so retain the linker default as your human-facing fallback.</p>
+<pre>package main
+
+import (
+    "log"
+    "runtime/debug"
+)
+
+var version = "dev" // CI may replace this with -X main.version=v1.4.0
+
+func moduleVersion() string {
+    info, ok := debug.ReadBuildInfo()
+    if !ok || info.Main.Version == "" || info.Main.Version == "(devel)" {
+        return version
+    }
+    return info.Main.Version
+}
+
+func logStarting(logger *log.Logger) {
+    logger.Printf("HTTP server starting version=%s", moduleVersion())
+}</pre>
+<p>That is intentionally boring: one pure-ish selector, one boundary-owned log call. Your existing <code>revision</code> linker variable remains the precise source identity; this lesson only supplies a useful fallback/readout for module builds.</p>
+
+<h2>Do the 3-minute implementation</h2>
+<ol class="steps"><li>Add <code>runtime/debug</code> and the <code>moduleVersion</code> function above beside your existing build variables.</li><li>Call it from the startup lifecycle log, not from an HTTP handler.</li><li>Run <code>go run .</code>. A local checkout will usually log your explicit <code>dev</code> fallback.</li><li>Keep the CI linker command that stamps <code>version</code> and <code>revision</code>. Explicit release metadata is still your stable deploy contract.</li></ol>
+<div class="card"><div class="label">Why not replace linker variables?</div><p><code>ReadBuildInfo</code> reports what the toolchain recorded; linker variables express the identity policy you control. Prefer the linker value for a named release and use build info as optional diagnostics or a fallback—not as a reason to remove the explicit contract.</p></div>
+
+<section class="quiz"><div class="label">Quick check</div><h2 style="margin-top:.35rem">What must code do before reading <code>info.Main.Version</code>?</h2><button data-answer="wrong">Assume build info always exists in Go binaries.</button><button data-answer="correct">Check the <code>ok</code> boolean returned by <code>debug.ReadBuildInfo</code>.</button><button data-answer="wrong">Start a goroutine so reading it cannot block startup.</button><div class="feedback" aria-live="polite"></div></section>
+<section class="quiz"><div class="label">Scenario</div><h2 style="margin-top:.35rem">Where should <code>moduleVersion()</code> be called for this server?</h2><button data-answer="wrong">Inside every JSON handler, so each response proves its version.</button><button data-answer="correct">At the application boundary when emitting the process startup lifecycle log.</button><button data-answer="wrong">Inside middleware after every request completes.</button><div class="feedback" aria-live="polite"></div></section>
+
+<h2>References</h2><ul><li><a href="https://pkg.go.dev/runtime/debug#ReadBuildInfo">Go standard library: runtime/debug.ReadBuildInfo</a> — return contract and build-info availability.</li><li><a href="https://pkg.go.dev/runtime/debug#BuildInfo">Go standard library: debug.BuildInfo</a> — <code>Main</code> module and build settings fields.</li><li><a href="https://pkg.go.dev/cmd/link">Go linker documentation</a> — <code>-X importpath.name=value</code> behavior.</li></ul>
+<footer>Ask your teacher a follow-up if you want to log selected VCS settings such as <code>vcs.revision</code> next. Keep the scope narrow: decide one identity precedence rule before adding structured logging.</footer>
+</main><script>document.querySelectorAll('.quiz button').forEach(b=>b.addEventListener('click',()=>{const q=b.closest('.quiz'),f=q.querySelector('.feedback');q.querySelectorAll('button').forEach(x=>x.disabled=true);if(b.dataset.answer==='correct'){b.classList.add('correct');f.className='feedback good';f.textContent='Correct — the bool says whether build information is available.'}else{b.classList.add('wrong');q.querySelector('[data-answer="correct"]').classList.add('correct');f.className='feedback bad';f.textContent='Not quite. ReadBuildInfo can report unavailable metadata; check ok before dereferencing info.'}}));</script></body></html>

@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Git Commit Build Identity (Lesson 36) <span class="new-badge">new</span></h2>
+<h2>Module Build Info (Lesson 37) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>debug.ReadBuildInfo</code></td><td>optional toolchain build metadata</td><td>A standard-library function returning <code>(*debug.BuildInfo, bool)</code>. The boolean says whether build information is available in the running executable; check it before reading the pointer. Use it for optional module/build diagnostics at the process boundary.</td></tr>
+  <tr><td><code>BuildInfo.Main.Version</code></td><td>runtime-exposed package version</td><td>The version of the main module recorded in build information. A local build may report <code>"(devel)"</code>, so use a deliberate linker-stamped version as the stable release identity and treat this value as an optional supplement or fallback source.</td></tr>
+  <tr><td>build-info availability guard</td><td>optional-value guard</td><td>The <code>ok</code> check after <code>info, ok := debug.ReadBuildInfo()</code>. It prevents dereferencing unavailable metadata and makes the fallback behavior explicit.</td></tr>
+</table>
+
+<h2>Git Commit Build Identity (Lesson 36)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>revision / commit SHA</td><td><code>GIT_SHA</code> build value</td><td>The immutable Git object name for the exact source commit that produced a binary. Resolve it in CI with <code>git rev-parse HEAD</code>, then log it with a human-readable release version so an operator can trace a lifecycle event to both a release and precise source.</td></tr>
