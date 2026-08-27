@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 38 — Choose a Revision Precedence Rule</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b5;--accent:#00adb5;--good:#49c779;--bad:#ff6b6b;--ts:#4b91e8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:880px;margin:auto;padding:42px 20px 70px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:.35rem 0 .8rem}h2{margin:2.2rem 0 .7rem;font-size:1.3rem}.lede,.muted{color:var(--muted)}.goal{border-left:3px solid var(--accent);padding:12px 16px;background:var(--surface);border-radius:0 8px 8px 0;margin:1.4rem 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin:16px 0}.label{font-weight:800;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}.ts{color:var(--ts)}pre{overflow:auto;background:#11141d;border:1px solid var(--border);padding:15px;border-radius:8px;color:#d9f3f4;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#242938;padding:.1em .3em;border-radius:4px}table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid var(--border);padding:10px;text-align:left;vertical-align:top}th{color:var(--accent)}.steps{counter-reset:item;padding:0}.steps li{list-style:none;counter-increment:item;margin:12px 0;padding-left:42px;position:relative}.steps li:before{content:counter(item);position:absolute;left:0;top:0;background:var(--accent);color:#071417;border-radius:50%;font-weight:800;width:26px;height:26px;text-align:center;line-height:26px}button{display:block;width:100%;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:8px 0;text-align:left;cursor:pointer;font:inherit}button:hover:not(:disabled){border-color:var(--accent)}button:disabled{cursor:default}.correct{border-color:var(--good)!important;background:#12331f}.wrong{border-color:var(--bad)!important;background:#3a1c23}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.good{color:var(--good)}.bad{color:#ff9b9b}a{color:#72d9dd}footer{margin-top:32px;color:var(--muted);font-size:.9rem;border-top:1px solid var(--border);padding-top:16px}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">Go · Lesson 38 · under 10 minutes</div>
+<h1>Choose a revision precedence rule</h1>
+<p class="lede">Your binary can know its source revision in two places: the CI-owned linker variable from Lesson 36 and the optional <code>vcs.revision</code> setting exposed by build info. Pick one deterministic rule so startup logs never disagree ambiguously.</p>
+<div class="goal"><strong>Tangible win:</strong> write a small, testable selector that uses an explicitly stamped revision when present and otherwise safely falls back to Go's recorded VCS revision.</div>
+
+<h2>One concept: an explicit value wins</h2>
+<div class="grid"><section class="card"><div class="label ts">TypeScript mental model</div><p>Prefer a CI-injected <code>GIT_SHA</code>; use optional bundler metadata only if the explicit environment value is missing.</p></section><section class="card"><div class="label">Go</div><p>Prefer linker-stamped <code>revision</code>; use the <code>vcs.revision</code> build setting only when that explicit value is its local fallback.</p></section></div>
+<table><tr><th>Candidate</th><th>Role</th><th>Rule</th></tr><tr><td><code>revision</code> linker variable</td><td>Intentional release identity</td><td>Use it unless it is the local fallback <code>"none"</code>.</td></tr><tr><td><code>vcs.revision</code> build setting</td><td>Toolchain diagnostic fallback</td><td>Use it only when build info is available and the setting is non-empty.</td></tr><tr><td>neither</td><td>Truthful local result</td><td>Log <code>"none"</code>; do not invent a SHA.</td></tr></table>
+<p>This is not about finding the “most detailed” value. CI's linker value is the deploy contract you control. Build settings are useful evidence, but may be absent depending on how the binary was built.</p>
+
+<h2>Encode the policy as a pure selector</h2>
+<p><code>debug.BuildInfo.Settings</code> is a slice of key/value pairs. Keep the runtime call at the edge; make the choice itself a plain function so tests can supply a small settings slice.</p>
+<pre>package main
+
+import "runtime/debug"
+
+var revision = "none" // CI: -X main.revision=$(git rev-parse HEAD)
+
+type buildSetting struct { Key, Value string }
+
+func selectedRevision(stamped string, settings []buildSetting) string {
+    if stamped != "" &amp;&amp; stamped != "none" {
+        return stamped
+    }
+    for _, s := range settings {
+        if s.Key == "vcs.revision" &amp;&amp; s.Value != "" {
+            return s.Value
+        }
+    }
+    return "none"
+}
+
+func revisionForLog() string {
+    info, ok := debug.ReadBuildInfo()
+    if !ok { return selectedRevision(revision, nil) }
+    settings := make([]buildSetting, 0, len(info.Settings))
+    for _, s := range info.Settings {
+        settings = append(settings, buildSetting{s.Key, s.Value})
+    }
+    return selectedRevision(revision, settings)
+}</pre>
+<p>The adapter is deliberately small. An equally good production design is to let <code>selectedRevision</code> accept <code>[]debug.BuildSetting</code> directly; the lesson's tiny type makes its policy test independent of runtime discovery.</p>
+
+<h2>Prove the three outcomes</h2>
+<pre>func TestSelectedRevision(t *testing.T) {
+    tests := []struct {
+        name, stamped string
+        settings      []buildSetting
+        want          string
+    }{
+        {"stamped beats build info", "a1b2", []buildSetting{{"vcs.revision", "c3d4"}}, "a1b2"},
+        {"falls back to VCS setting", "none", []buildSetting{{"vcs.revision", "c3d4"}}, "c3d4"},
+        {"honest local fallback", "none", nil, "none"},
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            if got := selectedRevision(tt.stamped, tt.settings); got != tt.want {
+                t.Fatalf("got %q, want %q", got, tt.want)
+            }
+        })
+    }
+}</pre>
+<ol class="steps"><li>Keep your existing <code>var revision = "none"</code> and CI linker stamp.</li><li>Add the selector and call <code>revisionForLog()</code> from the startup lifecycle log only.</li><li>Add the three table rows above and run <code>go test ./...</code>.</li><li>Confirm that a local build can honestly log <code>none</code>, while a release build logs the CI SHA.</li></ol>
+
+<section class="quiz"><div class="label">Quick check</div><h2 style="margin-top:.35rem">Both sources exist: linker <code>revision</code> is <code>"release-sha"</code> and <code>vcs.revision</code> is <code>"other-sha"</code>. What should appear in the log?</h2><button data-answer="correct"><code>release-sha</code>, because the explicit CI stamp is the chosen contract.</button><button data-answer="wrong"><code>other-sha</code>, because build info is closer to the Go runtime.</button><button data-answer="wrong">Both values joined together, so no information is lost.</button><div class="feedback" aria-live="polite"></div></section>
+<section class="quiz"><div class="label">Scenario</div><h2 style="margin-top:.35rem">The linker variable is <code>"none"</code>, and build info is unavailable. What is the truthful selector result?</h2><button data-answer="wrong">Generate a random ID so the log always has a revision.</button><button data-answer="correct"><code>none</code>; optional metadata must not be fabricated.</button><button data-answer="wrong">Panic, because every executable must have VCS metadata.</button><div class="feedback" aria-live="polite"></div></section>
+
+<h2>References</h2><ul><li><a href="https://pkg.go.dev/runtime/debug#ReadBuildInfo">Go standard library: runtime/debug.ReadBuildInfo</a> — availability contract for runtime build information.</li><li><a href="https://pkg.go.dev/runtime/debug#BuildSetting">Go standard library: debug.BuildSetting</a> — build settings are key/value pairs.</li><li><a href="https://pkg.go.dev/cmd/go#hdr-Build_and_test_caching">Go command documentation</a> — describes embedded VCS revision settings such as <code>vcs.revision</code>.</li><li><a href="https://pkg.go.dev/cmd/link">Go linker documentation</a> — <code>-X</code> stamps a string variable at link time.</li></ul>
+<footer>Ask your teacher a follow-up if you want to refactor the selector to use <code>debug.BuildSetting</code> directly, or to migrate the lifecycle fields to <code>log/slog</code>. Preserve the policy first; change log formatting second.</footer>
+</main><script>document.querySelectorAll('.quiz button').forEach(b=>b.addEventListener('click',()=>{const q=b.closest('.quiz'),f=q.querySelector('.feedback');q.querySelectorAll('button').forEach(x=>x.disabled=true);if(b.dataset.answer==='correct'){b.classList.add('correct');f.className='feedback good';f.textContent='Correct — explicit, CI-owned identity has precedence; optional build info is the fallback.'}else{b.classList.add('wrong');q.querySelector('[data-answer="correct"]').classList.add('correct');f.className='feedback bad';f.textContent='Not quite. Keep the precedence deterministic: stamped revision → vcs.revision → none.'}}));</script></body></html>

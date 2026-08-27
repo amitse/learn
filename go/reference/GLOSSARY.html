@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Module Build Info (Lesson 37) <span class="new-badge">new</span></h2>
+<h2>Revision Precedence (Lesson 38) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>vcs.revision</code></td><td>toolchain-recorded source SHA</td><td>An optional <code>debug.BuildInfo.Settings</code> entry containing the VCS revision recorded by the Go toolchain. It is useful diagnostic fallback metadata, but can be unavailable depending on the build.</td></tr>
+  <tr><td>revision precedence</td><td><code>GIT_SHA</code> config precedence</td><td>A deterministic identity rule: prefer a non-fallback CI linker-stamped <code>revision</code>; otherwise use a non-empty <code>vcs.revision</code>; otherwise report <code>"none"</code>. Do not concatenate conflicting values or invent a SHA.</td></tr>
+  <tr><td>pure selector</td><td>pure metadata-choice function</td><td>A function such as <code>selectedRevision(stamped, settings)</code> that chooses an identity without reading global runtime state. It makes precedence simple to cover with table-driven tests.</td></tr>
+</table>
+
+<h2>Module Build Info (Lesson 37)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>debug.ReadBuildInfo</code></td><td>optional toolchain build metadata</td><td>A standard-library function returning <code>(*debug.BuildInfo, bool)</code>. The boolean says whether build information is available in the running executable; check it before reading the pointer. Use it for optional module/build diagnostics at the process boundary.</td></tr>
