@@ -42,4 +42,5 @@
 - Lesson 37 added a rolling two-record instruction: label the latest records incomplete/cue/start-side/none, then retain the existing plan for two ordinary attempts unless the same readable earliest break appears twice and supports one already-specified matching test.
 - Lesson 38 added a rolling-instruction fidelity check: compare the written instruction with both covered attempts; when it was not followed or is unclear, repeat it and gather two readable records before interpreting outcomes.
 - Lesson 39 combined rolling-instruction fidelity and triage: verify the instruction, label each readable record `none`/`cue`/`start-side`, then retain for two attempts, gather readable evidence, or use one already-specified matching test.
+- Lesson 40 added a verifiable next-instruction sentence: name one next move plus the stable cue, two-minute action, frequency, and any active test; repeat for incomplete evidence, retain for mixed/workable evidence, or use one already-specified matching test for a repeated break.
 - Increase difficulty only when the basic start ritual is reliable.
