@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 39 — Test a Revision Precedence Table</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b5;--accent:#00adb5;--good:#49c779;--bad:#ff6b6b;--ts:#4b91e8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.58 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:880px;margin:auto;padding:42px 20px 70px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:.35rem 0 .8rem}h2{margin:2.2rem 0 .7rem;font-size:1.3rem}.lede,.muted{color:var(--muted)}.goal{border-left:3px solid var(--accent);padding:12px 16px;background:var(--surface);border-radius:0 8px 8px 0;margin:1.4rem 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin:16px 0}.label{font-weight:800;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}.ts{color:var(--ts)}pre{overflow:auto;background:#11141d;border:1px solid var(--border);padding:15px;border-radius:8px;color:#d9f3f4;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#242938;padding:.1em .3em;border-radius:4px}table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid var(--border);padding:10px;text-align:left;vertical-align:top}th{color:var(--accent)}.steps{counter-reset:item;padding:0}.steps li{list-style:none;counter-increment:item;margin:12px 0;padding-left:42px;position:relative}.steps li:before{content:counter(item);position:absolute;left:0;top:0;background:var(--accent);color:#071417;border-radius:50%;font-weight:800;width:26px;height:26px;text-align:center;line-height:26px}button{display:block;width:100%;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:8px 0;text-align:left;cursor:pointer;font:inherit}button:hover:not(:disabled){border-color:var(--accent)}button:disabled{cursor:default}.correct{border-color:var(--good);background:#11281c}.wrong{border-color:var(--bad);background:#30191d}.feedback{min-height:1.5em;margin-top:12px;font-weight:650}.good{color:var(--good)}.bad{color:var(--bad)}a{color:#72d8df}footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--border);color:var(--muted);font-size:.9rem}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">Go · Lesson 39 · under 10 minutes</div>
+<h1>Test a revision precedence table</h1>
+<p class="lede">Lesson 38 made the build-identity rule explicit: stamped revision → <code>vcs.revision</code> → <code>none</code>. Now lock that operational contract down with a table-driven test, including the easy-to-miss empty-string case.</p>
+<div class="goal"><strong>Tangible win:</strong> write a test that proves a CI release SHA wins, optional build info is a fallback, and blank data never becomes a fake revision.</div>
+
+<h2>One concept: the table is the policy</h2>
+<div class="grid"><section class="card"><div class="label ts">TypeScript mental model</div><p>A <code>test.each</code> matrix makes every configuration-precedence case visible: inputs on the left, expected identity on the right.</p></section><section class="card"><div class="label">Go</div><p>A slice of anonymous structs plus <code>t.Run</code> is the standard-library table-driven equivalent. Each row documents one contract outcome.</p></section></div>
+<p>Do not test <code>debug.ReadBuildInfo()</code> itself here—that is Go runtime behavior. Test your pure selector. It receives ordinary inputs, has no environment or binary dependency, and should always choose exactly one honest result.</p>
+<table><tr><th>Row</th><th>Stamped</th><th>Build setting</th><th>Want</th></tr><tr><td>release contract</td><td><code>release-sha</code></td><td><code>other-sha</code></td><td><code>release-sha</code></td></tr><tr><td>diagnostic fallback</td><td><code>none</code></td><td><code>toolchain-sha</code></td><td><code>toolchain-sha</code></td></tr><tr><td>blank setting is not identity</td><td><code>none</code></td><td><code>""</code></td><td><code>none</code></td></tr></table>
+
+<h2>Write the focused test</h2>
+<p>Assume the selector from Lesson 38 accepts a small <code>buildSetting</code> slice. Add this in the same package as <code>selectedRevision</code> so an unexported selector stays unexported.</p>
+<pre>func TestSelectedRevision(t *testing.T) {
+    tests := []struct {
+        name     string
+        stamped  string
+        settings []buildSetting
+        want     string
+    }{
+        {
+            name:     "stamped revision wins over VCS setting",
+            stamped:  "release-sha",
+            settings: []buildSetting{{Key: "vcs.revision", Value: "other-sha"}},
+            want:     "release-sha",
+        },
+        {
+            name:     "falls back to non-empty VCS setting",
+            stamped:  "none",
+            settings: []buildSetting{{Key: "vcs.revision", Value: "toolchain-sha"}},
+            want:     "toolchain-sha",
+        },
+        {
+            name:     "blank VCS setting falls back honestly",
+            stamped:  "none",
+            settings: []buildSetting{{Key: "vcs.revision", Value: ""}},
+            want:     "none",
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := selectedRevision(tt.stamped, tt.settings)
+            if got != tt.want {
+                t.Fatalf("selectedRevision() = %q, want %q", got, tt.want)
+            }
+        })
+    }
+}</pre>
+<p><code>t.Run</code> gives failures a readable row name. <code>t.Fatalf</code> is appropriate because there is only one assertion per row; continuing that row after a failed result offers no extra information.</p>
+
+<h2>Why the blank row matters</h2>
+<p><code>vcs.revision</code> identifies a revision only when it is non-empty. A test that covers merely “setting exists” can accidentally bless an empty value. This row preserves the contract: missing, unavailable, or blank optional metadata resolves to the local fallback <code>none</code>.</p>
+<ol class="steps"><li>Put the test beside the selector, in a file ending <code>_test.go</code>.</li><li>Run <code>go test ./...</code>.</li><li>Temporarily remove <code>s.Value != ""</code> from the selector. The blank-row test should fail.</li><li>Restore the guard and run the test again. The green result is evidence that your startup identity cannot silently become blank.</li></ol>
+
+<section class="quiz"><div class="label">Quick check</div><h2 style="margin-top:.35rem">Which input belongs in the row that proves the release contract?</h2><button data-answer="wrong">Stamped <code>none</code>; VCS <code>""</code>; want <code>none</code>.</button><button data-answer="correct">Stamped <code>release-sha</code>; VCS <code>other-sha</code>; want <code>release-sha</code>.</button><button data-answer="wrong">Stamped <code>""</code>; VCS <code>toolchain-sha</code>; want both values.</button><div class="feedback" aria-live="polite"></div></section>
+<section class="quiz"><div class="label">Edge case</div><h2 style="margin-top:.35rem">Why test a <code>vcs.revision</code> setting whose value is <code>""</code>?</h2><button data-answer="correct">To prove an empty optional setting is not treated as a real revision and the selector returns <code>none</code>.</button><button data-answer="wrong">Because an empty SHA is a valid release identifier.</button><button data-answer="wrong">To make Go re-read build info from the running binary.</button><div class="feedback" aria-live="polite"></div></section>
+
+<h2>References</h2><ul><li><a href="https://go.dev/blog/subtests">Go Blog: Using Subtests and Sub-benchmarks</a> — semantics and reporting of <code>t.Run</code>.</li><li><a href="https://pkg.go.dev/testing#T.Run">Go standard library: testing.T.Run</a> — each subtest runs <code>f</code> in its own <code>*T</code>.</li><li><a href="https://pkg.go.dev/runtime/debug#BuildSetting">Go standard library: debug.BuildSetting</a> — build settings are key/value data.</li><li><a href="https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies">Go command documentation</a> — <code>go test</code> builds and tests packages.</li></ul>
+<footer>Ask your teacher a follow-up if you want to test the runtime adapter separately. Keep this lesson’s boundary: first prove the pure precedence rule; then test runtime discovery only if your application adds behavior around it.</footer>
+</main><script>document.querySelectorAll('.quiz button').forEach(b=>b.addEventListener('click',()=>{const q=b.closest('.quiz'),f=q.querySelector('.feedback');q.querySelectorAll('button').forEach(x=>x.disabled=true);if(b.dataset.answer==='correct'){b.classList.add('correct');f.className='feedback good';f.textContent='Correct — each table row makes one precedence outcome explicit and repeatable.'}else{b.classList.add('wrong');q.querySelector('[data-answer="correct"]').classList.add('correct');f.className='feedback bad';f.textContent='Not quite. The test must preserve stamped → non-empty vcs.revision → none.'}}));</script></body></html>
