@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Revision-Precedence Table Tests (Lesson 39) <span class="new-badge">new</span></h2>
+<h2>Structured Startup Identity (Lesson 40) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>log/slog</code></td><td>structured application logger</td><td>Go’s standard-library structured logging package. A log event has a message plus named attributes, and a handler chooses the output representation.</td></tr>
+  <tr><td><code>slog.String</code></td><td>named string property</td><td>Creates an explicit string attribute, for example <code>slog.String("revision", revision)</code>. Use it to make process identity queryable rather than burying it in formatted text.</td></tr>
+  <tr><td><code>slog.Handler</code></td><td>logger transport / formatter</td><td>The component that renders log records. <code>NewTextHandler</code> is convenient for local readable logs and buffer-based tests; <code>NewJSONHandler</code> emits JSON for systems that ingest structured JSON logs.</td></tr>
+  <tr><td>stable event message</td><td>consistent log event name</td><td>A fixed message such as <code>"HTTP server starting"</code>, with changing facts supplied as attributes. This separates event type from data and makes queries durable.</td></tr>
+</table>
+
+<h2>Revision-Precedence Table Tests (Lesson 39)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>policy table test</td><td><code>test.each</code> precedence matrix</td><td>A table-driven test whose rows express the allowed identity outcomes. For revision selection, cover: linker stamp wins; non-empty <code>vcs.revision</code> is fallback; blank metadata returns <code>"none"</code>.</td></tr>

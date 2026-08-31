@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 40 — Structured Startup Identity with slog</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b5;--accent:#00adb5;--good:#49c779;--bad:#ff6b6b;--ts:#4b91e8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.58 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:880px;margin:auto;padding:42px 20px 70px}.eyebrow,.label{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:.35rem 0 .8rem}h2{margin:2.2rem 0 .7rem;font-size:1.3rem}.lede,.muted{color:var(--muted)}.goal{border-left:3px solid var(--accent);padding:12px 16px;background:var(--surface);border-radius:0 8px 8px 0;margin:1.4rem 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin:16px 0}.ts{color:var(--ts)}pre{overflow:auto;background:#11141d;border:1px solid var(--border);padding:15px;border-radius:8px;color:#d9f3f4;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#242938;padding:.1em .3em;border-radius:4px}table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid var(--border);padding:10px;text-align:left;vertical-align:top}th{color:var(--accent)}.steps{counter-reset:item;padding:0}.steps li{list-style:none;counter-increment:item;margin:12px 0;padding-left:42px;position:relative}.steps li:before{content:counter(item);position:absolute;left:0;top:0;background:var(--accent);color:#071417;border-radius:50%;font-weight:800;width:26px;height:26px;text-align:center;line-height:26px}button{display:block;width:100%;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:8px 0;text-align:left;cursor:pointer;font:inherit}button:hover{border-color:var(--accent)}button:disabled{cursor:default}.feedback{min-height:1.4em;margin-top:10px;font-weight:650}.good{color:var(--good)}.bad{color:var(--bad)}.correct{border-color:var(--good);background:#12261b}.wrong{border-color:var(--bad);background:#2a171b}a{color:#72dce1}footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:.9rem}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body><main>
+<div class="eyebrow">Go · Lesson 40 · under 10 minutes</div>
+<h1>Structured startup identity with <code>slog</code></h1>
+<p class="lede">Your server already chooses a truthful version and revision. Now emit those same facts as named fields, so humans and log tools can reliably find the exact binary that started.</p>
+<div class="goal"><strong>Tangible win:</strong> replace one formatted startup line with a testable <code>log/slog</code> event carrying <code>version</code> and <code>revision</code>.</div>
+
+<h2>One concept: message vs. attributes</h2>
+<div class="grid"><section class="card"><div class="label ts">TypeScript mental model</div><p>Instead of interpolating facts into <code>logger.info(`starting ${version}`)</code>, send a stable message and a structured object: <code>logger.info({version, revision}, "HTTP server starting")</code>.</p></section><section class="card"><div class="label">Go</div><p><code>slog</code> separates the event message from its attributes. Use a stable message, then attach named <code>slog.String</code> attributes. A handler renders text or JSON later.</p></section></div>
+<p>This belongs at the application boundary—not in a handler. Version and revision describe the process artifact, while a request handler describes one request. Keep the existing selectors from Lessons 37–39; only change presentation.</p>
+
+<h2>Emit one startup event</h2>
+<pre>import (
+    "log/slog"
+    "os"
+)
+
+func runApp(run func() error, logger *slog.Logger) error {
+    logger.Info("HTTP server starting",
+        slog.String("version", moduleVersion()),
+        slog.String("revision", revisionForLog()),
+    )
+
+    if err := run(); err != nil {
+        return fmt.Errorf("run HTTP server: %w", err)
+    }
+    logger.Info("HTTP server stopped")
+    return nil
+}
+
+func main() {
+    logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+    if err := runApp(Run, logger); err != nil {
+        logger.Error("HTTP server failed", "error", err)
+        os.Exit(1)
+    }
+}</pre>
+<p><code>Info</code> receives a message followed by attributes. <code>slog.String</code> makes both the field name and its string type explicit. With <code>NewTextHandler</code>, a line will include fields like <code>msg="HTTP server starting" version=dev revision=none</code>; use <code>NewJSONHandler</code> when your log collector expects JSON.</p>
+
+<h2>Keep the feedback loop: test the fields</h2>
+<p>Inject the logger just as you injected <code>*log.Logger</code> before. An in-memory buffer gives the test direct evidence without starting a listener or changing global logging.</p>
+<pre>func TestRunAppLogsStartupIdentity(t *testing.T) {
+    var out bytes.Buffer
+    logger := slog.New(slog.NewTextHandler(&amp;out, &amp;slog.HandlerOptions{
+        Level: slog.LevelInfo,
+    }))
+
+    err := runApp(func() error { return nil }, logger)
+    if err != nil { t.Fatalf("runApp() error = %v", err) }
+
+    got := out.String()
+    for _, want := range []string{
+        "msg=\"HTTP server starting\"",
+        "version=dev",
+        "revision=none",
+    } {
+        if !strings.Contains(got, want) {
+            t.Errorf("log missing %q:\\n%s", want, got)
+        }
+    }
+}</pre>
+<p>Keep identity selection tests separate: this test proves the logging boundary supplies named fields. It does not need to re-test linker precedence. If your defaults differ, assert your actual local fallback values.</p>
+<ol class="steps"><li>Create an injected <code>*slog.Logger</code> at the application boundary.</li><li>Log the stable startup message with explicit <code>version</code> and <code>revision</code> attributes.</li><li>Use a buffer-backed <code>TextHandler</code> in one focused test.</li><li>Run <code>go test ./...</code>; the test should fail if either field disappears or becomes unnamed text.</li></ol>
+
+<section class="quiz"><div class="label">Quick check</div><h2 style="margin-top:.35rem">Which startup log keeps identity machine-readable?</h2><button data-answer="wrong"><code>logger.Info(fmt.Sprintf("starting %s %s", version, revision))</code></button><button data-answer="correct"><code>logger.Info("HTTP server starting", slog.String("version", version), slog.String("revision", revision))</code></button><button data-answer="wrong"><code>handler writes version and revision into every HTTP response</code></button><div class="feedback" aria-live="polite"></div></section>
+<section class="quiz"><div class="label">Boundary check</div><h2 style="margin-top:.35rem">Why retain the pure revision-selector test from Lesson 39?</h2><button data-answer="correct">It proves the identity policy; the new logger test proves those chosen values are emitted as fields. They are different contracts.</button><button data-answer="wrong">Because <code>slog</code> cannot log a string without a selector test.</button><button data-answer="wrong">To make each HTTP request recompute Git metadata.</button><div class="feedback" aria-live="polite"></div></section>
+
+<h2>References</h2><ul><li><a href="https://pkg.go.dev/log/slog">Go standard library: <code>log/slog</code></a> — logger, attributes, and handlers.</li><li><a href="https://go.dev/blog/slog">Go Blog: Structured Logging with <code>slog</code></a> — why structured attributes are useful and how handlers work.</li><li><a href="https://pkg.go.dev/log/slog#Logger.Info">Go standard library: <code>Logger.Info</code></a> — message and attribute arguments.</li><li><a href="https://pkg.go.dev/log/slog#NewTextHandler">Go standard library: <code>NewTextHandler</code></a> — text output handler used for the focused buffer test.</li></ul>
+<footer>Ask your teacher a follow-up if you want to compare text and JSON handlers. For now, preserve the boundary: choose identity with pure functions, then log it once at application startup.</footer>
+</main><script>document.querySelectorAll('.quiz button').forEach(b=>b.addEventListener('click',()=>{const q=b.closest('.quiz'),f=q.querySelector('.feedback');q.querySelectorAll('button').forEach(x=>x.disabled=true);if(b.dataset.answer==='correct'){b.classList.add('correct');f.className='feedback good';f.textContent='Correct — stable messages plus named attributes make the event queryable and keep identity out of handlers.'}else{b.classList.add('wrong');q.querySelector('[data-answer="correct"]').classList.add('correct');f.className='feedback bad';f.textContent='Not quite. Keep process identity at the lifecycle boundary and use explicit named slog attributes.'}}));</script></body></html>
