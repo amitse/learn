@@ -45,4 +45,5 @@
 - Lesson 40 added a verifiable next-instruction sentence: name one next move plus the stable cue, two-minute action, frequency, and any active test; repeat for incomplete evidence, retain for mixed/workable evidence, or use one already-specified matching test for a repeated break.
 - Lesson 41 added a two-attempt instruction audit: compare the exact prior sentence with both covered attempts; label each `followed`, `not followed`, or `unclear`; repeat the same instruction for two readable attempts unless both were followed, then use the existing cue/start triage.
 - Lesson 42 added verified-pair triage: after both attempts followed the instruction, label each `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable cue or start-side break appears twice and supports one already-specified matching test.
+- Lesson 43 added the verified-pair instruction: write one exact retain, gather, or one-test instruction with the stable cue and two-minute action named; use it for two ordinary attempts before a new audit.
 - Increase difficulty only when the basic start ritual is reliable.
