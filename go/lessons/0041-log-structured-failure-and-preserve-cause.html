@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 41 — Log a Structured Failure and Preserve Its Cause</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b5;--accent:#00adb5;--good:#49c779;--bad:#ff6b6b;--ts:#4b91e8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.58 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:880px;margin:auto;padding:42px 20px 70px}.eyebrow,.label{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.1;margin:.35rem 0 .8rem}h2{margin:2.2rem 0 .7rem;font-size:1.3rem}.lede,.muted{color:var(--muted)}.goal{border-left:3px solid var(--accent);padding:12px 16px;background:var(--surface);border-radius:0 8px 8px 0;margin:1.4rem 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin:16px 0}.ts{color:var(--ts)}pre{overflow:auto;background:#11141d;border:1px solid var(--border);padding:15px;border-radius:8px;color:#d9f3f4;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#242938;padding:.1em .3em;border-radius:4px}.steps{counter-reset:item;padding:0}.steps li{list-style:none;counter-increment:item;margin:12px 0;padding-left:42px;position:relative}.steps li:before{content:counter(item);position:absolute;left:0;top:0;background:var(--accent);color:#071417;border-radius:50%;font-weight:800;width:26px;height:26px;text-align:center;line-height:26px}button{display:block;width:100%;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin:8px 0;text-align:left;cursor:pointer;font:inherit}button:hover{border-color:var(--accent)}button:disabled{cursor:default}.feedback{margin-top:12px;padding:10px;border-radius:7px}.good{background:#123320;color:#a9edbe}.bad{background:#3a181d;color:#ffb4bb}.correct{border-color:var(--good)}.wrong{border-color:var(--bad)}a{color:var(--accent)}footer{margin-top:3rem;color:var(--muted);font-size:.9rem;border-top:1px solid var(--border);padding-top:1rem}@media(max-width:640px){.grid{grid-template-columns:1fr}}
+</style></head><body><main>
+<div class="eyebrow">Go · Lesson 41 · under 10 minutes</div><h1>Log a structured failure<br>and preserve its cause</h1>
+<p class="lede">A server failure needs two audiences: an operator needs an observable structured event, while Go code needs the original cause still discoverable through <code>errors.Is</code>. You can satisfy both at the application boundary.</p>
+<div class="goal"><strong>Tangible win:</strong> add one failure branch that logs a stable <code>slog</code> event and returns a wrapped error whose sentinel cause remains intact.</div>
+<h2>One concept: observability is not error semantics</h2>
+<div class="grid"><section class="card"><div class="label ts">TypeScript mental model</div><p>At top level, you might log <code>logger.error({err}, "server failed")</code> and rethrow <code>new Error("run HTTP server", {cause: err})</code>. The log is evidence; the <code>cause</code> chain preserves programmatic meaning.</p></section><section class="card"><div class="label">Go</div><p>Call <code>logger.Error</code> with named attributes, then return <code>fmt.Errorf("run HTTP server: %w", err)</code>. The attribute records the failure; <code>%w</code> keeps it available to <code>errors.Is</code>.</p></section></div>
+<p>Do this where process policy already lives: just outside <code>Run</code>. Do not add lifecycle logging to request handlers, and do not replace the returned error with <code>errors.New</code> or formatted <code>%v</code>.</p>
+<h2>The narrow failure branch</h2>
+<pre>func runApp(run func() error, logger *slog.Logger) error {
+    if err := run(); err != nil {
+        logger.Error("HTTP server stopped unexpectedly",
+            slog.Any("error", err),
+            slog.String("version", moduleVersion()),
+            slog.String("revision", revisionForLog()),
+        )
+        return fmt.Errorf("run HTTP server: %w", err)
+    }
+    return nil
+}</pre>
+<p><code>slog.Any("error", err)</code> keeps the error value attached to the event (the text handler renders its message). The message stays stable for queries; version and revision identify the process, just as at startup. Crucially, logging does <em>not</em> consume, replace, or unwrap <code>err</code>.</p>
+<h2>Prove both contracts in one focused test</h2>
+<pre>func TestRunAppLogsFailureAndPreservesCause(t *testing.T) {
+    sentinel := errors.New("listener accept failed")
+    var out bytes.Buffer
+    logger := slog.New(slog.NewTextHandler(&amp;out, nil))
+
+    err := runApp(func() error { return sentinel }, logger)
+
+    if !errors.Is(err, sentinel) {
+        t.Fatalf("returned error does not preserve cause: %v", err)
+    }
+    got := out.String()
+    for _, want := range []string{
+        `level=ERROR`,
+        `msg="HTTP server stopped unexpectedly"`,
+        `error="listener accept failed"`,
+    } {
+        if !strings.Contains(got, want) {
+            t.Errorf("log missing %q:\n%s", want, got)
+        }
+    }
+}</pre>
+<p>This is intentionally one test at one boundary: it supplies a deterministic failure, checks the returned error chain, then checks the log’s level, message, and failure field. It does not open a port or re-test revision precedence.</p>
+<ol class="steps"><li>Make a sentinel failure with <code>errors.New</code>.</li><li>Inject a buffer-backed <code>*slog.Logger</code>.</li><li>Log a stable error event with <code>slog.Any("error", err)</code>.</li><li>Return <code>fmt.Errorf(... %w ...)</code> and require <code>errors.Is(err, sentinel)</code>.</li></ol>
+<section class="quiz"><div class="label">Quick check</div><h2 style="margin-top:.35rem">Which return preserves a sentinel error for callers?</h2><button data-answer="wrong"><code>return errors.New("run HTTP server: " + err.Error())</code></button><button data-answer="correct"><code>return fmt.Errorf("run HTTP server: %w", err)</code></button><button data-answer="wrong"><code>return fmt.Errorf("run HTTP server: %v", err)</code></button><div class="feedback" aria-live="polite"></div></section>
+<section class="quiz"><div class="label">Boundary check</div><h2 style="margin-top:.35rem">What should the test independently establish?</h2><button data-answer="wrong">Only that a string containing the error was logged.</button><button data-answer="correct">The failure event is structured <em>and</em> <code>errors.Is</code> still finds the sentinel cause.</button><button data-answer="wrong">That each request handler logs the server’s version.</button><div class="feedback" aria-live="polite"></div></section>
+<h2>References</h2><ul><li><a href="https://pkg.go.dev/fmt#Errorf">Go standard library: <code>fmt.Errorf</code></a> — <code>%w</code> wraps an error for later inspection.</li><li><a href="https://pkg.go.dev/errors#Is">Go standard library: <code>errors.Is</code></a> — checks an error chain for a target.</li><li><a href="https://pkg.go.dev/log/slog#Logger.Error">Go standard library: <code>slog.Logger.Error</code></a> — emits an error-level message with attributes.</li><li><a href="https://pkg.go.dev/log/slog#Any">Go standard library: <code>slog.Any</code></a> — creates an attribute from an arbitrary value, including an error.</li></ul>
+<footer>Ask your teacher a follow-up if you want to compare text and JSON failure output. The rule to carry forward: logs explain the event; wrapped errors retain the cause.</footer>
+</main><script>document.querySelectorAll('.quiz button').forEach(b=>b.addEventListener('click',()=>{const q=b.closest('.quiz'),f=q.querySelector('.feedback');q.querySelectorAll('button').forEach(x=>x.disabled=true);if(b.dataset.answer==='correct'){b.classList.add('correct');f.className='feedback good';f.textContent='Correct — structured logging and error wrapping are separate contracts, so verify both.'}else{b.classList.add('wrong');q.querySelector('[data-answer="correct"]').classList.add('correct');f.className='feedback bad';f.textContent='Not quite. Use %w to preserve the chain, then test errors.Is separately from the log output.'}}));</script></body></html>

@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Structured Startup Identity (Lesson 40) <span class="new-badge">new</span></h2>
+<h2>Structured Failure + Error Cause (Lesson 41) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>slog.Any("error", err)</code></td><td><code>{ err }</code> log property</td><td>Creates a structured log attribute from an error value. Attach it to a stable lifecycle failure event rather than interpolating the failure into the event message.</td></tr>
+  <tr><td>structured failure event</td><td><code>logger.error({ err }, "server failed")</code></td><td>An error-level lifecycle log with a stable message, named error field, and optional process-identity fields. It is operational evidence and does not replace returning an error.</td></tr>
+  <tr><td>wrapped cause</td><td><code>Error</code> with <code>cause</code></td><td>The original failure retained by <code>fmt.Errorf("operation: %w", err)</code>. Check it with <code>errors.Is(returned, sentinel)</code>; logging the error does not alter this chain.</td></tr>
+</table>
+
+<h2>Structured Startup Identity (Lesson 40)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>log/slog</code></td><td>structured application logger</td><td>Go’s standard-library structured logging package. A log event has a message plus named attributes, and a handler chooses the output representation.</td></tr>
