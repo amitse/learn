@@ -47,4 +47,5 @@
 - Lesson 42 added verified-pair triage: after both attempts followed the instruction, label each `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable cue or start-side break appears twice and supports one already-specified matching test.
 - Lesson 43 added the verified-pair instruction: write one exact retain, gather, or one-test instruction with the stable cue and two-minute action named; use it for two ordinary attempts before a new audit.
 - Lesson 44 added an audit gate for the verified-pair instruction: label each covered attempt `followed`, `not followed`, or `unclear`; repeat the exact instruction for two ordinary attempts unless both labels are `followed`, then use the existing cue/start triage.
+- Lesson 45 added audited-pair classification: after both attempts followed the instruction, label each `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and supports one already-specified matching test.
 - Increase difficulty only when the basic start ritual is reliable.
