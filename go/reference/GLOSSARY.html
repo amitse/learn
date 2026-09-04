@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Structured Failure + Error Cause (Lesson 41) <span class="new-badge">new</span></h2>
+<h2>Structured Clean Completion (Lesson 42) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>clean-stop event</td><td><code>logger.info(..., "server stopped cleanly")</code></td><td>A stable INFO lifecycle event emitted only after the server lifecycle function returns <code>nil</code>. It records normal process completion; it is not a claim about each individual HTTP request.</td></tr>
+  <tr><td>transparent success</td><td>resolved <code>Promise&lt;void&gt;</code> passed through</td><td>The rule that a lifecycle wrapper returns <code>nil</code> unchanged after successful work. Observability may add a log event but must not manufacture an error or otherwise change the success result.</td></tr>
+  <tr><td>buffer-backed slog test</td><td>in-memory logger transport test</td><td>A focused test using <code>slog.NewTextHandler(&amp;bytes.Buffer{}, nil)</code>. Assert the stable INFO message and fields without a real listener, global logger, or timing dependency.</td></tr>
+</table>
+
+<h2>Structured Failure + Error Cause (Lesson 41)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>slog.Any("error", err)</code></td><td><code>{ err }</code> log property</td><td>Creates a structured log attribute from an error value. Attach it to a stable lifecycle failure event rather than interpolating the failure into the event message.</td></tr>
