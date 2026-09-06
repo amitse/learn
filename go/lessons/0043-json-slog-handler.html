@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 43 — Emit Lifecycle Logs as JSON</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b8;--accent:#00adb5;--green:#3ab54a;--red:#f07178;--ts:#3178c6;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.2rem 0 .7rem;font-size:1.35rem}p{color:var(--muted)}.lead{font-size:1.1rem;max-width:720px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}.label{color:var(--accent);font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.86rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{font-size:.88rem;margin:0 0 7px}.ts h3{color:#69a7ed}.go h3{color:var(--accent)}ol{padding-left:1.35rem;color:var(--muted)}li{margin:.45rem 0}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.quiz h2{margin-top:0}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:600}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div>
+<h1>Emit lifecycle logs as JSON</h1>
+<p class="lead">Your server now emits structured startup, failure, and clean-stop events. Make those same fields machine-readable by swapping the <code>slog.Handler</code> at the application boundary—not by changing every log call.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>By the end, you can configure a production JSON logger and write a focused test that checks the emitted JSON record without a real server.</p></section>
+<h2>One event, two representations</h2>
+<p>A <code>slog.Logger</code> sends a record (level, message, attributes) to its handler. <code>TextHandler</code> renders readable key/value text; <code>JSONHandler</code> renders one JSON object per record. The logging call—and therefore the stable message plus <code>version</code>/<code>revision</code> contract—stays the same.</p>
+<div class="comparison">
+ <section class="pane ts card"><h3>TypeScript / Node mental model</h3><pre>// Same event object; select a JSON transport/formatter
+logger.info({ version, revision }, "HTTP server starting")</pre></section>
+ <section class="pane go card"><h3>Go</h3><pre>// Same record; select its renderer at construction
+logger.Info("HTTP server starting",
+  slog.String("version", version),
+  slog.String("revision", revision),
+)</pre></section>
+</div>
+<div class="callout"><strong>Boundary rule:</strong> choose the handler once where <code>main</code> assembles operational dependencies. Request handlers receive a logger only if they have a distinct request-level logging need; they do not decide the process log format.</div>
+<h2>Change only the handler</h2>
+<pre>package main
+
+import (
+    "log/slog"
+    "os"
+)
+
+func main() {
+    // One newline-delimited JSON object per log record.
+    logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
+
+    logger.Info("HTTP server starting",
+        slog.String("version", version),
+        slog.String("revision", revision),
+    )
+    // run(logger) ...
+}</pre>
+<p>A typical line is conceptually:</p>
+<pre>{"time":"2026-09-06T07:00:00Z","level":"INFO","msg":"HTTP server starting","version":"v1.4.0","revision":"abc123"}</pre>
+<p>The dynamic <code>time</code> is useful operationally but brittle in a test. Assert the event facts you own: message, level, and identity fields. Do not compare the whole serialized string or hard-code a timestamp.</p>
+<h2>Test the JSON shape, not formatting</h2>
+<p><code>JSONHandler</code> writes newline-delimited JSON (one object per record). Capture one record in a <code>bytes.Buffer</code>, decode it into a map, then inspect its fields.</p>
+<pre>func TestStartupEventIsJSON(t *testing.T) {
+    var out bytes.Buffer
+    logger := slog.New(slog.NewJSONHandler(&amp;out, nil))
+
+    logger.Info("HTTP server starting",
+        slog.String("version", "v1.4.0"),
+        slog.String("revision", "abc123"),
+    )
+
+    var got map[string]any
+    if err := json.Unmarshal(out.Bytes(), &amp;got); err != nil {
+        t.Fatalf("decode log JSON: %v\n%s", err, out.String())
+    }
+    if got["msg"] != "HTTP server starting" { t.Fatalf("msg = %v", got["msg"]) }
+    if got["level"] != "INFO" { t.Fatalf("level = %v", got["level"]) }
+    if got["version"] != "v1.4.0" { t.Fatalf("version = %v", got["version"]) }
+    if got["revision"] != "abc123" { t.Fatalf("revision = %v", got["revision"]) }
+}</pre>
+<p>The standard package specifies that JSON handler output is a sequence of complete JSON objects separated by newlines, so this test is testing a supported representation—not an accidental byte layout.</p>
+<h2>Do this now</h2>
+<ol><li>At your application composition boundary, replace <code>slog.NewTextHandler(os.Stderr, nil)</code> with <code>slog.NewJSONHandler(os.Stderr, nil)</code>.</li><li>Keep the existing <code>logger.Info</code>/<code>logger.Error</code> calls and named identity attributes unchanged.</li><li>Add the focused buffer-and-decode test above for one lifecycle event.</li><li>Run <code>go test ./...</code>. If a log collector expects plain text, retain <code>TextHandler</code>; handler choice is a deployment integration decision, not a Go style rule.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Which change turns the startup event into structured JSON while preserving its logging contract?</h2>
+<button class="option" data-correct="false">Format the message yourself: <code>logger.Info(fmt.Sprintf("{...}"))</code>.</button>
+<button class="option" data-correct="true">Construct the logger with <code>slog.NewJSONHandler(os.Stderr, nil)</code> and keep the same message and attributes.</button>
+<button class="option" data-correct="false">Move JSON encoding into every HTTP handler.</button>
+<p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>What should a focused JSON-log test avoid asserting?</h2>
+<button class="option" data-correct="false">The <code>msg</code>, <code>level</code>, and identity fields after decoding JSON.</button>
+<button class="option" data-correct="true">The exact timestamp or entire serialized line.</button>
+<button class="option" data-correct="false">That the captured output can be decoded as JSON.</button>
+<p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/log/slog#NewJSONHandler">Go package documentation — slog.NewJSONHandler</a></li><li><a href="https://pkg.go.dev/log/slog#JSONHandler">Go package documentation — JSONHandler output and behavior</a></li><li><a href="https://go.dev/blog/slog">Go Blog — Structured Logging with slog</a></li></ul>
+<p class="callout">Questions or a different deployment target? Ask your teacher: the right handler depends on what will consume your server’s stderr.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback');const ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — the handler controls representation; the record contract stays stable.':'Not quite — separate event data from its renderer. Try again.';})));</script></body></html>

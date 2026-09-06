@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Structured Clean Completion (Lesson 42) <span class="new-badge">new</span></h2>
+<h2>JSON Log Handler (Lesson 43) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>slog.NewJSONHandler</code></td><td>JSON log transport / formatter</td><td>Constructs an <code>slog.Handler</code> that renders each log record as a complete JSON object followed by a newline. Use it at the application boundary when the deployment log collector expects JSON.</td></tr>
+  <tr><td>newline-delimited JSON</td><td>one JSON log event per line</td><td>A stream where each line is a complete JSON object. It permits a log collector or a test to process records individually without treating the whole stream as one JSON array.</td></tr>
+  <tr><td>representation contract</td><td>logger transport output shape</td><td>The handler-selected external form of a log event. Changing text to JSON must retain the event contract: stable message, level, and named attributes such as <code>version</code> and <code>revision</code>.</td></tr>
+  <tr><td>decoded log assertion</td><td>parse event object then assert fields</td><td>A test that captures JSON output in a <code>bytes.Buffer</code>, uses <code>json.Unmarshal</code>, and asserts owned fields rather than a dynamic timestamp or exact serialized line.</td></tr>
+</table>
+
+<h2>Structured Clean Completion (Lesson 42)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>clean-stop event</td><td><code>logger.info(..., "server stopped cleanly")</code></td><td>A stable INFO lifecycle event emitted only after the server lifecycle function returns <code>nil</code>. It records normal process completion; it is not a claim about each individual HTTP request.</td></tr>
