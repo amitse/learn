@@ -50,4 +50,5 @@
 - Lesson 45 added audited-pair classification: after both attempts followed the instruction, label each `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and supports one already-specified matching test.
 - Lesson 46 added an audited-pair next instruction: write the supported retain/gather or one already-specified matching-test move with the stable cue and exact two-minute action; use it for two ordinary attempts before auditing enactment.
 - Lesson 47 added an audited-pair instruction audit: compare the exact sentence with both covered attempts, label each `followed`, `not followed`, or `unclear`, and repeat the same instruction for two ordinary attempts unless both labels are `followed`.
+- Lesson 48 added re-audited-pair classification: after both attempts are `followed`, label each `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and supports one already-specified matching test.
 - Increase difficulty only when the basic start ritual is reliable.
