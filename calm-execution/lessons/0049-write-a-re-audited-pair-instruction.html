@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 49 — Write a Re-audited Pair Instruction</title>
+<style>
+:root{--ink:#20202b;--muted:#606074;--paper:#fffdf9;--violet:#6d3cc7;--violet-pale:#f0eaff;--line:#ded7ec;--good:#176b45;--bad:#a23047}*{box-sizing:border-box}body{margin:0;background:#f5f2fa;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px;margin:14px 0;box-shadow:0 5px 20px #4320750b}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet)}h1{font-size:clamp(1.7rem,7vw,2.5rem);line-height:1.08;margin:.35rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 .65rem}p{margin:.5rem 0}.lead{font-size:1.08rem;color:var(--muted)}.rule{padding:14px;border-left:4px solid var(--violet);background:var(--violet-pale);border-radius:8px;font-weight:650}.steps{padding-left:1.3rem}.steps li{margin:.55rem 0}label{display:block;font-weight:700;margin:14px 0 5px}input,select,button{font:inherit}input,select{width:100%;padding:11px;border:1px solid #bdb4cf;border-radius:9px;background:white}button{margin-top:15px;padding:11px 15px;border:0;border-radius:9px;background:var(--violet);color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:12px;border-radius:9px;font-weight:650}.good{display:block!important;background:#e4f6eb;color:var(--good)}.needs{display:block!important;background:#fff0f2;color:var(--bad)}.small{font-size:.9rem;color:var(--muted)}a{color:#5430a1}footer{font-size:.9rem;color:var(--muted);padding:8px 4px}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}
+</style>
+</head>
+<body>
+<main class="page">
+<header>
+<div class="eyebrow">Calm Execution · Lesson 49</div>
+<h1>Write a re-audited pair instruction</h1>
+<p class="lead">Turn today’s pair classification into one small instruction that can be checked after two ordinary attempts.</p>
+</header>
+<section class="card">
+<h2>One skill: make the next move auditable</h2>
+<p>Once both attempts have been audited and classified, do not redesign the ritual. Write one sentence for the next two attempts. It must say what to do and what stays stable.</p>
+<p class="rule">For the next two ordinary attempts: <strong>[one next move]</strong>; after <strong>[stable cue]</strong>, do <strong>[exact two-minute action]</strong>. Then audit whether I followed this sentence.</p>
+<p>If the pair was <code>unclear</code>, <code>none</code>, or mixed, the next move is usually “retain and gather two readable attempts.” If both labels were the same readable break, use only the already-specified matching test. This is a practical guardrail against changing several links at once—not a verdict about you.</p>
+<p class="small">Why keep a cue stable? Repetition in a stable context is part of the habit-formation account reviewed by Gardner, Lally, and Wardle; this course uses that idea as a small, testable design choice rather than a promise of automaticity. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Read the review</a>.</p>
+</section>
+<section class="card">
+<h2>10-minute applied exercise</h2>
+<ol class="steps">
+<li>Take your latest <em>audited</em> pair. Write its two labels: <code>cue</code>, <code>start-side</code>, <code>none</code>, or <code>unclear</code>.</li>
+<li>Choose one move: retain/gather, or one already-specified matching test only if the same readable break appears twice.</li>
+<li>Write the sentence in the planner below. Copy it beside your start record.</li>
+<li>Use it for two ordinary attempts. At the next review, audit the sentence before interpreting outcomes.</li>
+</ol>
+</section>
+<section class="card" aria-labelledby="planner-title">
+<h2 id="planner-title">Instruction check</h2>
+<label for="labels">Your pair classification</label>
+<select id="labels"><option value="">Choose one…</option><option value="retain">Mixed, none, or unclear → retain/gather</option><option value="cue">Cue twice → one already-specified cue test</option><option value="start">Start-side twice → one already-specified setup/opening test</option></select>
+<label for="move">One next move</label>
+<input id="move" placeholder="e.g., retain the current plan and gather two readable attempts">
+<label for="cue">Stable cue</label>
+<input id="cue" placeholder="e.g., after I make morning tea">
+<label for="action">Exact two-minute action</label>
+<input id="action" placeholder="e.g., open the proposal and write its first heading">
+<button type="button" id="check">Check my instruction</button>
+<div id="feedback" role="status" aria-live="polite"></div>
+</section>
+<footer>Stopping after the two-minute action remains a valid start. Ask your teacher if your pair does not fit these branches or if you want help wording a matching test.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const kind=$('labels').value,move=$('move').value.trim(),cue=$('cue').value.trim(),action=$('action').value.trim(),box=$('feedback');let missing=[];if(!kind)missing.push('a pair classification');if(!move)missing.push('one next move');if(!cue)missing.push('a stable cue');if(!action)missing.push('an exact two-minute action');if(missing.length){box.className='needs';box.textContent='Add '+missing.join(', ')+'. Your next instruction needs all four parts to be auditable.';return}let branch=kind==='retain'?'Good: retain/gather fits mixed, workable, or unclear evidence.':kind==='cue'?'Check that this is an already-specified cue test and that no other link changes.':'Check that this is an already-specified setup or opening-action test and that no other link changes.';box.className='good';box.textContent=branch+' Your checkable sentence: “For the next two ordinary attempts: '+move+'; after '+cue+', '+action+'. Then audit whether I followed this sentence.”';});
+</script>
+</body>
+</html>
