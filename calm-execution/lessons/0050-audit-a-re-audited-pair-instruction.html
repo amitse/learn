@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 50 — Audit a Re-audited Pair Instruction</title>
+<style>
+:root{--ink:#20202b;--muted:#626174;--paper:#fffdf9;--violet:#6d3cc7;--pale:#f0eaff;--line:#ded7ec;--good:#176b45;--warn:#a23047}*{box-sizing:border-box}body{margin:0;background:#f5f2fa;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px;margin:14px 0;box-shadow:0 5px 20px #4320750b}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet)}h1{font-size:clamp(1.75rem,7vw,2.55rem);line-height:1.08;margin:.35rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 .65rem}p{margin:.5rem 0}.lead,.small{color:var(--muted)}.small,footer{font-size:.9rem}.rule{padding:14px;border-left:4px solid var(--violet);background:var(--pale);border-radius:8px;font-weight:650}.steps{padding-left:1.3rem}.steps li{margin:.55rem 0}label{display:block;font-weight:750;margin:14px 0 5px}select,button{font:inherit}select{width:100%;padding:11px;border:1px solid #bdb4cf;border-radius:9px;background:#fff}button{margin-top:16px;padding:11px 15px;border:0;border-radius:9px;background:var(--violet);color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:12px;border-radius:9px;font-weight:650}.good{display:block!important;background:#e4f6eb;color:var(--good)}.needs{display:block!important;background:#fff0f2;color:var(--warn)}a{color:#5430a1}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}
+</style>
+</head>
+<body>
+<main class="page">
+<header><div class="eyebrow">Calm Execution · Lesson 50</div><h1>Audit a re-audited pair instruction</h1><p class="lead">Before reading results, check whether the exact instruction was used on both ordinary attempts.</p></header>
+<section class="card">
+<h2>One skill: separate enactment from outcome</h2>
+<p>Take the sentence you wrote in Lesson 49 and compare it with each of the two attempts it covered. For each attempt, choose one label:</p>
+<p class="rule"><strong>Followed</strong> = the stated next move, cue, and two-minute action happened as written. <strong>Not followed</strong> = a stated part did not happen. <strong>Unclear</strong> = the record cannot tell.</p>
+<p>If either label is <code>not followed</code> or <code>unclear</code>, repeat the same instruction for two ordinary attempts. Do not interpret cue or start results yet, and do not add a change. If both are <code>followed</code>, the pair is ready for the existing cue/start-side classification.</p>
+<p class="small">This course treats a stable cue and small opening action as a practical design choice. A review of habit research distinguishes cue-triggered habits from mere repetition; it does not promise automaticity on a timetable. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+</section>
+<section class="card">
+<h2>10-minute applied exercise</h2>
+<ol class="steps"><li>Put the exact Lesson 49 instruction beside the two records it covered.</li><li>For attempt 1, check the next move, cue, and two-minute action against the sentence. Label it.</li><li>Do the same for attempt 2. Use the checker below.</li><li>Copy the resulting next move into your log: repeat the same instruction, or classify the now-readable pair.</li></ol>
+</section>
+<section class="card" aria-labelledby="check-title">
+<h2 id="check-title">Pair audit checker</h2>
+<label for="one">Attempt 1</label><select id="one"><option value="">Choose a label…</option><option value="followed">Followed</option><option value="not">Not followed</option><option value="unclear">Unclear</option></select>
+<label for="two">Attempt 2</label><select id="two"><option value="">Choose a label…</option><option value="followed">Followed</option><option value="not">Not followed</option><option value="unclear">Unclear</option></select>
+<button type="button" id="check">Check the next move</button><div id="feedback" role="status" aria-live="polite"></div>
+</section>
+<footer>Stopping after the two-minute action remains a valid start. Ask your teacher if a record is hard to label; “unclear” is useful system data, not a failure.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const a=$('one').value,b=$('two').value,box=$('feedback');if(!a||!b){box.className='needs';box.textContent='Choose a label for both attempts before deciding.';return}if(a==='followed'&&b==='followed'){box.className='good';box.textContent='Both attempts followed the sentence. Next move: use the existing cue/start-side classification—without adding a new change yet.';return}box.className='good';box.textContent='Enactment is not fully readable. Next move: repeat the exact same instruction for two ordinary attempts; do not interpret outcomes or add a change.';});
+</script>
+</body>
+</html>
