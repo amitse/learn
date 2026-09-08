@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>JSON Log Handler (Lesson 43) <span class="new-badge">new</span></h2>
+<h2>slog Minimum Level (Lesson 44) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>slog.HandlerOptions</code></td><td>logger transport options</td><td>Options passed when constructing an <code>slog</code> handler. They configure handler-wide behavior such as the minimum enabled level; select them at the application boundary rather than in individual HTTP handlers.</td></tr>
+  <tr><td><code>slog.LevelInfo</code></td><td><code>"info"</code> logger threshold</td><td>The INFO severity level. With <code>HandlerOptions{Level: slog.LevelInfo}</code>, INFO, WARN, and ERROR records reach the handler while DEBUG records are suppressed. It is also the default threshold, but writing it explicitly documents policy.</td></tr>
+  <tr><td>minimum log level</td><td>transport log filter</td><td>The lowest-severity record a handler processes. It is output policy: call sites label events with <code>Debug</code>, <code>Info</code>, <code>Warn</code>, or <code>Error</code>; logger construction decides which levels production emits.</td></tr>
+  <tr><td>output-based log test</td><td>assert captured transport events</td><td>A focused test that writes to a <code>bytes.Buffer</code> and checks observable behavior—e.g. an INFO message is present while a DEBUG message is absent—without testing handler fields, timestamps, or a real server.</td></tr>
+</table>
+
+<h2>JSON Log Handler (Lesson 43)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>slog.NewJSONHandler</code></td><td>JSON log transport / formatter</td><td>Constructs an <code>slog.Handler</code> that renders each log record as a complete JSON object followed by a newline. Use it at the application boundary when the deployment log collector expects JSON.</td></tr>
