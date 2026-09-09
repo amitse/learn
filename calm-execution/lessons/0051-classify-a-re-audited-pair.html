@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 51 — Classify a Re-audited Pair</title>
+<style>
+:root{--ink:#20202b;--muted:#626174;--paper:#fffdf9;--violet:#6d3cc7;--pale:#f0eaff;--line:#ded7ec;--good:#176b45;--warn:#9d2841}*{box-sizing:border-box}body{margin:0;background:#f5f2fa;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px;margin:14px 0;box-shadow:0 5px 20px #4320750b}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet)}h1{font-size:clamp(1.75rem,7vw,2.55rem);line-height:1.08;margin:.35rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 .65rem}p{margin:.5rem 0}.lead,.small{color:var(--muted)}.small,footer{font-size:.9rem}.rule{padding:14px;border-left:4px solid var(--violet);background:var(--pale);border-radius:8px;font-weight:650}.steps{padding-left:1.3rem}.steps li{margin:.55rem 0}label{display:block;font-weight:750;margin:14px 0 5px}select,button{font:inherit}select{width:100%;padding:11px;border:1px solid #bdb4cf;border-radius:9px;background:#fff}button{margin-top:16px;padding:11px 15px;border:0;border-radius:9px;background:var(--violet);color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:12px;border-radius:9px;font-weight:650}.good{display:block!important;background:#e4f6eb;color:var(--good)}.needs{display:block!important;background:#fff0f2;color:var(--warn)}a{color:#5430a1}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}
+</style>
+</head>
+<body>
+<main class="page">
+<header><div class="eyebrow">Calm Execution · Lesson 51</div><h1>Classify a re-audited pair</h1><p class="lead">Once both attempts followed the instruction, read each outcome in the same small order: cue first, start second.</p></header>
+<section class="card">
+<h2>One skill: give each readable attempt one label</h2>
+<p>Use this only after Lesson 50’s audit says both attempts were <code>followed</code>. For each record, read <strong>cue occurred?</strong>, then <strong>two-minute action started?</strong>.</p>
+<p class="rule"><strong>cue</strong> = the cue did not occur. <strong>start-side</strong> = the cue occurred but the action did not start. <strong>none</strong> = cue and action both happened. <strong>unclear</strong> = the record cannot tell.</p>
+<p>Two matching readable <code>cue</code> or <code>start-side</code> labels may support one already-specified matching test. Any other pair—working, mixed, or unclear—means retain the current instruction and gather two ordinary records. This is a practical decision rule, not a diagnosis or a claim that two records prove a cause.</p>
+<p class="small">For context on why stable contexts can matter for cue-triggered habits, see <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>. This lesson’s classification rule is a deliberately modest practice tool.</p>
+</section>
+<section class="card">
+<h2>10-minute applied exercise</h2>
+<ol class="steps"><li>Confirm both covered attempts were labelled <code>followed</code> in the instruction audit.</li><li>Read attempt 1: cue first, then two-minute start. Choose one label below.</li><li>Repeat for attempt 2. Do not fill gaps from memory.</li><li>Use the feedback to write one next move: retain/gather two records, or use one already-specified matching test.</li></ol>
+</section>
+<section class="card" aria-labelledby="check-title">
+<h2 id="check-title">Pair classifier</h2>
+<label for="one">Attempt 1 outcome</label><select id="one"><option value="">Choose a label…</option><option value="cue">Cue</option><option value="start">Start-side</option><option value="none">None</option><option value="unclear">Unclear</option></select>
+<label for="two">Attempt 2 outcome</label><select id="two"><option value="">Choose a label…</option><option value="cue">Cue</option><option value="start">Start-side</option><option value="none">None</option><option value="unclear">Unclear</option></select>
+<button type="button" id="check">Check the next move</button><div id="feedback" role="status" aria-live="polite"></div>
+</section>
+<footer>The aim remains one calm, pre-chosen start—not a longer session, catch-up work, or a verdict about you. Ask your teacher if a record is hard to label.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const a=$('one').value,b=$('two').value,box=$('feedback');if(!a||!b){box.className='needs';box.textContent='Choose one label for each attempt before deciding.';return}if(a===b&&a==='cue'){box.className='good';box.textContent='The same readable cue break appears twice. Next move: use one already-specified cue test only; keep the two-minute action and other links stable.';return}if(a===b&&a==='start'){box.className='good';box.textContent='The same readable start-side break appears twice. Next move: use one already-specified setup or opening-action test only; keep other links stable.';return}box.className='good';box.textContent='This pair is working, mixed, or incomplete. Next move: retain the current instruction and gather two ordinary readable records—no new change yet.';});
+</script>
+</body>
+</html>
