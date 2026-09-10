@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 52 — Write an Audited-Pair Next Instruction</title>
+<style>
+:root{--ink:#20202b;--muted:#626174;--paper:#fffdf9;--violet:#6d3cc7;--pale:#f0eaff;--line:#ded7ec;--good:#176b45;--warn:#9d2841}*{box-sizing:border-box}body{margin:0;background:#f5f2fa;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px;margin:14px 0;box-shadow:0 5px 20px #4320750b}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet)}h1{font-size:clamp(1.7rem,7vw,2.5rem);line-height:1.08;margin:.35rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 .65rem}p{margin:.5rem 0}.lead,.small,footer{color:var(--muted)}.small,footer{font-size:.9rem}.rule{padding:14px;border-left:4px solid var(--violet);background:var(--pale);border-radius:8px;font-weight:650}.steps{padding-left:1.3rem}.steps li{margin:.55rem 0}label{display:block;font-weight:750;margin:14px 0 5px}input,select,button{font:inherit}input,select{width:100%;padding:11px;border:1px solid #bdb4cf;border-radius:9px;background:#fff}button{margin-top:16px;padding:11px 15px;border:0;border-radius:9px;background:var(--violet);color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:12px;border-radius:9px;font-weight:650}.good{display:block!important;background:#e4f6eb;color:var(--good)}.needs{display:block!important;background:#fff0f2;color:var(--warn)}a{color:#5430a1}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}
+</style>
+</head>
+<body>
+<main class="page">
+<header><div class="eyebrow">Calm Execution · Lesson 52</div><h1>Write an audited-pair next instruction</h1><p class="lead">Convert a classified pair into one sentence for two ordinary attempts—small enough to enact, specific enough to audit.</p></header>
+<section class="card">
+<h2>One skill: write the supported next move</h2>
+<p>Use this after Lesson 51’s classification, and keep the cue and exact two-minute action visible in the sentence. The classification decides the move; it does not invite a redesign.</p>
+<p class="rule">For the next two ordinary attempts: <strong>[retain and gather records / one already-specified matching test]</strong>. After <strong>[stable cue]</strong>, I will <strong>[exact two-minute action]</strong>. Then I will audit whether I followed this instruction.</p>
+<p>If the pair was mixed, working, or unclear, write <em>retain and gather two readable records</em>. Only <code>cue</code> twice supports one already-specified cue test; only <code>start-side</code> twice supports one already-specified setup or opening-action test. This is a practical experiment rule, not evidence that two records establish a cause.</p>
+<p class="small">The stable-context idea behind retaining a cue is consistent with Gardner, Lally &amp; Wardle’s review of cue-driven habit formation; this lesson applies it as a modest design choice, not a guarantee. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Source: Making health habitual (2012)</a>.</p>
+</section>
+<section class="card">
+<h2>10-minute applied exercise</h2>
+<ol class="steps"><li>Look at the two labels from your classified, audited pair.</li><li>Select the supported move below. Do not invent a fresh test; use one only if it was already specified.</li><li>Write your stable cue and the physical two-minute action exactly as you will do them.</li><li>Copy the resulting sentence beside the next two records. At the next review, audit enactment before reading outcomes.</li></ol>
+</section>
+<section class="card" aria-labelledby="check-title">
+<h2 id="check-title">Instruction builder</h2>
+<label for="branch">Pair result</label><select id="branch"><option value="">Choose a result…</option><option value="retain">Mixed, working, or unclear</option><option value="cue">Cue twice</option><option value="start">Start-side twice</option></select>
+<label for="move">Supported next move</label><input id="move" placeholder="e.g., retain the plan and gather two readable records">
+<label for="cue">Stable cue</label><input id="cue" placeholder="e.g., after I put down my breakfast dish">
+<label for="action">Exact two-minute action</label><input id="action" placeholder="e.g., open the brief and write its first heading">
+<button type="button" id="check">Check the instruction</button><div id="feedback" role="status" aria-live="polite"></div>
+</section>
+<footer>The aim is one calm intentional start, not catch-up work or a longer session. Stopping after the two-minute action remains valid. Ask your teacher if a test is not already specified or a record is hard to classify.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const b=$('branch').value,m=$('move').value.trim(),c=$('cue').value.trim(),a=$('action').value.trim(),box=$('feedback');if(!b||!m||!c||!a){box.className='needs';box.textContent='Add the pair result, one move, a stable cue, and an exact two-minute action before using the instruction.';return}const lower=m.toLowerCase();if(b==='retain'&&(lower.includes('test')||lower.includes('change'))){box.className='needs';box.textContent='This result calls for retention: replace the new test or change with “retain the plan and gather two readable records.”';return}if(b==='cue'&&!lower.includes('cue')){box.className='needs';box.textContent='Cue twice supports only an already-specified cue test. Name that test, or return to the record before writing a move.';return}if(b==='start'&&!(lower.includes('setup')||lower.includes('opening')||lower.includes('action'))){box.className='needs';box.textContent='Start-side twice supports only an already-specified setup or opening-action test. Name that one test, not a broader redesign.';return}box.className='good';box.textContent='Ready to try twice: “For the next two ordinary attempts: '+m+'. After '+c+', I will '+a+'. Then I will audit whether I followed this instruction.” Keep the other links stable.';});
+</script>
+</body>
+</html>
