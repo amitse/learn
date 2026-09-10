@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>slog Minimum Level (Lesson 44) <span class="new-badge">new</span></h2>
+<h2>slog Source Location (Lesson 45) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>AddSource</code></td><td>include caller metadata</td><td>A <code>slog.HandlerOptions</code> boolean that asks a handler to attach source location information to each record it handles. Select it once at logger construction when it is useful to the log consumer; individual handlers and log calls do not choose it.</td></tr>
+  <tr><td>source location</td><td>caller file / function / line</td><td>Diagnostic metadata identifying where a log call originated. In JSON output it is a source object; it supports investigation but does not replace a stable event message or named attributes.</td></tr>
+  <tr><td>presence-based source test</td><td>assert caller metadata exists</td><td>A JSON log test that decodes one captured record and requires a populated <code>source</code> object. Do not assert an exact file path or line number: refactoring changes those details without changing the source-inclusion policy.</td></tr>
+</table>
+
+<h2>slog Minimum Level (Lesson 44)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>slog.HandlerOptions</code></td><td>logger transport options</td><td>Options passed when constructing an <code>slog</code> handler. They configure handler-wide behavior such as the minimum enabled level; select them at the application boundary rather than in individual HTTP handlers.</td></tr>

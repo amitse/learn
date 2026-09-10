@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 45 — Add Source Locations to slog Events</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b8;--accent:#00adb5;--green:#3ab54a;--red:#f07178;--ts:#69a7ed;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.2rem 0 .7rem;font-size:1.35rem}p,li{color:var(--muted)}.lead{font-size:1.1rem;max-width:740px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.86rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{font-size:.88rem;margin:0 0 7px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:600}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}ol{padding-left:1.35rem}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 7 minutes</div>
+<h1>Add source locations to <code>slog</code> events</h1>
+<p class="lead">When an operator needs to jump from a lifecycle event to the line that emitted it, <code>slog</code> can include source metadata. You will enable it once at logger construction and test its presence without freezing a fragile file path or line number.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>By the end, you can add <code>AddSource: true</code> to your JSON logger and verify that an emitted event contains source information while your stable message and identity fields remain unchanged.</p></section>
+
+<h2>Source is handler policy</h2>
+<p><code>slog.HandlerOptions{AddSource: true}</code> tells a handler to include the source file and line of the logging call in each record it handles. It is useful when the people reading the logs can act on that location. Like your JSON format and INFO threshold, select it once where the application assembles its logger—not in handlers or at individual log calls.</p>
+<div class="comparison"><section class="pane ts card"><h3>TypeScript / Node mental model</h3><pre>// Configure the logger's caller metadata once
+createLogger({
+  format: json(),
+  includeCaller: true,
+})
+
+logger.info("HTTP server starting")</pre></section><section class="pane go card"><h3>Go</h3><pre>// Configure handler metadata once
+opts := &amp;slog.HandlerOptions{
+    Level:     slog.LevelInfo,
+    AddSource: true,
+}
+logger := slog.New(slog.NewJSONHandler(os.Stderr, opts))
+
+logger.Info("HTTP server starting")</pre></section></div>
+<div class="callout"><strong>Keep the contract straight:</strong> source data helps a human investigate an event. Your stable message (<code>"HTTP server starting"</code>) and queryable attributes (<code>version</code>, <code>revision</code>) still identify what happened. Source is supporting metadata, not an event name.</div>
+
+<h2>Make one deliberate construction change</h2>
+<pre>func newLogger(out io.Writer) *slog.Logger {
+    opts := &amp;slog.HandlerOptions{
+        Level:     slog.LevelInfo,
+        AddSource: true,
+    }
+    return slog.New(slog.NewJSONHandler(out, opts))
+}</pre>
+<p>This leaves call sites alone. A JSON record gains a <code>source</code> object containing dynamic location details, alongside fields such as <code>time</code>, <code>level</code>, and <code>msg</code>. Enable it only when that extra detail is useful to the log consumer; it adds work and makes output noisier.</p>
+
+<h2>Test presence, not a line number</h2>
+<p>Source location is intentionally tied to code layout. A refactor can change the path or line without changing your logging policy. Capture one JSON record, decode it, and assert that the source field exists and has the fields your consumer needs.</p>
+<pre>func TestLoggerAddsSource(t *testing.T) {
+    var out bytes.Buffer
+    logger := newLogger(&amp;out)
+    logger.Info("HTTP server starting")
+
+    var got map[string]any
+    if err := json.Unmarshal(out.Bytes(), &amp;got); err != nil {
+        t.Fatal(err)
+    }
+
+    source, ok := got["source"].(map[string]any)
+    if !ok {
+        t.Fatal("source object missing")
+    }
+    if source["function"] == "" || source["file"] == "" {
+        t.Fatal("source location was incomplete")
+    }
+}</pre>
+<p>The exact JSON representation is owned by the handler, so do not assert a full serialized line. This test checks the behaviour you chose: source metadata is emitted. Keep your existing test for the INFO threshold separate; it already verifies which events reach the handler.</p>
+
+<h2>Do this now</h2>
+<ol><li>Decide whether the people investigating production logs can use source paths and functions.</li><li>Add <code>AddSource: true</code> beside the existing <code>Level: slog.LevelInfo</code> option.</li><li>Write the one-record JSON test above, asserting source presence rather than a line number.</li><li>Run <code>go test ./...</code>. Keep stable lifecycle messages and identity attributes exactly as they are.</li></ol>
+
+<section class="quiz"><div class="label">Instant check</div><h2>Where does <code>AddSource: true</code> belong?</h2><button class="option" data-correct="false">On each <code>logger.Info</code> call that might need debugging.</button><button class="option" data-correct="true">In <code>slog.HandlerOptions</code> when the application constructs its logger.</button><button class="option" data-correct="false">Inside a request handler after writing the response.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>What should a durable source-location test assert?</h2><button class="option" data-correct="false">The precise source line stays 42 forever.</button><button class="option" data-correct="true">A decoded JSON event has a non-empty source object; its exact path and line are not the policy.</button><button class="option" data-correct="false">The log message is replaced with the source file name.</button><p class="feedback" aria-live="polite"></p></section>
+
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/log/slog#HandlerOptions">Go package documentation — <code>slog.HandlerOptions</code> and <code>AddSource</code></a></li><li><a href="https://pkg.go.dev/log/slog#JSONHandler">Go package documentation — <code>JSONHandler</code></a></li><li><a href="https://go.dev/blog/slog">Go Blog — Structured Logging with slog</a></li></ul>
+<p class="callout">Want to make source metadata conditional by environment, or add one request event with a clear operational question? Ask your teacher—those are the next separate policy decisions.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — source inclusion is selected once by the handler.':'Not quite — source metadata is handler-wide output policy. Try again.'})));</script></body></html>
