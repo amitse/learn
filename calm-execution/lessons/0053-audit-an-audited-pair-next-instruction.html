@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 53 — Audit an Audited-Pair Next Instruction</title>
+<style>
+:root{--ink:#20202b;--muted:#626174;--paper:#fffdf9;--violet:#6d3cc7;--pale:#f0eaff;--line:#ded7ec;--good:#176b45;--warn:#9d2841}*{box-sizing:border-box}body{margin:0;background:#f5f2fa;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px;margin:14px 0;box-shadow:0 5px 20px #4320750b}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet)}h1{font-size:clamp(1.7rem,7vw,2.5rem);line-height:1.08;margin:.35rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 .65rem}p{margin:.5rem 0}.lead,.small,footer{color:var(--muted)}.small,footer{font-size:.9rem}.rule{padding:14px;border-left:4px solid var(--violet);background:var(--pale);border-radius:8px;font-weight:650}.steps{padding-left:1.3rem}.steps li{margin:.55rem 0}label{display:block;font-weight:750;margin:14px 0 5px}select,button{font:inherit}select{width:100%;padding:11px;border:1px solid #bdb4cf;border-radius:9px;background:#fff}button{margin-top:16px;padding:11px 15px;border:0;border-radius:9px;background:var(--violet);color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:12px;border-radius:9px;font-weight:650}.good{display:block!important;background:#e4f6eb;color:var(--good)}.needs{display:block!important;background:#fff0f2;color:var(--warn)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}
+</style>
+</head>
+<body>
+<main class="page">
+<header><div class="eyebrow">Calm Execution · Lesson 53</div><h1>Audit the next instruction</h1><p class="lead">Before reading what happened, check whether the sentence you wrote was actually followed—twice.</p></header>
+<section class="card">
+<h2>One skill: make enactment readable</h2>
+<p>Take the exact next-instruction sentence from Lesson 52 and place it beside its two covered ordinary attempts. For each attempt, compare what the sentence said with what the record shows.</p>
+<p class="rule">Label each attempt: <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>.<br>If either label is <code>not followed</code> or <code>unclear</code>, repeat the same instruction for two ordinary attempts. Do not interpret cue or start outcomes yet.</p>
+<p>This is a practical reading rule: it prevents a missing or different instruction from being mistaken for an answer about the plan. Two <code>followed</code> labels create a pair that is ready for the existing cue-then-start classification.</p>
+</section>
+<section class="card">
+<h2>8-minute applied exercise</h2>
+<ol class="steps"><li>Copy your exact Lesson 52 instruction at the top of two recent records.</li><li>For attempt 1, choose one label below. Do the same for attempt 2. Use <code>unclear</code> when the record cannot answer; do not fill gaps from memory.</li><li>Use the feedback to write the one next move: repeat unchanged, or classify the verified pair next.</li></ol>
+</section>
+<section class="card" aria-labelledby="check-title">
+<h2 id="check-title">Two-attempt audit</h2>
+<label for="one">Attempt 1: did it follow the exact instruction?</label><select id="one"><option value="">Choose a label…</option><option>followed</option><option>not followed</option><option>unclear</option></select>
+<label for="two">Attempt 2: did it follow the exact instruction?</label><select id="two"><option value="">Choose a label…</option><option>followed</option><option>not followed</option><option>unclear</option></select>
+<button type="button" id="check">Check the audit</button><div id="feedback" role="status" aria-live="polite"></div>
+</section>
+<footer>Keep the cue, exact two-minute action, frequency, and any active one-link test unchanged. This exercise asks for readable evidence—not catch-up work, guilt, or a longer session. Ask your teacher if the sentence or a record is hard to read.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const a=$('one').value,b=$('two').value,box=$('feedback');if(!a||!b){box.className='needs';box.textContent='Choose one evidence label for each attempt before deciding what the pair can answer.';return}if(a==='followed'&&b==='followed'){box.className='good';box.textContent='Verified pair: next, read each record cue first and two-minute start second. Retain unless the same readable earliest break appears twice and supports one already-specified matching test.';return}box.className='good';box.textContent='Not ready to interpret outcomes: repeat the exact instruction unchanged for two ordinary attempts, then audit again. “Not followed” and “unclear” are system data, not a verdict.';});
+</script>
+</body>
+</html>
