@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>slog Source Location (Lesson 45) <span class="new-badge">new</span></h2>
+<h2>Configurable slog Source Policy (Lesson 46) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>LogSource</code></td><td><code>logSource</code> config field</td><td>A typed boolean configuration value controlling whether the application creates its slog handler with <code>AddSource: true</code>. It transports deployment policy from configuration loading to logger construction; handlers and individual log calls do not read it.</td></tr>
+  <tr><td><code>strconv.ParseBool</code></td><td>strict boolean env parser</td><td>Standard-library parsing for boolean text. It accepts documented true/false spellings such as <code>true</code>, <code>false</code>, <code>1</code>, and <code>0</code>, and returns an error for an invalid setting so a configuration typo is visible.</td></tr>
+  <tr><td>configuration policy test</td><td>table-test config behavior</td><td>A test that injects lookup values and specifies the policy for missing, enabled, disabled, and invalid configuration. Test source output separately with a buffer-backed JSON handler, asserting presence or absence rather than a source line.</td></tr>
+</table>
+
+<h2>slog Source Location (Lesson 45)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>AddSource</code></td><td>include caller metadata</td><td>A <code>slog.HandlerOptions</code> boolean that asks a handler to attach source location information to each record it handles. Select it once at logger construction when it is useful to the log consumer; individual handlers and log calls do not choose it.</td></tr>

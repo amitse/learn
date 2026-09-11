@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 46 — Configure slog Source by Environment</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b8;--accent:#00adb5;--green:#3ab54a;--red:#f07178;--ts:#69a7ed;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.1rem 0 .7rem;font-size:1.35rem}p,li{color:var(--muted)}.lead{font-size:1.1rem;max-width:760px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{font-size:.88rem;margin:0 0 7px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:600}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}ol{padding-left:1.35rem}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Configure <code>slog</code> source by environment</h1>
+<p class="lead">Lesson 45 made source locations available. Now make that choice at your existing configuration boundary: a local run can include caller details, while production can deliberately keep its JSON lean.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will carry one boolean from validated configuration into logger construction, then test both output policies without touching <code>os.Getenv</code> or starting an HTTP server.</p></section>
+<h2>One policy, one input</h2><p><code>AddSource</code> belongs to <code>slog.HandlerOptions</code>, but whether it is enabled is deployment policy. That makes it configuration—not a decision for a request handler or a <code>logger.Info</code> call. Give it a clear, explicit setting such as <code>LOG_SOURCE</code>.</p>
+<div class="comparison"><section class="pane ts card"><h3>TypeScript / Node</h3><pre>type Config = { logSource: boolean };
+
+const logger = createLogger({
+  format: json(),
+  includeCaller: config.logSource,
+});</pre></section><section class="pane go card"><h3>Go</h3><pre>type Config struct {
+    LogSource bool
+}
+
+func newLogger(out io.Writer, cfg Config) *slog.Logger {
+    opts := &amp;slog.HandlerOptions{
+        Level: slog.LevelInfo,
+        AddSource: cfg.LogSource,
+    }
+    return slog.New(slog.NewJSONHandler(out, opts))
+}</pre></section></div>
+<div class="callout"><strong>Boundary rule:</strong> raw environment text is untrusted input. Parse it once into <code>Config</code>; pass the typed value onward. The logger should not read <code>LOG_SOURCE</code> itself.</div>
+<h2>Parse strictly, fail early</h2><p>Use <code>strconv.ParseBool</code>. It accepts documented spellings such as <code>true</code>, <code>false</code>, <code>1</code>, and <code>0</code>; a typo produces an error instead of quietly changing observability. Below, absence means the conservative default: no source locations.</p>
+<pre>func loadLogSource(lookup Lookup) (bool, error) {
+    raw, ok := lookup("LOG_SOURCE")
+    if !ok || raw == "" {
+        return false, nil
+    }
+    enabled, err := strconv.ParseBool(raw)
+    if err != nil {
+        return false, fmt.Errorf("parse LOG_SOURCE: %w", err)
+    }
+    return enabled, nil
+}
+
+// During config loading:
+source, err := loadLogSource(lookup)
+if err != nil { return Config{}, err }
+cfg.LogSource = source</pre>
+<p>This reuses the injected <code>Lookup</code> seam from Lesson 19. A map-backed lookup makes every policy case deterministic.</p>
+<h2>Test configuration and rendered output separately</h2><p>First table-test parsing: missing → false, <code>"true"</code> → true, invalid → error. Then test the logger’s observable result with an in-memory buffer. Do not test a specific source file or line.</p>
+<pre>func TestLoggerSourcePolicy(t *testing.T) {
+    for _, tt := range []struct {
+        name string; enabled bool; wantSource bool
+    }{
+        {"disabled", false, false},
+        {"enabled", true, true},
+    } {
+        t.Run(tt.name, func(t *testing.T) {
+            var out bytes.Buffer
+            newLogger(&amp;out, Config{LogSource: tt.enabled}).Info("started")
+            var got map[string]any
+            if err := json.Unmarshal(out.Bytes(), &amp;got); err != nil { t.Fatal(err) }
+            _, hasSource := got["source"]
+            if hasSource != tt.wantSource { t.Fatalf("source=%v, want %v", hasSource, tt.wantSource) }
+        })
+    }
+}</pre>
+<h2>Do this now</h2><ol><li>Add <code>LogSource bool</code> to the application configuration that already owns log level and deployment settings.</li><li>Parse <code>LOG_SOURCE</code> through the injected lookup, with <code>false</code> when absent and an error when invalid.</li><li>Pass the typed config to your logger constructor and assign <code>AddSource: cfg.LogSource</code>.</li><li>Run <code>go test ./...</code>. Decide the production value with the people who use the logs.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Where should <code>LOG_SOURCE</code> be read?</h2><button class="option" data-correct="false">Inside every HTTP handler before it logs.</button><button class="option" data-correct="true">Once at the configuration boundary, then passed as a typed boolean to logger construction.</button><button class="option" data-correct="false">Inside <code>newLogger</code> with <code>os.Getenv</code>.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>What is the safest behavior for <code>LOG_SOURCE=perhaps</code>?</h2><button class="option" data-correct="false">Silently treat it as false.</button><button class="option" data-correct="true">Return a configuration error so the deployment typo is visible.</button><button class="option" data-correct="false">Always enable source locations.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/log/slog#HandlerOptions">Go package documentation — <code>slog.HandlerOptions</code> and <code>AddSource</code></a></li><li><a href="https://pkg.go.dev/strconv#ParseBool">Go package documentation — <code>strconv.ParseBool</code></a></li><li><a href="https://pkg.go.dev/os#LookupEnv">Go package documentation — <code>os.LookupEnv</code></a></li></ul>
+<p class="callout">Want to define one request-log event next? Ask your teacher—we can first decide the operational question it must answer, then keep it distinct from lifecycle events.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — configuration produces typed policy; the handler applies it once.':'Not quite — keep environment access at the configuration boundary. Try again.'})));</script></body></html>
