@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 54 — Classify a Verified Audited Pair</title>
+<style>
+:root{--ink:#20202b;--muted:#626174;--paper:#fffdf9;--violet:#6d3cc7;--pale:#f0eaff;--line:#ded7ec;--good:#176b45;--warn:#9d2841}*{box-sizing:border-box}body{margin:0;background:#f5f2fa;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px;margin:14px 0;box-shadow:0 5px 20px #4320750b}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet)}h1{font-size:clamp(1.7rem,7vw,2.5rem);line-height:1.08;margin:.35rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 .65rem}p{margin:.5rem 0}.lead,.small,footer{color:var(--muted)}.small,footer{font-size:.9rem}.rule{padding:14px;border-left:4px solid var(--violet);background:var(--pale);border-radius:8px;font-weight:650}.steps{padding-left:1.3rem}.steps li{margin:.55rem 0}fieldset{border:1px solid var(--line);border-radius:12px;margin:14px 0;padding:14px}legend{font-weight:800;padding:0 5px}label{display:block;font-weight:700;margin:11px 0 4px}select,button{font:inherit}select{width:100%;padding:11px;border:1px solid #bdb4cf;border-radius:9px;background:#fff}button{margin-top:16px;padding:11px 15px;border:0;border-radius:9px;background:var(--violet);color:#fff;font-weight:800;cursor:pointer}button:hover{filter:brightness(.94)}#feedback{display:none;margin-top:14px;padding:12px;border-radius:9px;font-weight:650}.good{display:block!important;background:#e4f6eb;color:var(--good)}.needs{display:block!important;background:#fff0f2;color:var(--warn)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}a{color:#5530a1}
+</style>
+</head>
+<body>
+<main class="page">
+<header><div class="eyebrow">Calm Execution · Lesson 54</div><h1>Classify a verified pair</h1><p class="lead">Once both attempts followed the instruction, read what happened in a fixed order: cue first, then the two-minute start.</p></header>
+<section class="card">
+<h2>One skill: name the earliest readable break</h2>
+<p>Use this only after Lesson 53’s audit gave <code>followed</code> for both attempts. For each record, ask: did the cue occur? If yes, did the exact two-minute action start?</p>
+<p class="rule"><strong>cue</strong> = the cue did not occur.<br><strong>start-side</strong> = the cue occurred, but the two-minute action did not start.<br><strong>none</strong> = both occurred and the action started.<br><strong>unclear</strong> = the record cannot tell you.</p>
+<p>This is a practical reading rule, not a verdict. Only two matching readable <code>cue</code> or <code>start-side</code> labels support using one already-specified matching test. Every other pair keeps the current small plan for two ordinary attempts.</p>
+</section>
+<section class="card">
+<h2>8-minute applied exercise</h2>
+<ol class="steps"><li>Put the exact instruction from Lesson 52 beside the two attempts that passed your Lesson 53 audit.</li><li>For each attempt, read the recorded cue before the recorded start. Choose <code>unclear</code> rather than filling a gap from memory.</li><li>Use the checker to write one next move: retain and gather two ordinary records, or use one already-specified matching test. Keep the cue, exact two-minute action, and frequency stable.</li></ol>
+</section>
+<section class="card" aria-labelledby="check-title">
+<h2 id="check-title">Verified-pair classifier</h2>
+<p class="small">First confirm: both attempts were labelled <code>followed</code> in the instruction audit.</p>
+<fieldset><legend>Attempt 1</legend><label for="cue1">Cue occurred?</label><select id="cue1"><option value="">Choose…</option><option value="yes">yes</option><option value="no">no</option><option value="unclear">unclear</option></select><label for="start1">Two-minute action started?</label><select id="start1"><option value="">Choose…</option><option value="yes">yes</option><option value="no">no</option><option value="unclear">unclear</option></select></fieldset>
+<fieldset><legend>Attempt 2</legend><label for="cue2">Cue occurred?</label><select id="cue2"><option value="">Choose…</option><option value="yes">yes</option><option value="no">no</option><option value="unclear">unclear</option></select><label for="start2">Two-minute action started?</label><select id="start2"><option value="">Choose…</option><option value="yes">yes</option><option value="no">no</option><option value="unclear">unclear</option></select></fieldset>
+<button type="button" id="check">Classify the pair</button><div id="feedback" role="status" aria-live="polite"></div>
+</section>
+<section class="card"><h2>Why keep the context stable?</h2><p class="small">The supporting habit review distinguishes behaviour repeated in a stable context from automatic cue-triggered habit. Here, stable cue and action details make your own small records easier to compare; this lesson does not claim two records establish a cause. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012), “Making health habitual”</a>.</p></section>
+<footer>No catch-up work, guilt, or longer session is required. Your task is to make the next ordinary attempt readable. Ask your teacher if a cue or start field is hard to classify.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);const label=(cue,start)=>{if(cue==='unclear'||start==='unclear')return'unclear';if(cue==='no')return'cue';if(cue==='yes'&&start==='no')return'start-side';if(cue==='yes'&&start==='yes')return'none';return null};$('check').addEventListener('click',()=>{const a=label($('cue1').value,$('start1').value),b=label($('cue2').value,$('start2').value),box=$('feedback');if(!a||!b){box.className='needs';box.textContent='Choose cue and start evidence for both attempts. Use “unclear” when the record cannot answer.';return}if(a==='cue'&&b==='cue'){box.className='good';box.textContent='Labels: cue, cue. If you already specified a matching cue test, use that one test on the next ordinary attempt; otherwise retain the plan and gather two readable records. Change no other link.';return}if(a==='start-side'&&b==='start-side'){box.className='good';box.textContent='Labels: start-side, start-side. If you already specified one matching setup or opening-action test, use that one test on the next ordinary attempt; otherwise retain the plan and gather two readable records. Change no other link.';return}box.className='good';box.textContent=`Labels: ${a}, ${b}. This pair is mixed, workable, or incomplete. Retain the current instruction for two ordinary attempts and gather readable records—no new test yet.`;});
+</script>
+</body>
+</html>
