@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 55 — Write a Verified-Pair Instruction</title>
+  <style>
+    :root{--ink:#20202a;--muted:#625f70;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5ee;--accent:#663ac8;--good:#176947;--warn:#9a5d00}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:26px 16px 56px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.3rem);line-height:1.03;margin:.35rem 0 .8rem}h2{font-size:1.25rem;margin:0 0 .5rem}.lede{font-size:1.14rem;color:var(--muted);max-width:60ch}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px;box-shadow:0 5px 20px #4c2a8210}.rule{border-left:4px solid var(--accent);padding:10px 14px;background:#f8f5ff;border-radius:0 10px 10px 0}.time{display:inline-block;border-radius:99px;background:#e6dbff;color:#48208e;padding:3px 9px;font-size:.82rem;font-weight:750}ol{padding-left:1.3rem}li+li{margin-top:.5rem}label{display:block;font-weight:700;margin:16px 0 5px}input,select{width:100%;border:1px solid #bfb5d5;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}small{color:var(--muted)}button{margin-top:17px;border:0;border-radius:10px;background:var(--accent);color:white;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer}.feedback{margin-top:14px;padding:12px;border-radius:10px;display:none}.feedback.good{display:block;background:#e9f8ef;color:var(--good)}.feedback.warn{display:block;background:#fff4db;color:var(--warn)}.sentence{margin-top:15px;padding:14px;background:#f7f4fc;border-radius:10px;font-weight:650}.cite{font-size:.9rem;color:var(--muted)}a{color:#5125ae}@media (max-width:440px){.card{padding:16px}.page{padding-top:19px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <div class="eyebrow">Calm Execution · Lesson 55</div>
+  <h1>Write a verified-pair instruction</h1>
+  <p class="lede">Turn the pair you just classified into one sentence you can actually follow—and audit—over the next two ordinary attempts.</p>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2 style="margin-top:12px">One skill</h2>
+    <p>Write a <strong>complete next instruction</strong> after a verified pair: one supported move, your stable cue, and your exact two-minute action.</p>
+    <p class="rule">This is a practical experiment, not a verdict. Do not add duration, catch-up work, or a second change. The next two attempts are ordinary attempts.</p>
+    <p class="cite">Why preserve a stable context? Habit research distinguishes cue-triggered repetition from mere frequency; use this lesson’s stable cue as a small, testable practice context. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Real-world exercise</h2>
+    <ol>
+      <li>Take the two attempts that passed your instruction audit.</li>
+      <li>Use your Lesson 54 labels. Choose <em>retain/gather</em> for mixed, working, or unclear labels. Choose <em>one matching test</em> only if both readable labels match and you already specified that test.</li>
+      <li>Write the sentence below on your start card or beside your first object. Use it for the next two ordinary attempts.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="planner-title">
+    <h2 id="planner-title">Build the sentence</h2>
+    <label for="move">Supported next move</label>
+    <select id="move">
+      <option value="">Choose one…</option>
+      <option value="retain">Retain the current plan and gather two readable ordinary attempts</option>
+      <option value="test">Run one already-specified matching test</option>
+    </select>
+    <label for="cue">Your stable cue</label>
+    <input id="cue" placeholder="e.g., After I put down my breakfast bowl">
+    <label for="action">Your exact two-minute action</label>
+    <input id="action" placeholder="e.g., open the proposal and write its first heading">
+    <div id="testWrap" hidden>
+      <label for="test">The already-specified matching test</label>
+      <input id="test" placeholder="e.g., place the proposal open on my desk before breakfast">
+    </div>
+    <button type="button" id="check">Check my instruction</button>
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+    <div id="sentence" class="sentence" hidden></div>
+  </section>
+
+  <section class="card">
+    <h2>Finish calmly</h2>
+    <p>If your instruction is complete, copy it now. At each cue, do only the named two-minute action. Record the attempt. After two attempts, audit whether this exact sentence was followed before reading cue/start outcomes.</p>
+    <p><strong>Ask your teacher:</strong> “Here are my two labels and my instruction—does my next move match the evidence?”</p>
+  </section>
+</main>
+<script>
+const move=document.querySelector('#move'), testWrap=document.querySelector('#testWrap'), feedback=document.querySelector('#feedback'), sentence=document.querySelector('#sentence');
+move.addEventListener('change',()=>testWrap.hidden=move.value!=='test');
+document.querySelector('#check').addEventListener('click',()=>{
+  const m=move.value, cue=document.querySelector('#cue').value.trim(), action=document.querySelector('#action').value.trim(), test=document.querySelector('#test').value.trim();
+  sentence.hidden=true; feedback.className='feedback';
+  if(!m||!cue||!action||(m==='test'&&!test)){
+    feedback.textContent='Almost: choose one move and name both your observable cue and exact two-minute action. A test also needs its already-specified change.';
+    feedback.classList.add('warn'); return;
+  }
+  const opening=`For the next two ordinary attempts, after ${cue}, I will ${action} for two minutes.`;
+  sentence.textContent=m==='retain' ? `${opening} I will retain the current plan and record readable evidence; no new change.` : `${opening} I will use this one already-specified matching test: ${test}. No other link changes.`;
+  feedback.textContent='Complete. Your instruction has one bounded move and a stable baseline—copy it to your start card.';
+  feedback.classList.add('good'); sentence.hidden=false;
+});
+</script>
+</body>
+</html>

@@ -57,4 +57,5 @@
 - Lesson 52 added an audited-pair next-instruction sentence: write the supported retain/gather or one already-specified matching-test move with the stable cue and exact two-minute action; use it for two ordinary attempts before auditing enactment.
 - Lesson 53 added an audited-pair next-instruction audit: compare the exact Lesson 52 sentence with both covered attempts, label each `followed`, `not followed`, or `unclear`, and repeat the instruction unchanged for two ordinary attempts unless both labels are `followed`.
 - Lesson 54 added verified audited-pair classification: after both attempts are `followed`, label each `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and supports one already-specified matching test.
+- Lesson 55 added a verified-pair next-instruction sentence: write a retain/gather instruction for two ordinary attempts, or one already-specified matching-test instruction, with the stable cue and exact two-minute action included; audit enactment next.
 - Increase difficulty only when the basic start ritual is reliable.
