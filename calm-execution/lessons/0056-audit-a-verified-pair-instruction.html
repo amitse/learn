@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 56 — Audit a Verified-Pair Instruction</title>
+  <style>
+    :root{--ink:#20202a;--muted:#625f70;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5ee;--accent:#663ac8;--good:#176947;--warn:#9a5d00}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:26px 16px 56px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.3rem);line-height:1.03;margin:.35rem 0 .8rem}h2{font-size:1.25rem;margin:0 0 .5rem}.lede{font-size:1.14rem;color:var(--muted);max-width:60ch}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px;box-shadow:0 5px 20px #4c2a8210}.rule{border-left:4px solid var(--accent);padding:10px 14px;background:#f8f5ff;border-radius:0 10px 10px 0}.time{display:inline-block;border-radius:99px;background:#e6dbff;color:#48208e;padding:3px 9px;font-size:.82rem;font-weight:750}ol{padding-left:1.3rem}li+li{margin-top:.5rem}label{display:block;font-weight:700;margin:16px 0 5px}select{width:100%;border:1px solid #bfb5d5;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}button{margin-top:17px;border:0;border-radius:10px;background:var(--accent);color:white;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer}.feedback{margin-top:14px;padding:12px;border-radius:10px;display:none}.feedback.good{display:block;background:#e9f8ef;color:var(--good)}.feedback.warn{display:block;background:#fff4db;color:var(--warn)}.cite{font-size:.9rem;color:var(--muted)}a{color:#5125ae}@media (max-width:440px){.card{padding:16px}.page{padding-top:19px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <div class="eyebrow">Calm Execution · Lesson 56</div>
+  <h1>Audit a verified-pair instruction</h1>
+  <p class="lede">Before reading outcomes, check whether the exact sentence from Lesson 55 was actually used on each of its two ordinary attempts.</p>
+
+  <section class="card">
+    <span class="time">7–10 minutes</span>
+    <h2 style="margin-top:12px">One skill</h2>
+    <p>Label each covered attempt <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong> by comparing it with your written instruction—not with what you meant to do.</p>
+    <p class="rule">This is a practical evidence check. If either attempt is not followed or unclear, repeat the exact sentence for two ordinary attempts. Do not diagnose the result, add a change, or catch up.</p>
+    <p class="cite">Repeated behaviour in a stable context is relevant to cue-based habit formation; here, keeping one written instruction stable is a modest practice design, not proof that it will work for you. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Real-world exercise</h2>
+    <ol>
+      <li>Put your exact Lesson 55 instruction where you can see it. Take its two covered attempt records.</li>
+      <li>For each attempt, ask only: did I use the stated cue, exact two-minute action, and the one stated move (retain/gather or the named test)?</li>
+      <li>Choose a label below. Then follow the feedback: repeat unchanged unless both attempts are <em>followed</em>.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="check-title">
+    <h2 id="check-title">Two-attempt audit</h2>
+    <label for="first">Attempt 1</label>
+    <select id="first"><option value="">Choose a label…</option><option value="followed">Followed — the exact instruction was used</option><option value="not">Not followed — a stated part was not used</option><option value="unclear">Unclear — the record cannot show whether it was used</option></select>
+    <label for="second">Attempt 2</label>
+    <select id="second"><option value="">Choose a label…</option><option value="followed">Followed — the exact instruction was used</option><option value="not">Not followed — a stated part was not used</option><option value="unclear">Unclear — the record cannot show whether it was used</option></select>
+    <button type="button" id="check">Check the next move</button>
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Finish calmly</h2>
+    <p>Both <em>followed</em> labels mean the pair is ready for the existing cue-then-start classification. Any other label means the next instruction is simply: “Repeat the exact Lesson 55 instruction for two ordinary attempts and record it readably.”</p>
+    <p><strong>Ask your teacher:</strong> “Here is my instruction and my two records. Which audit label is supported by what I wrote?”</p>
+  </section>
+</main>
+<script>
+const feedback=document.querySelector('#feedback');
+document.querySelector('#check').addEventListener('click',()=>{
+  const a=document.querySelector('#first').value,b=document.querySelector('#second').value;
+  feedback.className='feedback';
+  if(!a||!b){feedback.textContent='Choose one evidence label for each attempt. If the record cannot show it, “unclear” is the accurate label.';feedback.classList.add('warn');return;}
+  if(a==='followed'&&b==='followed'){feedback.textContent='Verified pair. The instruction was followed twice; now use the familiar cue-then-start classification. Keep the cue and two-minute action stable.';feedback.classList.add('good');return;}
+  feedback.textContent='Not ready to interpret outcomes. Repeat the exact Lesson 55 instruction for two ordinary attempts and record it readably—no new change and no catch-up work.';feedback.classList.add('warn');
+});
+</script>
+</body>
+</html>
