@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 47 — Configure slog Level by Environment</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b8;--accent:#00adb5;--green:#3ab54a;--red:#f07178;--ts:#69a7ed;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.1rem 0 .7rem;font-size:1.35rem}p,li{color:var(--muted)}.lead{font-size:1.1rem;max-width:760px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{font-size:.88rem;margin:0 0 7px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:600}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}ol{padding-left:1.35rem}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Configure <code>slog</code> level by environment</h1>
+<p class="lead">Your logger already has an explicit minimum level. Make that deployment policy configurable without letting raw strings leak into logger construction or HTTP handlers.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will parse <code>LOG_LEVEL</code> once into a typed <code>slog.Level</code>, pass it through <code>Config</code>, and test default, valid, and invalid settings without changing the real environment.</p></section>
+<h2>Level is policy; events are facts</h2><p>A call site should say what happened: <code>logger.Debug</code>, <code>Info</code>, <code>Warn</code>, or <code>Error</code>. The handler decides which severities a particular deployment emits. That choice belongs at the same configuration boundary as <code>LOG_SOURCE</code>.</p>
+<div class="comparison"><section class="pane ts card"><h3>TypeScript / Node</h3><pre>type Config = { logLevel: "debug" | "info" | "warn" | "error" };
+
+const logger = createLogger({
+  level: config.logLevel,
+  format: json(),
+});</pre></section><section class="pane go card"><h3>Go</h3><pre>type Config struct {
+    LogLevel slog.Level
+}
+
+func newLogger(out io.Writer, cfg Config) *slog.Logger {
+    opts := &amp;slog.HandlerOptions{
+        Level: cfg.LogLevel,
+    }
+    return slog.New(slog.NewJSONHandler(out, opts))
+}</pre></section></div>
+<div class="callout"><strong>Keep the boundary clean:</strong> <code>LOG_LEVEL</code> is untrusted text. <code>newLogger</code> receives a typed level; it does not call <code>os.Getenv</code>. Handlers do not choose the threshold either.</div>
+<h2>Let <code>slog.Level</code> parse its own names</h2><p><code>slog.Level.UnmarshalText</code> accepts the standard names <code>DEBUG</code>, <code>INFO</code>, <code>WARN</code>, and <code>ERROR</code> (case-insensitively). It also supports documented level offsets such as <code>DEBUG+2</code>. Do not maintain a second hand-written mapping when the type already owns its text format.</p>
+<pre>func loadLogLevel(lookup Lookup) (slog.Level, error) {
+    raw, ok := lookup("LOG_LEVEL")
+    if !ok || raw == "" {
+        return slog.LevelInfo, nil // deliberate default
+    }
+
+    var level slog.Level
+    if err := level.UnmarshalText([]byte(raw)); err != nil {
+        return 0, fmt.Errorf("parse LOG_LEVEL: %w", err)
+    }
+    return level, nil
+}
+
+// During config loading:
+level, err := loadLogLevel(lookup)
+if err != nil { return Config{}, err }
+cfg.LogLevel = level</pre>
+<p>Notice the default is explicit. A missing setting means INFO—not accidentally DEBUG because <code>slog.Level</code>'s numeric zero value is <code>LevelDebug</code>.</p>
+<h2>Test parsing separately from output</h2><p>The injected <code>Lookup</code> seam from Lesson 19 keeps parsing deterministic. First test the configuration contract; then use a buffer-backed handler to test the filtering result. The two tests answer different questions.</p>
+<pre>func TestLoadLogLevel(t *testing.T) {
+    tests := []struct {
+        name string; env map[string]string
+        want slog.Level; wantErr bool
+    }{
+        {"missing defaults to info", nil, slog.LevelInfo, false},
+        {"debug", map[string]string{"LOG_LEVEL": "debug"}, slog.LevelDebug, false},
+        {"invalid is rejected", map[string]string{"LOG_LEVEL": "loud"}, 0, true},
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got, err := loadLogLevel(mapLookup(tt.env))
+            if (err != nil) != tt.wantErr { t.Fatalf("err=%v", err) }
+            if !tt.wantErr &amp;&amp; got != tt.want { t.Fatalf("got %v, want %v", got, tt.want) }
+        })
+    }
+}</pre>
+<pre>var out bytes.Buffer
+logger := newLogger(&amp;out, Config{LogLevel: slog.LevelWarn})
+logger.Info("startup detail")
+logger.Warn("pool near capacity")
+
+text := out.String()
+// Assert: "startup detail" is absent; "pool near capacity" is present.</pre>
+<p>Test the event’s presence or absence—not the handler’s internal fields, timestamp, or full serialized JSON line.</p>
+<h2>Do this now</h2><ol><li>Add <code>LogLevel slog.Level</code> to your application configuration.</li><li>Parse <code>LOG_LEVEL</code> with <code>level.UnmarshalText([]byte(raw))</code>; make absent or empty mean <code>slog.LevelInfo</code>.</li><li>Return a contextual error for invalid input. A typo should fail startup rather than silently hide useful logs.</li><li>Pass <code>cfg.LogLevel</code> to <code>HandlerOptions{Level: ...}</code>, then run <code>go test ./...</code>.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>What should an unset <code>LOG_LEVEL</code> produce?</h2><button class="option" data-correct="false">The zero value, because it is always a safe default.</button><button class="option" data-correct="true">An explicit <code>slog.LevelInfo</code> default.</button><button class="option" data-correct="false">A handler that reads the environment whenever an event is logged.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>Where is <code>LOG_LEVEL=loud</code> handled?</h2><button class="option" data-correct="false">Each handler ignores it and logs normally.</button><button class="option" data-correct="true">Configuration loading returns an error before the server starts.</button><button class="option" data-correct="false">The JSON handler silently changes it to INFO.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/log/slog#Level.UnmarshalText">Go package documentation — <code>slog.Level.UnmarshalText</code> accepted level text</a></li><li><a href="https://pkg.go.dev/log/slog#HandlerOptions">Go package documentation — <code>slog.HandlerOptions.Level</code></a></li><li><a href="https://pkg.go.dev/log/slog#Level">Go package documentation — standard severity levels and their ordering</a></li></ul>
+<p class="callout">Want to go further? Ask your teacher to help decide whether a runtime-adjustable <code>slog.LevelVar</code> is genuinely needed, or whether a restart-time deployment setting is the simpler operational policy.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — parse once at the boundary and carry typed policy to logger construction.':'Not quite — keep raw configuration at one validated startup boundary. Try again.'})));</script></body></html>

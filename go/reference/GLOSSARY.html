@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Configurable slog Source Policy (Lesson 46) <span class="new-badge">new</span></h2>
+<h2>Configurable slog Minimum-Level Policy (Lesson 47) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>LogLevel</code></td><td><code>logLevel</code> config field</td><td>A typed <code>slog.Level</code> configuration value that transports an environment's minimum output threshold from configuration loading to logger construction. It is deployment policy, not a decision for handlers or individual log calls.</td></tr>
+  <tr><td><code>Level.UnmarshalText</code></td><td>strict logger-level parser</td><td>A method on <code>slog.Level</code> that parses standard severity text such as <code>DEBUG</code>, <code>INFO</code>, <code>WARN</code>, and <code>ERROR</code>. Invalid text returns an error, making a deployment typo visible at startup.</td></tr>
+  <tr><td>explicit INFO default</td><td>default <code>"info"</code> config</td><td>The deliberate policy for an absent or empty <code>LOG_LEVEL</code>. It must be stated rather than relying on a zero value: numeric zero for <code>slog.Level</code> is <code>LevelDebug</code>.</td></tr>
+  <tr><td>threshold output test</td><td>capture transport and assert filtering</td><td>A logger test that captures output, requires an eligible event to be present, and requires a below-threshold event to be absent. It verifies observable filtering without asserting handler internals or timestamps.</td></tr>
+</table>
+
+<h2>Configurable slog Source Policy (Lesson 46)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>LogSource</code></td><td><code>logSource</code> config field</td><td>A typed boolean configuration value controlling whether the application creates its slog handler with <code>AddSource: true</code>. It transports deployment policy from configuration loading to logger construction; handlers and individual log calls do not read it.</td></tr>
