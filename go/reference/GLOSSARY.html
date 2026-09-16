@@ -45,6 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
+<h2>Runtime slog Level Control (Lesson 48) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>slog.LevelVar</code></td><td>mutable logger-level controller</td><td>A concurrency-safe value implementing <code>slog.Leveler</code>. A handler can consult the same <code>*LevelVar</code> for each record while an authorized application control path changes its threshold with <code>Set</code>.</td></tr>
+  <tr><td><code>slog.Leveler</code></td><td>level-provider interface</td><td>The interface that supplies a handler’s current minimum <code>slog.Level</code>. A plain <code>slog.Level</code> is fixed; a shared <code>*slog.LevelVar</code> makes the selection dynamic.</td></tr>
+  <tr><td>runtime level owner</td><td>owned operations control</td><td>The application-boundary component that creates, initializes, and (if needed) exposes the one mutable logging threshold. HTTP handlers must not independently set it or reread environment text.</td></tr>
+  <tr><td>level transition test</td><td>assert logs before/after controller update</td><td>A buffer-backed test that requires a DEBUG event to be absent at INFO, calls <code>Set(slog.LevelDebug)</code>, and requires a later DEBUG event to be present. It proves the observable live policy change.</td></tr>
+</table>
+
 <h2>Configurable slog Minimum-Level Policy (Lesson 47) <span class="new-badge">new</span></h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>

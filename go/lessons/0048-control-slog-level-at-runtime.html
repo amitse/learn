@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 48 — Control slog Level at Runtime</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--green:#57cf76;--red:#ff7881;--ts:#69a7ed;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.1rem 0 .7rem;font-size:1.35rem}h3{font-size:1rem}p,li{color:var(--muted)}.lead{font-size:1.1rem;max-width:760px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{margin:0 0 7px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}ol{padding-left:1.35rem}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Control <code>slog</code> level at runtime</h1>
+<p class="lead">Yesterday’s <code>LOG_LEVEL</code> selects a threshold at startup. When an incident needs temporary detail without restarting a server, use one shared, concurrency-safe level value: <code>slog.LevelVar</code>.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will wire a <code>LevelVar</code> into a JSON handler, change the threshold while the process is running, and test the observable effect. You will also name its owner—so a useful diagnostic switch does not become an unaudited global.</p></section>
+<h2>The one moving part is the threshold</h2><p>Keep the rule from Lesson 47: log calls report facts at truthful severities. The handler applies deployment policy. <code>LevelVar</code> is an implementation of <code>slog.Leveler</code> whose value can be changed safely while handlers consult it.</p>
+<div class="comparison"><section class="pane ts card"><h3>TypeScript / Node</h3><pre>const level = { current: "info" };
+const logger = createLogger({
+  level: () =&gt; level.current,
+});
+
+// incident control path
+level.current = "debug";</pre></section><section class="pane go card"><h3>Go</h3><pre>var level slog.LevelVar
+level.Set(slog.LevelInfo)
+
+handler := slog.NewJSONHandler(out,
+  &amp;slog.HandlerOptions{Level: &amp;level})
+logger := slog.New(handler)
+
+// incident control path
+level.Set(slog.LevelDebug)</pre></section></div>
+<div class="callout"><strong>Important:</strong> pass the <em>same pointer</em> (<code>&amp;level</code>) to <code>HandlerOptions.Level</code>, then call <code>level.Set(...)</code>. Passing a plain <code>slog.Level</code> freezes the threshold selected at construction.</div>
+<h2>Initialize it from your existing typed config</h2><p>Do not add another environment read. Your configuration boundary already validates <code>LOG_LEVEL</code> into <code>cfg.LogLevel</code>. Use that typed value to establish the initial policy, then make the mutable level an explicit application-owned dependency.</p>
+<pre>type App struct {
+    LogLevel *slog.LevelVar
+    Logger   *slog.Logger
+}
+
+func newApp(out io.Writer, cfg Config) *App {
+    var level slog.LevelVar
+    level.Set(cfg.LogLevel) // cfg is already validated
+
+    logger := slog.New(slog.NewJSONHandler(out,
+        &amp;slog.HandlerOptions{Level: &amp;level}))
+    return &amp;App{LogLevel: &amp;level, Logger: logger}
+}</pre>
+<p>A later admin endpoint, authenticated CLI, or platform control plane can call <code>app.LogLevel.Set(slog.LevelDebug)</code>. That control path is separate from request handlers and should have an operational reason, authorization, and an audit event. If you do not have that need, the restart-time <code>LOG_LEVEL</code> policy is simpler.</p>
+<h2>Prove the live change, not internals</h2><p>Write an INFO record, lower the shared threshold to DEBUG, then write a DEBUG record. A buffer reveals the contract: the first debug event is absent; the second is present. This avoids inspecting implementation fields or relying on timing.</p>
+<pre>func TestLevelVarChangesHandlerThreshold(t *testing.T) {
+    var out bytes.Buffer
+    var level slog.LevelVar
+    level.Set(slog.LevelInfo)
+    log := slog.New(slog.NewTextHandler(&amp;out,
+        &amp;slog.HandlerOptions{Level: &amp;level}))
+
+    log.Debug("before")
+    level.Set(slog.LevelDebug)
+    log.Debug("after")
+
+    got := out.String()
+    if strings.Contains(got, "before") { t.Fatal("debug leaked at INFO") }
+    if !strings.Contains(got, "after") { t.Fatal("debug missing after change") }
+}</pre>
+<h2>Do this now</h2><ol><li>Retain <code>loadLogLevel</code> from Lesson 47; it remains the single parser for <code>LOG_LEVEL</code>.</li><li>Create one application-owned <code>slog.LevelVar</code> and initialize it with <code>cfg.LogLevel</code>.</li><li>Pass <code>&amp;level</code> as <code>HandlerOptions.Level</code>.</li><li>Add the focused transition test, then run <code>go test ./...</code>.</li><li>Only expose <code>Set</code> after defining who may change it, how it is authenticated, and how the change is recorded.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Which value should go into <code>HandlerOptions.Level</code> for runtime control?</h2><button class="option" data-correct="false">A copied <code>slog.Level</code>, because values cannot change accidentally.</button><button class="option" data-correct="true">The shared <code>*slog.LevelVar</code>, because it implements the level lookup the handler checks.</button><button class="option" data-correct="false">A new <code>LevelVar</code> created inside every HTTP handler.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>Where should the initial runtime level come from?</h2><button class="option" data-correct="true">The already validated <code>cfg.LogLevel</code> at application construction.</button><button class="option" data-correct="false">A fresh <code>os.Getenv</code> call whenever a log record is written.</button><button class="option" data-correct="false">Whichever request handler most recently needed debug logs.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/log/slog#LevelVar">Go package documentation — <code>slog.LevelVar</code>, <code>Set</code>, and concurrent use</a></li><li><a href="https://pkg.go.dev/log/slog#HandlerOptions">Go package documentation — handler level selection through <code>Leveler</code></a></li><li><a href="https://pkg.go.dev/log/slog#Leveler">Go package documentation — <code>slog.Leveler</code> interface</a></li></ul>
+<p class="callout">Want to go further? Ask your teacher to help design an authenticated, auditable temporary debug control—or to decide that restart-time configuration is the better fit for your service.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — share one LevelVar with the handler and change that owned value.':'Not quite — preserve the validated configuration boundary and share the LevelVar deliberately. Try again.'})));</script></body></html>
