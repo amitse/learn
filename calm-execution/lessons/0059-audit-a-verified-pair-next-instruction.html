@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 59 — Audit a Verified-Pair Next Instruction</title>
+  <style>
+    :root{--ink:#20202a;--muted:#625f70;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5ee;--accent:#663ac8;--good:#176947;--warn:#9a5d00}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:26px 16px 56px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.3rem);line-height:1.03;margin:.35rem 0 .8rem}h2{font-size:1.25rem;margin:0 0 .5rem}.lede{font-size:1.14rem;color:var(--muted);max-width:60ch}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px;box-shadow:0 5px 20px #4c2a8210}.rule{border-left:4px solid var(--accent);padding:10px 14px;background:#f8f5ff;border-radius:0 10px 10px 0}.time{display:inline-block;border-radius:99px;background:#e6dbff;color:#48208e;padding:3px 9px;font-size:.82rem;font-weight:750}ol{padding-left:1.3rem}li+li{margin-top:.5rem}label{display:block;font-weight:700;margin:14px 0 5px}select,input{width:100%;border:1px solid #bfb5d5;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}button{margin-top:17px;border:0;border-radius:10px;background:var(--accent);color:white;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer}.feedback{margin-top:14px;padding:12px;border-radius:10px;display:none}.feedback.good{display:block;background:#e9f8ef;color:var(--good)}.feedback.warn{display:block;background:#fff4db;color:var(--warn)}a{color:#5426ad}@media(max-width:440px){.card{padding:16px}.page{padding-top:19px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <div class="eyebrow">Calm Execution · Lesson 59</div>
+  <h1>Audit a verified-pair next instruction</h1>
+  <p class="lede">Before interpreting two attempts, check whether the exact instruction you wrote was actually the one you used.</p>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2 style="margin-top:12px">One skill</h2>
+    <p>Compare one written instruction with each of the two ordinary attempts it covered, then label each attempt <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>.</p>
+    <p class="rule">This is a practical evidence rule, not a claim that two attempts prove a cause. If either label is <strong>not followed</strong> or <strong>unclear</strong>, repeat the exact instruction for two ordinary attempts. Do not interpret cue/start results yet; do not add a change.</p>
+    <p><small>Context: this course keeps the cue explicit and the action small. For background on cue-dependent habits in stable contexts, see <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</small></p>
+  </section>
+
+  <section class="card">
+    <h2>Real-world exercise</h2>
+    <ol>
+      <li>Copy your exact Lesson 58 instruction where you can see it. It should name the cue, exact two-minute action, and one next move.</li>
+      <li>Take the two ordinary attempts it covered. For each one, ask only: “Did I follow that sentence?” Choose a label below; do not reconstruct missing details.</li>
+      <li>Use the result: two <em>followed</em> labels unlock the existing cue-then-start reading. Any other result means repeat the same sentence for two ordinary attempts—no catch-up, longer session, or redesign.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="audit-title">
+    <h2 id="audit-title">Two-attempt audit</h2>
+    <label for="instruction">Exact instruction (optional—paste it for your record)</label>
+    <input id="instruction" placeholder="For the next two ordinary attempts, after…">
+    <label for="one">Attempt 1</label>
+    <select id="one"><option value="">Choose one…</option><option value="followed">followed</option><option value="not-followed">not followed</option><option value="unclear">unclear</option></select>
+    <label for="two">Attempt 2</label>
+    <select id="two"><option value="">Choose one…</option><option value="followed">followed</option><option value="not-followed">not followed</option><option value="unclear">unclear</option></select>
+    <button type="button" id="check">Check my next move</button>
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Finish calmly</h2>
+    <p>“Unclear” is a useful label, not a failed one. Your job is only to make the next two attempts readable. Ask your teacher: <strong>“Here is my instruction and audit. Should I repeat it, or is the pair ready for cue/start classification?”</strong></p>
+  </section>
+</main>
+<script>
+const feedback=document.querySelector('#feedback');
+document.querySelector('#check').addEventListener('click',()=>{
+  const one=document.querySelector('#one').value, two=document.querySelector('#two').value;
+  feedback.className='feedback';
+  if(!one||!two){feedback.textContent='Label both attempts before deciding. Missing evidence stays unclear; do not fill it in from memory.';feedback.classList.add('warn');return;}
+  if(one==='followed'&&two==='followed'){
+    feedback.innerHTML='<strong>Verified pair.</strong> The instruction was followed twice. You may now use the existing order for each attempt: cue occurred? then two-minute action started? Keep the instruction stable while you read.';
+    feedback.classList.add('good');
+  }else{
+    feedback.innerHTML='<strong>Repeat, do not interpret.</strong> At least one attempt was not followed or unclear. Use the exact same instruction for two ordinary attempts. Do not add duration, catch-up work, or another change.';
+    feedback.classList.add('warn');
+  }
+});
+</script>
+</body>
+</html>
