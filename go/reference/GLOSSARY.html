@@ -45,6 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
+<h2>Runtime Log-Level Change Audit (Lesson 49) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>LevelVar.Level()</code></td><td>read current mutable threshold</td><td>Returns the current <code>slog.Level</code> from a <code>LevelVar</code>. At an owned change boundary, read it before <code>Set</code> so an audit event can state the intended transition.</td></tr>
+  <tr><td>log-level control</td><td>operations-only level service</td><td>The single application-owned object or method allowed to change the shared <code>*slog.LevelVar</code>. It keeps runtime logging policy out of ordinary HTTP handlers and gives a future authenticated transport one narrow target.</td></tr>
+  <tr><td>audit logger</td><td>separate durable audit transport</td><td>A logger with a filtering policy independent of the mutable application logger. It records the stable <code>"log level changed"</code> event even if the new application threshold would suppress an INFO record.</td></tr>
+  <tr><td>change audit event</td><td>structured operations action record</td><td>A structured event with a stable message and fields such as <code>actor</code>, <code>from</code>, and <code>to</code>. Test it by decoding captured JSON and asserting those owned fields.</td></tr>
+</table>
+
 <h2>Runtime slog Level Control (Lesson 48) <span class="new-badge">new</span></h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>

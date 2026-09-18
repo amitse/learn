@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 49 — Audit Runtime Log-Level Changes</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--green:#57cf76;--red:#ff7881;--ts:#69a7ed;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.1rem 0 .7rem;font-size:1.35rem}h3{font-size:1rem}p,li{color:var(--muted)}.lead{font-size:1.1rem;max-width:780px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{margin:0 0 7px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.warning{background:#32230e;border:1px solid #70511c;border-radius:8px;padding:14px;color:#f5d98c}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}ol{padding-left:1.35rem}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Audit runtime log-level changes</h1>
+<p class="lead">A shared <code>slog.LevelVar</code> can change live verbosity. That power needs a single, visible change boundary—not scattered <code>Set</code> calls that disappear precisely when they matter.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will wrap the mutable level in one application-owned control, emit a structured <code>log level changed</code> audit event with <code>from</code>, <code>to</code>, and <code>actor</code>, and test it without a server or an HTTP admin endpoint.</p></section>
+<h2>The audit event must not use the level it changes</h2><p>Suppose the application logger moves from INFO to WARN. If you set the threshold first and then write an INFO audit event through that same logger, the event is filtered out. An audit record must use a deliberately separate, durable sink whose policy is not controlled by the mutable application level.</p>
+<div class="comparison"><section class="pane ts card"><h3>TypeScript / Node</h3><pre>const appLog = createLogger({ level });
+const auditLog = createLogger({ level: "info" });
+
+function setLevel(actor: string, to: Level) {
+  const from = level.current;
+  level.current = to;
+  auditLog.info({ actor, from, to },
+    "log level changed");
+}</pre></section><section class="pane go card"><h3>Go</h3><pre>type LogLevelControl struct {
+    level *slog.LevelVar
+    audit *slog.Logger // fixed, separate policy
+}
+
+func (c *LogLevelControl) Set(
+    ctx context.Context, actor string, to slog.Level,
+) {
+    from := c.level.Level()
+    c.level.Set(to)
+    c.audit.InfoContext(ctx, "log level changed",
+        "actor", actor, "from", from, "to", to)
+}</pre></section></div>
+<div class="callout"><strong>One owner:</strong> construct <code>LogLevelControl</code> once at the application boundary, with the same <code>*slog.LevelVar</code> used by the application handler. Future authenticated operations code calls <code>control.Set</code>; ordinary handlers receive neither the control nor the raw <code>LevelVar</code>.</div>
+<h2>Make the audit sink explicit</h2><p>For this focused example, the audit logger is a JSON handler writing to a destination chosen by your application boundary. In a real service, agree with operations whether this is stdout, a separate durable stream, or an external audit system. The important local contract is that its minimum level remains capable of recording the change event.</p>
+<pre>func newLogLevelControl(out io.Writer, initial slog.Level) (*slog.Logger, *LogLevelControl) {
+    var level slog.LevelVar
+    level.Set(initial)
+
+    app := slog.New(slog.NewJSONHandler(out,
+        &amp;slog.HandlerOptions{Level: &amp;level}))
+
+    audit := slog.New(slog.NewJSONHandler(out,
+        &amp;slog.HandlerOptions{Level: slog.LevelInfo}))
+
+    return app, &amp;LogLevelControl{level: &amp;level, audit: audit}
+}</pre>
+<p>This is intentionally not an HTTP endpoint. Authentication, authorization, input parsing, and durable retention are separate concerns. First give the live mutation one owner and a testable audit contract.</p>
+<div class="warning"><strong>Concurrency boundary:</strong> <code>LevelVar</code> safely supports concurrent reads and <code>Set</code> calls. If your product requires a strict, ordered history of simultaneous changes, make the control operation serial (for example with a mutex) and send audit events to a system that preserves the ordering you need. Do not claim ordering that your sink cannot provide.</div>
+<h2>Test the facts an operator needs</h2><p>Capture the audit JSON, perform one change, decode one record, and assert stable fields. Avoid asserting timestamps or a whole serialized line.</p>
+<pre>func TestLogLevelControlAuditsChange(t *testing.T) {
+    var out bytes.Buffer
+    _, control := newLogLevelControl(&amp;out, slog.LevelInfo)
+
+    control.Set(context.Background(), "on-call:amit", slog.LevelDebug)
+
+    var event map[string]any
+    if err := json.Unmarshal(bytes.TrimSpace(out.Bytes()), &amp;event); err != nil {
+        t.Fatal(err)
+    }
+    if event["msg"] != "log level changed" { t.Fatal("missing audit event") }
+    if event["actor"] != "on-call:amit" { t.Fatal("wrong actor") }
+    if event["from"] != "INFO" || event["to"] != "DEBUG" {
+        t.Fatalf("transition = %v → %v", event["from"], event["to"])
+    }
+}</pre>
+<p><code>slog.Level</code> implements text marshaling, so JSON handler output represents the levels as strings such as <code>INFO</code> and <code>DEBUG</code>. The test checks the transition and actor, not incidental formatting.</p>
+<h2>Do this now</h2><ol><li>Keep the validated startup value from <code>Config.LogLevel</code> as the initial value for one <code>LevelVar</code>.</li><li>Keep the variable private; expose one application-owned control method instead.</li><li>Use an audit logger whose threshold is independent of the mutable app logger.</li><li>Record a stable event name plus actor, prior level, and next level; write the focused decoded-JSON test.</li><li>Run <code>go test ./...</code>. Add an authenticated transport only after deciding who is allowed to use it.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Why should the audit event not depend on the mutable application logger?</h2><button class="option" data-correct="false">Audit events are never useful at INFO or WARN.</button><button class="option" data-correct="true">The new threshold can filter out the event that reports its own change.</button><button class="option" data-correct="false">A <code>LevelVar</code> cannot be passed to a normal logger.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>Which object should ordinary HTTP handlers receive to change logging policy?</h2><button class="option" data-correct="false">Their own newly-created <code>slog.LevelVar</code>.</button><button class="option" data-correct="false">The shared <code>*slog.LevelVar</code>, so every handler can call <code>Set</code>.</button><button class="option" data-correct="true">Neither; only an explicit, authorized operations boundary should call the control method.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/log/slog#LevelVar">Go package documentation — <code>slog.LevelVar</code>, <code>Level</code>, and concurrent use</a></li><li><a href="https://pkg.go.dev/log/slog#Logger.InfoContext">Go package documentation — context-aware structured logging</a></li><li><a href="https://pkg.go.dev/log/slog#JSONHandler">Go package documentation — JSON handler output</a></li></ul>
+<p class="callout">Want to go further? Ask your teacher to help choose an authenticated operations transport and an audit-retention policy that matches how your server is actually run.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — a change record must remain observable even when application verbosity moves.':'Not quite — think about what happens after a threshold filters the audit event itself. Try again.'})));</script></body></html>
