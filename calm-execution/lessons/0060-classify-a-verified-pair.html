@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 60 — Classify a Verified Pair</title>
+  <style>
+    :root{--ink:#20202a;--muted:#625f70;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5ee;--accent:#663ac8;--good:#176947;--warn:#9a5d00}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:26px 16px 56px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.3rem);line-height:1.03;margin:.35rem 0 .8rem}h2{font-size:1.25rem;margin:0 0 .5rem}.lede{font-size:1.14rem;color:var(--muted);max-width:60ch}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px;box-shadow:0 5px 20px #4c2a8210}.rule{border-left:4px solid var(--accent);padding:10px 14px;background:#f8f5ff;border-radius:0 10px 10px 0}.time{display:inline-block;border-radius:99px;background:#e6dbff;color:#48208e;padding:3px 9px;font-size:.82rem;font-weight:750}ol{padding-left:1.3rem}li+li{margin-top:.5rem}label{display:block;font-weight:700;margin:14px 0 5px}select{width:100%;border:1px solid #bfb5d5;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}button{margin-top:17px;border:0;border-radius:10px;background:var(--accent);color:white;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer}.feedback{margin-top:14px;padding:12px;border-radius:10px;display:none}.feedback.good{display:block;background:#e9f8ef;color:var(--good)}.feedback.warn{display:block;background:#fff4db;color:var(--warn)}a{color:#5426ad}@media(max-width:440px){.card{padding:16px}.page{padding-top:19px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <div class="eyebrow">Calm Execution · Lesson 60</div>
+  <h1>Classify a verified pair</h1>
+  <p class="lede">Once the same next instruction was followed twice, read each attempt in one fixed order: cue first, then start.</p>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2 style="margin-top:12px">One skill</h2>
+    <p>Give each verified attempt one earliest readable label: <strong>cue</strong>, <strong>start-side</strong>, <strong>none</strong>, or <strong>unclear</strong>.</p>
+    <p class="rule"><strong>Order matters:</strong> ask “Did the cue occur?” first. If no, label <strong>cue</strong>. If yes, ask “Did the exact two-minute action start?” If no, label <strong>start-side</strong>; if yes, label <strong>none</strong>. Missing facts are <strong>unclear</strong>—never guessed.</p>
+    <p><small>This is a practical reading rule, not proof that a pair establishes a cause. The course’s small, stable cue/action design is informed by the discussion of cue-dependent habits in stable contexts in <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</small></p>
+  </section>
+
+  <section class="card">
+    <h2>Real-world exercise</h2>
+    <ol>
+      <li>Confirm that both attempts covered by your Lesson 58 instruction were labelled <strong>followed</strong> in Lesson 59. If not, stop: repeat that exact instruction for two ordinary attempts.</li>
+      <li>With the two records in front of you, classify each using the fixed order above. This should take 5–10 minutes; do not revise the ritual while reading.</li>
+      <li>Use the result below. Only two matching, readable <strong>cue</strong> or <strong>start-side</strong> labels point to one already-specified matching test. Every other result means retain the instruction and gather two ordinary readable attempts.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="classify-title">
+    <h2 id="classify-title">Pair classifier</h2>
+    <label for="one">Attempt 1: earliest readable label</label>
+    <select id="one"><option value="">Choose one…</option><option value="cue">cue — the cue did not occur</option><option value="start">start-side — cue occurred; action did not start</option><option value="none">none — cue occurred; action started</option><option value="unclear">unclear — evidence is missing</option></select>
+    <label for="two">Attempt 2: earliest readable label</label>
+    <select id="two"><option value="">Choose one…</option><option value="cue">cue — the cue did not occur</option><option value="start">start-side — cue occurred; action did not start</option><option value="none">none — cue occurred; action started</option><option value="unclear">unclear — evidence is missing</option></select>
+    <button type="button" id="check">Check the supported next move</button>
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Finish calmly</h2>
+    <p>Classification is not a verdict about you. It simply protects the next move from guesswork. Ask your teacher: <strong>“Here are my two labels. Which existing instruction should I retain or test?”</strong></p>
+  </section>
+</main>
+<script>
+const feedback=document.querySelector('#feedback');
+document.querySelector('#check').addEventListener('click',()=>{
+  const one=document.querySelector('#one').value, two=document.querySelector('#two').value;
+  feedback.className='feedback';
+  if(!one||!two){feedback.textContent='Classify both verified attempts. If a fact is missing, choose unclear rather than reconstructing it.';feedback.classList.add('warn');return;}
+  if(one===two&&one==='cue'){
+    feedback.innerHTML='<strong>One supported option:</strong> use only an already-specified matching cue test for the next two ordinary attempts. Keep the exact two-minute action stable; do not add another change.';
+    feedback.classList.add('good');
+  }else if(one===two&&one==='start'){
+    feedback.innerHTML='<strong>One supported option:</strong> use only an already-specified matching setup or opening-action test for the next two ordinary attempts. Keep the cue and exact two-minute action stable.';
+    feedback.classList.add('good');
+  }else{
+    feedback.innerHTML='<strong>Retain and gather.</strong> The pair is mixed, workable, or incomplete. Keep the current instruction unchanged for two ordinary readable attempts. No catch-up work, redesign, or added test.';
+    feedback.classList.add('warn');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Learning Record 0060 — Classify a Verified Pair
+
+## Date
+2026-09-18
+
+## Lesson
+0060 — Classify a Verified Pair
+
+## What was taught
+
+- Only after both covered attempts are labelled `followed` does the learner read each record in order: `cue occurred?`, then `two-minute action started?`.
+- Each attempt receives one earliest readable label: `cue`, `start-side`, `none`, or `unclear`; missing facts are not reconstructed from memory.
+- Mixed, workable, or unclear pairs retain the current instruction and gather two ordinary readable records.
+- Only two matching readable `cue` or `start-side` labels support one already-specified matching bounded test; no other link changes.
+
+## Key insight
+
+A verified pair can be read without daily redesign: **cue first, start second, then retain unless the same readable earliest break appears twice.**
+
+## Zone of proximal development notes
+
+The learner has written and audited a verified-pair next instruction. This lesson supplies the immediate outcome-classification step after the audit gate without increasing duration, frequency, tracking burden, or output expectations. Preserve the two-minute baseline, chosen frequency, no-penalty stance, and one-variable boundary. Do not add catch-up work, multiple changes, or a larger tracking system.
+
+## What comes next
+
+After the pair is classified, teach a compact next-instruction writing drill: write a retain/gather instruction for two ordinary attempts, or name only one already-specified matching test, with the stable cue and exact two-minute action included.
