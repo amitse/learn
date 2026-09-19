@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 61 — Write a Classified-Pair Instruction</title>
+  <style>
+    :root{--ink:#20202a;--muted:#625f70;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5ee;--accent:#663ac8;--good:#176947;--warn:#925700}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:26px 16px 56px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.3rem);line-height:1.03;margin:.35rem 0 .8rem}h2{font-size:1.25rem;margin:0 0 .55rem}.lede{font-size:1.14rem;color:var(--muted);max-width:60ch}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px;box-shadow:0 5px 20px #4c2a8210}.rule{border-left:4px solid var(--accent);padding:10px 14px;background:#f8f5ff;border-radius:0 10px 10px 0}.time{display:inline-block;border-radius:99px;background:#e6dbff;color:#48208e;padding:3px 9px;font-size:.82rem;font-weight:750}ol{padding-left:1.3rem}li+li{margin-top:.5rem}label{display:block;font-weight:750;margin:14px 0 5px}input,select{width:100%;border:1px solid #bfb5d5;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}button{margin-top:17px;border:0;border-radius:10px;background:var(--accent);color:#fff;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer}.feedback{margin-top:14px;padding:12px;border-radius:10px;display:none}.feedback.good{display:block;background:#e9f8ef;color:var(--good)}.feedback.warn{display:block;background:#fff4db;color:var(--warn)}a{color:#5426ad}@media(max-width:440px){.card{padding:16px}.page{padding-top:19px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <div class="eyebrow">Calm Execution · Lesson 61</div>
+  <h1>Write a classified-pair instruction</h1>
+  <p class="lede">Turn two verified labels into one small, auditable next move—without redesigning the whole ritual.</p>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2 style="margin-top:12px">One skill</h2>
+    <p>Write one exact instruction for the next <strong>two ordinary attempts</strong>, based only on your Lesson 60 pair classification.</p>
+    <p class="rule"><strong>Decision rule:</strong> two matching readable <strong>cue</strong> labels may use one already-specified cue test. Two matching readable <strong>start-side</strong> labels may use one already-specified setup/opening test. All other pairs mean: retain the current plan and gather two readable attempts.</p>
+    <p><small>The practical design keeps a stable context and a small repeated action; these are relevant features of cue-dependent habit formation discussed by <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>. This lesson is a planning exercise, not a claim that one pair proves a cause.</small></p>
+  </section>
+
+  <section class="card">
+    <h2>Real-world exercise</h2>
+    <ol>
+      <li>Put your two Lesson 60 labels beside you. If either is <strong>unclear</strong>, treat the result as retain and gather.</li>
+      <li>Use the planner below to write one instruction. Name the existing cue and exact two-minute action; select only a test you had already specified, if the pair supports one.</li>
+      <li>Copy the resulting sentence into your normal log. Follow it for the next two ordinary attempts—no catch-up work and no extra change. This takes 8–12 minutes.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="planner-title">
+    <h2 id="planner-title">Instruction planner</h2>
+    <label for="result">Your Lesson 60 pair result</label>
+    <select id="result"><option value="">Choose one…</option><option value="retain">mixed, none, or unclear → retain and gather</option><option value="cue">two matching readable cue labels</option><option value="start">two matching readable start-side labels</option></select>
+    <label for="cue">Existing cue (observable event)</label>
+    <input id="cue" placeholder="e.g., After I put down my morning mug">
+    <label for="action">Exact two-minute action</label>
+    <input id="action" placeholder="e.g., Open the proposal and write its heading">
+    <label for="test">Already-specified matching test (only if supported)</label>
+    <input id="test" placeholder="e.g., Place proposal tab beside calendar (or leave blank)">
+    <button type="button" id="build">Check and build my instruction</button>
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Finish calmly</h2>
+    <p>The sentence is a temporary instruction, not a verdict. Next time, audit whether it was followed before interpreting cue or start outcomes. Ask your teacher: <strong>“Here is my two-attempt instruction—does it preserve one change and remain auditable?”</strong></p>
+  </section>
+</main>
+<script>
+const feedback=document.querySelector('#feedback');
+document.querySelector('#build').addEventListener('click',()=>{
+  const result=document.querySelector('#result').value;
+  const cue=document.querySelector('#cue').value.trim();
+  const action=document.querySelector('#action').value.trim();
+  const test=document.querySelector('#test').value.trim();
+  feedback.className='feedback';
+  if(!result||!cue||!action){feedback.textContent='Choose the pair result and name both the existing cue and exact two-minute action. Keep the instruction observable.';feedback.classList.add('warn');return;}
+  if(result==='retain'){
+    feedback.innerHTML='<strong>Copy this:</strong> For my next two ordinary attempts, after “'+cue+',” I will “'+action+'” for two minutes. I will make no change and record each attempt clearly.'+(test?' Leave the proposed test unused for now.':'');
+    feedback.classList.add('good');return;
+  }
+  if(!test){feedback.textContent='A matching pair permits only an already-specified matching test. Name that exact test, or choose retain and gather; do not invent a new change here.';feedback.classList.add('warn');return;}
+  const kind=result==='cue'?'cue':'setup or opening-action';
+  feedback.innerHTML='<strong>Copy this:</strong> For my next two ordinary attempts, I will use this one '+kind+' test: “'+test+'.” After “'+cue+',” I will still “'+action+'” for two minutes, and record each attempt clearly. I will add no other change.';
+  feedback.classList.add('good');
+});
+</script>
+</body>
+</html>
