@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 50 — Serialize Runtime Log-Level Changes</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--green:#57cf76;--red:#ff7881;--ts:#69a7ed;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.1rem 0 .7rem;font-size:1.35rem}h3{font-size:1rem}p,li{color:var(--muted)}.lead{font-size:1.1rem;max-width:780px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{margin:0 0 7px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.warning{background:#32230e;border:1px solid #70511c;border-radius:8px;padding:14px;color:#f5d98c}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}ol{padding-left:1.35rem}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Serialize runtime log-level changes</h1>
+<p class="lead">A <code>slog.LevelVar</code> safely permits concurrent reads and writes. But safe access is not the same as an ordered audit history: two callers can otherwise interleave “read old level → set new level → audit”.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will make one log-level change operation atomic <em>as a business action</em>: read the old level, set the new one, and submit its audit record while one control mutex is held. A focused test proves two concurrent changes produce a coherent transition chain.</p></section>
+<h2>Thread-safe value ≠ ordered operation</h2><p><code>LevelVar</code> is safe for concurrent use, so using <code>Set</code> from two goroutines will not create a data race. Yet this unprotected sequence can report an impossible-looking history:</p>
+<pre>// Goroutine A reads INFO
+// Goroutine B reads INFO, sets WARN, audits INFO → WARN
+// Goroutine A sets DEBUG, audits INFO → DEBUG
+// Final level: DEBUG. The audit claims both changes began at INFO.</pre>
+<p>The missing guarantee is not memory safety; it is a serial order for the <em>whole</em> state-change-and-audit operation.</p>
+<div class="comparison"><section class="pane ts card"><h3>TypeScript / Node</h3><pre>// A single async mutex protects the transaction.
+await mutex.runExclusive(() =&gt; {
+  const from = level.current;
+  level.current = to;
+  audit.info({ actor, from, to },
+    "log level changed");
+});</pre></section><section class="pane go card"><h3>Go</h3><pre>type LogLevelControl struct {
+    mu    sync.Mutex
+    level *slog.LevelVar
+    audit *slog.Logger
+}
+
+func (c *LogLevelControl) Set(
+    ctx context.Context, actor string, to slog.Level,
+) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+
+    from := c.level.Level()
+    c.level.Set(to)
+    c.audit.InfoContext(ctx, "log level changed",
+        "actor", actor, "from", from, "to", to)
+}</pre></section></div>
+<div class="callout"><strong>Scope the lock to the contract:</strong> this mutex belongs inside the one application-owned control from Lesson 49. It does <em>not</em> wrap normal application logging or HTTP handlers. Those keep reading the shared <code>LevelVar</code> concurrently.</div>
+<h2>What this ordering guarantees</h2><p>Within this process, callers of this one control see a serial sequence. If the events are <code>INFO → WARN</code> and then <code>WARN → DEBUG</code>, the second event’s <code>from</code> is the first event’s <code>to</code>.</p>
+<pre>// The control owns both the mutable policy and the operation lock.
+func NewLogLevelControl(level *slog.LevelVar, audit *slog.Logger) *LogLevelControl {
+    return &amp;LogLevelControl{level: level, audit: audit}
+}</pre>
+<div class="warning"><strong>Important limit:</strong> a mutex orders method execution and synchronous submission to your configured handler. It cannot guarantee that an external collector, buffered transport, or distributed audit system stores events in that same order. If retention order matters, choose and test a sink that explicitly provides that guarantee.</div>
+<h2>Test a transition chain, not scheduling</h2><p>Do not test that a particular goroutine “wins”; scheduling is deliberately unspecified. Start two changes concurrently, wait for both, decode the two audit events, and check that together they form one valid chain from INFO through WARN and DEBUG.</p>
+<pre>func TestLogLevelControlSerializesTransitions(t *testing.T) {
+    var out bytes.Buffer
+    var level slog.LevelVar
+    level.Set(slog.LevelInfo)
+    audit := slog.New(slog.NewJSONHandler(&amp;out, nil))
+    control := NewLogLevelControl(&amp;level, audit)
+
+    var wg sync.WaitGroup
+    for _, to := range []slog.Level{slog.LevelWarn, slog.LevelDebug} {
+        wg.Add(1)
+        go func(to slog.Level) {
+            defer wg.Done()
+            control.Set(context.Background(), "on-call:amit", to)
+        }(to)
+    }
+    wg.Wait()
+
+    // Decode the two newline-delimited JSON records. In emitted order,
+    // require events[1]["from"] == events[0]["to"]. Also require the
+    // first "from" is INFO and the final control level equals the last "to".
+}</pre>
+<p>Run this test with <code>go test -race ./...</code>. The race detector helps expose unsynchronized memory access; the chain assertion verifies the higher-level ordering rule your operators need.</p>
+<h2>Do this now</h2><ol><li>Add <code>sync.Mutex</code> to the existing <code>LogLevelControl</code>, not to handlers or the logger factory.</li><li>Hold it across <code>Level()</code>, <code>Set()</code>, and synchronous audit submission.</li><li>Keep the audit logger independent of the mutable application threshold.</li><li>Add the two-change chain test, then run <code>go test -race ./...</code>.</li><li>Only promise cross-process ordering if the audit destination documents it.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Why add a mutex if <code>slog.LevelVar</code> is already concurrency-safe?</h2><button class="option" data-correct="false">Because <code>LevelVar.Set</code> otherwise always causes a data race.</button><button class="option" data-correct="true">Because the audit operation spans reading, changing, and recording state, which must have one serial order.</button><button class="option" data-correct="false">Because HTTP handlers cannot read a LevelVar without a mutex.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>What does the mutex <em>not</em> prove?</h2><button class="option" data-correct="false">That two calls to this control have an in-process order.</button><button class="option" data-correct="true">That a remote or buffered audit system persists the events in the same order.</button><button class="option" data-correct="false">That the next event can use the preceding event’s resulting level as its <code>from</code> value.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/log/slog#LevelVar">Go package documentation — <code>slog.LevelVar</code> and concurrent use</a></li><li><a href="https://pkg.go.dev/sync#Mutex">Go package documentation — <code>sync.Mutex</code></a></li><li><a href="https://go.dev/doc/articles/race_detector">Go documentation — data race detector</a></li></ul>
+<p class="callout">Want to go further? Ask your teacher to help decide whether runtime log-level control is needed at all, and—if it is—what audit sink and retention guarantee your deployment actually requires.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — memory safety and a coherent audit operation are different guarantees.':'Not quite — distinguish a safe individual value operation from an ordered multi-step operation. Try again.'})));</script></body></html>

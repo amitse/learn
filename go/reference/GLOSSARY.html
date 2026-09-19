@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Runtime Log-Level Change Audit (Lesson 49) <span class="new-badge">new</span></h2>
+<h2>Serialized Runtime Log-Level Changes (Lesson 50) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>sync.Mutex</code></td><td>async mutex / exclusive lock</td><td>A mutual-exclusion lock. In <code>LogLevelControl</code>, it protects the whole operational change: read the current <code>LevelVar</code>, set the next value, and synchronously submit one audit record. It does not need to surround ordinary log calls or handler reads.</td></tr>
+  <tr><td>serialized transition</td><td>exclusive state-change transaction</td><td>A sequence in which one log-level change completely establishes its <code>from</code> and <code>to</code> audit record before the next control call reads the level. This supplies coherent in-process history beyond the individual concurrency safety of <code>LevelVar</code>.</td></tr>
+  <tr><td>transition-chain test</td><td>order-independent concurrent assertion</td><td>A test that starts two level changes concurrently, waits for both, decodes their emitted records, and requires the second event’s <code>from</code> to equal the first event’s <code>to</code>. It must not assume which goroutine wins.</td></tr>
+  <tr><td>sink ordering guarantee</td><td>durable audit-stream ordering contract</td><td>A documented promise by an audit destination about stored-event order. A process mutex orders local method execution and submission; it cannot by itself guarantee order across a buffered, remote, or distributed sink.</td></tr>
+</table>
+
+<h2>Runtime Log-Level Change Audit (Lesson 49)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>LevelVar.Level()</code></td><td>read current mutable threshold</td><td>Returns the current <code>slog.Level</code> from a <code>LevelVar</code>. At an owned change boundary, read it before <code>Set</code> so an audit event can state the intended transition.</td></tr>
