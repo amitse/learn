@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 62 — Audit a Classified-Pair Instruction</title>
+  <style>
+    :root{--ink:#20202a;--muted:#625f70;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5ee;--accent:#663ac8;--good:#176947;--warn:#925700}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:26px 16px 56px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.3rem);line-height:1.03;margin:.35rem 0 .8rem}h2{font-size:1.25rem;margin:0 0 .55rem}.lede{font-size:1.14rem;color:var(--muted);max-width:60ch}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px;box-shadow:0 5px 20px #4c2a8210}.rule{border-left:4px solid var(--accent);padding:10px 14px;background:#f8f5ff;border-radius:0 10px 10px 0}.time{display:inline-block;border-radius:99px;background:#e6dbff;color:#48208e;padding:3px 9px;font-size:.82rem;font-weight:750}ol{padding-left:1.3rem}li+li{margin-top:.5rem}label{display:block;font-weight:750;margin:14px 0 5px}textarea,select{width:100%;border:1px solid #bfb5d5;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}textarea{min-height:86px;resize:vertical}button{margin-top:17px;border:0;border-radius:10px;background:var(--accent);color:#fff;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer}.feedback{margin-top:14px;padding:12px;border-radius:10px;display:none}.feedback.good{display:block;background:#e9f8ef;color:var(--good)}.feedback.warn{display:block;background:#fff4db;color:var(--warn)}a{color:#5426ad}@media(max-width:440px){.card{padding:16px}.page{padding-top:19px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <div class="eyebrow">Calm Execution · Lesson 62</div>
+  <h1>Audit a classified-pair instruction</h1>
+  <p class="lede">Before you read outcomes, check whether your exact two-attempt instruction was actually used.</p>
+
+  <section class="card">
+    <span class="time">8–12 minutes</span>
+    <h2 style="margin-top:12px">One skill</h2>
+    <p>Compare the sentence you wrote in Lesson 61 with each of its two ordinary attempts. Give each attempt one label: <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>.</p>
+    <p class="rule"><strong>Audit gate:</strong> if either attempt is <strong>not followed</strong> or <strong>unclear</strong>, repeat the exact instruction for two ordinary attempts. Do not interpret cue or start outcomes yet. Only two <strong>followed</strong> labels create a pair ready for cue-then-start classification.</p>
+    <p><small>Repeated behaviour in a consistent context can become more cue-driven over time, but this small audit does not establish cause. It is a practical way to keep one planned change readable. See <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</small></p>
+  </section>
+
+  <section class="card">
+    <h2>Real-world exercise</h2>
+    <ol>
+      <li>Open your Lesson 61 sentence and the two attempts it covered. Do not reconstruct missing details from memory.</li>
+      <li>For each attempt, ask only: did I use the stated cue, two-minute action, and any named test? If the record cannot show this, choose <strong>unclear</strong>.</li>
+      <li>Use the audit below. Copy its result into your normal log. If either label is not <strong>followed</strong>, repeat the same sentence for two ordinary attempts—no catch-up work and no new change.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="audit-title">
+    <h2 id="audit-title">Two-attempt audit</h2>
+    <label for="instruction">Your exact Lesson 61 instruction</label>
+    <textarea id="instruction" placeholder="Paste the sentence you used for both attempts."></textarea>
+    <label for="first">Attempt 1: was that exact instruction followed?</label>
+    <select id="first"><option value="">Choose one…</option><option value="followed">followed</option><option value="not followed">not followed</option><option value="unclear">unclear</option></select>
+    <label for="second">Attempt 2: was that exact instruction followed?</label>
+    <select id="second"><option value="">Choose one…</option><option value="followed">followed</option><option value="not followed">not followed</option><option value="unclear">unclear</option></select>
+    <button type="button" id="check">Check my audit</button>
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Finish calmly</h2>
+    <p>A label is evidence, not a grade. A repeated instruction is not a punishment; it is a way to make the next pair readable. Ask your teacher: <strong>“Do these labels match the evidence, or should I mark an attempt unclear?”</strong></p>
+  </section>
+</main>
+<script>
+const feedback=document.querySelector('#feedback');
+document.querySelector('#check').addEventListener('click',()=>{
+  const instruction=document.querySelector('#instruction').value.trim();
+  const first=document.querySelector('#first').value;
+  const second=document.querySelector('#second').value;
+  feedback.className='feedback';
+  if(!instruction||!first||!second){feedback.textContent='Paste the exact instruction and choose one evidence label for each attempt. Missing evidence is “unclear,” not a guess.';feedback.classList.add('warn');return;}
+  if(first==='followed'&&second==='followed'){
+    feedback.innerHTML='<strong>Verified pair:</strong> both attempts followed the instruction. You may now read each attempt in order: cue occurred? then two-minute action started? Keep the same calm, one-variable boundary.';
+    feedback.classList.add('good');return;
+  }
+  feedback.innerHTML='<strong>Repeat, do not interpret:</strong> at least one attempt is '+(first!=='followed'?'“'+first+'”':'“'+second+'”')+'. Use the exact same instruction for two ordinary attempts, record them clearly, and audit again. Do not add a new change or catch-up work.';
+  feedback.classList.add('good');
+});
+</script>
+</body>
+</html>
