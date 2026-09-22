@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 51 — Authorize Runtime Log-Level Changes</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--green:#57cf76;--red:#ff7881;--ts:#69a7ed;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2.1rem 0 .7rem;font-size:1.35rem}h3{font-size:1rem}p,li{color:var(--muted)}.lead{font-size:1.1rem;max-width:790px}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:20px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{min-width:0}.pane h3{margin:0 0 7px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.callout{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.warning{background:#32230e;border:1px solid #70511c;border-radius:8px;padding:14px;color:#f5d98c}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.good{color:var(--green)}.bad{color:var(--red)}a{color:#53d5dd}ol{padding-left:1.35rem}.sources li{font-size:.92rem}@media(max-width:640px){.comparison{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Authorize runtime log-level changes</h1>
+<p class="lead">Lesson 50 made log-level changes serial and auditable. The next rule is simpler: an identity must not be able to change production logging merely because it reached a future admin route. Put the permission check in the one control that owns the change.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will make <code>LogLevelControl.Set</code> reject a caller lacking <code>logs:write</code>, before it reads the level, mutates it, or writes an audit event. A tiny test proves an unauthorized call has no side effect.</p></section>
+<h2>Authorization is a business boundary, not a route detail</h2>
+<p>An HTTP middleware may eventually authenticate a request and create a trusted <code>Principal</code>. But a route check alone is fragile: another transport—CLI, job, RPC, or a future route—could call the control incorrectly. The control owns the sensitive action, so it enforces the permission too.</p>
+<div class="comparison"><section class="pane ts card"><h3>TypeScript / Node</h3><pre>type Principal = {
+  id: string;
+  permissions: Set&lt;string&gt;;
+};
+
+if (!principal.permissions.has("logs:write")) {
+  throw new ForbiddenError();
+}
+await logLevelControl.set(principal, "warn");</pre></section><section class="pane go card"><h3>Go</h3><pre>type Principal struct {
+    ID          string
+    Permissions map[string]bool
+}
+
+func (p Principal) Can(permission string) bool {
+    return p.Permissions[permission]
+}</pre></section></div>
+<p><code>Principal</code> is deliberately application data, not <code>context.Context</code>. An authentication adapter may obtain it from an HTTP request; the control receives it explicitly, which makes its authority requirement visible in every call and easy to test.</p>
+<h2>Reject before every side effect</h2>
+<pre>var ErrForbidden = errors.New("log-level change forbidden")
+
+func (c *LogLevelControl) Set(
+    ctx context.Context, actor Principal, to slog.Level,
+) error {
+    if !actor.Can("logs:write") {
+        return ErrForbidden
+    }
+
+    c.mu.Lock()
+    defer c.mu.Unlock()
+
+    from := c.level.Level()
+    c.level.Set(to)
+    c.audit.InfoContext(ctx, "log level changed",
+        "actor", actor.ID, "from", from, "to", to)
+    return nil
+}</pre>
+<div class="callout"><strong>Ordering matters:</strong> authorization is outside the mutex because it does not inspect or change the protected level state. It happens <em>before</em> the read → set → audit transition. Authorized calls still serialize exactly as in Lesson 50.</div>
+<h2>What this does—and does not—trust</h2>
+<ul><li>It trusts the adapter that constructs a <code>Principal</code>; that is where JWT/session verification belongs.</li><li>It does <strong>not</strong> trust a raw HTTP header such as <code>X-Role: admin</code>, a request body field, or an arbitrary actor string as proof of permission.</li><li>It records <code>actor.ID</code> only after authorization succeeds. The audit event is evidence of an accepted operation, not a log of rejected guesses.</li></ul>
+<div class="warning"><strong>Do not add an unprotected “temporary” admin endpoint.</strong> Until authentication is wired, keep this control unexposed to HTTP. A correct authorization seam is useful now because the future adapter has one safe place to delegate to.</div>
+<h2>Test denial as “no mutation, no audit”</h2>
+<pre>func TestSetRejectsPrincipalWithoutLogsWrite(t *testing.T) {
+    var level slog.LevelVar
+    level.Set(slog.LevelInfo)
+    var out bytes.Buffer
+    audit := slog.New(slog.NewJSONHandler(&amp;out, nil))
+    control := NewLogLevelControl(&amp;level, audit)
+
+    err := control.Set(context.Background(), Principal{
+        ID: "viewer-42", Permissions: map[string]bool{},
+    }, slog.LevelDebug)
+
+    if !errors.Is(err, ErrForbidden) {
+        t.Fatalf("Set error = %v, want ErrForbidden", err)
+    }
+    if got, want := level.Level(), slog.LevelInfo; got != want {
+        t.Fatalf("level = %v, want %v", got, want)
+    }
+    if got := out.String(); got != "" {
+        t.Fatalf("audit output = %q, want no event", got)
+    }
+}</pre>
+<p>This test checks the operational contract rather than private implementation: an unauthorized principal leaves the level and audit stream unchanged. Add a second focused test with <code>Permissions: map[string]bool{"logs:write": true}</code> to retain the accepted-change behavior from Lessons 49–50.</p>
+<h2>Do this now</h2><ol><li>Define a small application-owned <code>Principal</code> with an ID and permission query.</li><li>Make the control return <code>ErrForbidden</code> before acquiring its transition lock.</li><li>Pass a trusted principal explicitly from the eventual authentication adapter—never from request input.</li><li>Test denial as zero level change and zero audit output.</li><li>Run <code>go test -race ./...</code>.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Where should <code>logs:write</code> be enforced?</h2><button class="option" data-correct="false">Only in the current HTTP route, because no other caller exists today.</button><button class="option" data-correct="true">At the <code>LogLevelControl</code> boundary that owns the state-changing operation.</button><button class="option" data-correct="false">Inside <code>slog.LevelVar.Set</code>, so every logger controls authorization.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>What must an unauthorized-change test demonstrate?</h2><button class="option" data-correct="true">The returned forbidden error, unchanged level, and no audit event.</button><button class="option" data-correct="false">Only that the actor string appears in an audit event.</button><button class="option" data-correct="false">That the mutex was acquired exactly once.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/context">Go package documentation — <code>context</code> carries request-scoped values; use explicit parameters when authority is an application API requirement</a></li><li><a href="https://pkg.go.dev/errors#Is">Go package documentation — <code>errors.Is</code> for checking a sentinel error contract</a></li><li><a href="https://pkg.go.dev/sync#Mutex">Go package documentation — <code>sync.Mutex</code></a></li><li><a href="https://owasp.org/www-community/Authorization_Cheat_Sheet">OWASP — Authorization Cheat Sheet</a></li></ul>
+<p class="callout">Want to go further? Ask your teacher to help connect the JWT middleware from Lesson 16 to this explicit <code>Principal</code> without exposing an unauthenticated operations route.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — authorization belongs with the operation that has power to change state.':'Not quite — focus on the operation boundary and observable lack of side effects. Try again.'})));</script></body></html>

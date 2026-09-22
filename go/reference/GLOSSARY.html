@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Serialized Runtime Log-Level Changes (Lesson 50) <span class="new-badge">new</span></h2>
+<h2>Authorized Runtime Log-Level Changes (Lesson 51) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>Principal</code></td><td>authenticated user/service principal</td><td>Application-owned data representing a caller whose identity has already been established by an authentication adapter. Pass it explicitly to sensitive application operations; a raw header or request-body field is not a trusted principal.</td></tr>
+  <tr><td><code>logs:write</code></td><td>permission / capability string</td><td>The narrowly named authority required to change the shared logging threshold. Enforce it in <code>LogLevelControl</code>, the owner of that sensitive operation, rather than relying on one HTTP route to remember the rule.</td></tr>
+  <tr><td><code>ErrForbidden</code></td><td><code>ForbiddenError</code></td><td>A sentinel error returned when a principal lacks the required permission. Callers and tests recognize the contract with <code>errors.Is</code>; do not make permission decisions by parsing error text.</td></tr>
+  <tr><td>denial-without-side-effects test</td><td>forbidden operation leaves state untouched</td><td>A focused test that requires a forbidden error, an unchanged <code>LevelVar</code>, and empty audit output. It proves an unauthorized caller neither changes policy nor creates an accepted-change record.</td></tr>
+</table>
+
+<h2>Serialized Runtime Log-Level Changes (Lesson 50)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>sync.Mutex</code></td><td>async mutex / exclusive lock</td><td>A mutual-exclusion lock. In <code>LogLevelControl</code>, it protects the whole operational change: read the current <code>LevelVar</code>, set the next value, and synchronously submit one audit record. It does not need to surround ordinary log calls or handler reads.</td></tr>
