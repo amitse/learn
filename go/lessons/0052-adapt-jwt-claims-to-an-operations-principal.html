@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 52 — Adapt JWT Claims to an Operations Principal</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--ts:#69a7ed;--ok:#57cf76;--bad:#ff7881;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2rem 0 .65rem;font-size:1.35rem}h3{font-size:1rem;margin:0 0 .5rem}p,li{color:var(--muted)}.lead{font-size:1.1rem}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:21px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.note{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.warn{background:#32230e;border:1px solid #70511c;border-radius:8px;padding:14px;color:#f5d98c}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.ok{color:var(--ok)}.bad{color:var(--bad)}a{color:#53d5dd}.sources li{font-size:.92rem}@media(max-width:640px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}</style></head>
+<body><main class="wrap"><div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Adapt JWT claims to an operations principal</h1><p class="lead">Lesson 51 made <code>LogLevelControl</code> require a trusted <code>Principal</code>. Now connect the JWT middleware from Lesson 16 without making the control depend on HTTP or treating a request header as authority.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will add one adapter that turns already-verified JWT claims into an application <code>Principal</code>. An admin handler gets the principal from the request context and passes it explicitly to the control; the control keeps enforcing <code>logs:write</code>.</p></section>
+<h2>Keep three jobs separate</h2><ol><li><strong>Authentication middleware</strong> verifies the token signature and expiry, then stores typed claims in request context.</li><li><strong>The adapter</strong> translates those claims into your application’s authority model.</li><li><strong>The control</strong> authorizes the operation and changes the log level only for a permitted principal.</li></ol><p>This gives each layer one question: “who is this?”, “what can this identity do here?”, and “may this operation proceed?”</p>
+<div class="compare"><section class="card ts"><h3>TypeScript / Express</h3><pre>const principal = principalFromClaims(req.claims);
+await logLevelControl.set(principal, "debug");
+
+// Controller does not decide permissions.
+// Service still checks logs:write.</pre></section><section class="card go"><h3>Go / net/http</h3><pre>principal, err := auth.PrincipalFromContext(r.Context())
+if err != nil { /* 401 */ }
+
+if err := control.Set(r.Context(), principal, slog.LevelDebug); err != nil {
+    /* map ErrForbidden to 403 */
+}</pre></section></div>
+<h2>Make the translation explicit</h2><p>Reuse Lesson 16’s private context key and typed <code>Claims</code>. The adapter is the only place that knows both the JWT shape and your application’s <code>Principal</code> shape.</p><pre>// package auth
+var ErrNoPrincipal = errors.New("authenticated principal missing")
+
+type Principal struct {
+    ID          string
+    Permissions map[string]bool
+}
+
+func (p Principal) Can(permission string) bool { return p.Permissions[permission] }
+
+func PrincipalFromContext(ctx context.Context) (Principal, error) {
+    claims, ok := ctx.Value(ClaimsKey).(*Claims)
+    if !ok || claims.Subject == "" {
+        return Principal{}, ErrNoPrincipal
+    }
+
+    permissions := map[string]bool{}
+    // This mapping is application policy—not a client-provided header.
+    if claims.Role == "operator" {
+        permissions["logs:write"] = true
+    }
+    return Principal{ID: claims.Subject, Permissions: permissions}, nil
+}</pre>
+<p>The <code>Role</code> claim must have been inside the token that the middleware verified. The mapping remains server-owned: a role receives only permissions your code defines. For a larger system, this seam can consult a policy service or database—but not inside the log-level control itself.</p>
+<div class="note"><strong>Why not pass <code>*Claims</code> into <code>Set</code>?</strong> Claims are transport/authentication data. <code>Principal</code> describes the capability the application operation needs. Keeping that boundary lets a CLI or job construct the same principal without fabricating an HTTP request or JWT.</div>
+<h2>Use the adapter at the HTTP edge</h2><pre>func SetDebug(control *LogLevelControl) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        principal, err := auth.PrincipalFromContext(r.Context())
+        if err != nil {
+            http.Error(w, "unauthorized", http.StatusUnauthorized)
+            return
+        }
+        if err := control.Set(r.Context(), principal, slog.LevelDebug); err != nil {
+            if errors.Is(err, ErrForbidden) {
+                http.Error(w, "forbidden", http.StatusForbidden)
+                return
+            }
+            http.Error(w, "internal error", http.StatusInternalServerError)
+            return
+        }
+        w.WriteHeader(http.StatusNoContent)
+    }
+}</pre>
+<p>Route composition determines whether claims exist:</p><pre>mux.Handle("POST /ops/log-level/debug",
+    AuthMiddleware(secret)(SetDebug(control)),
+)</pre><div class="warn"><strong>401 is not 403.</strong> No verified identity (or malformed context) is <code>401 Unauthorized</code>. A verified identity that lacks <code>logs:write</code> is <code>403 Forbidden</code>. Keep the control’s sentinel <code>ErrForbidden</code>; the HTTP handler translates it at the transport boundary.</div>
+<h2>Test the seam, not a real token</h2><pre>func TestPrincipalFromContextOperatorCanWriteLogs(t *testing.T) {
+    claims := &Claims{RegisteredClaims: jwt.RegisteredClaims{
+        Subject: "ops-17",
+    }, Role: "operator"}
+    ctx := context.WithValue(context.Background(), ClaimsKey, claims)
+
+    got, err := PrincipalFromContext(ctx)
+    if err != nil { t.Fatal(err) }
+    if got.ID != "ops-17" || !got.Can("logs:write") {
+        t.Fatalf("principal = %#v, want operator with logs:write", got)
+    }
+}</pre><p>Add the mirror test for a signed <code>viewer</code> role: it should return a principal but <code>Can("logs:write")</code> must be false. The existing Lesson 51 test then proves that denial still produces no level or audit side effect.</p>
+<h2>Do this now</h2><ol><li>Add a <code>Role</code> field to the JWT claims only if your issuer sets it as a signed claim.</li><li>Write <code>PrincipalFromContext</code> and test operator versus viewer mapping.</li><li>Place the operations route behind <code>AuthMiddleware</code>.</li><li>Map missing identity to 401 and <code>ErrForbidden</code> to 403.</li><li>Run <code>go test -race ./...</code>.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Which layer should decide that <code>operator</code> implies <code>logs:write</code>?</h2><button class="option" data-correct="false">The browser, by adding an <code>X-Role</code> header.</button><button class="option" data-correct="true">The server-owned claims-to-principal adapter, after token verification.</button><button class="option" data-correct="false">The <code>slog.LevelVar</code>, when it receives a new level.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>A valid token belongs to a viewer who lacks <code>logs:write</code>. What should the route return?</h2><button class="option" data-correct="false">401, because every denied request is unauthenticated.</button><button class="option" data-correct="true">403, because the identity is verified but the operation is forbidden.</button><button class="option" data-correct="false">204, while silently ignoring the requested change.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/context#Context">Go <code>context</code> documentation — request-scoped data and context values</a></li><li><a href="https://pkg.go.dev/net/http#StatusUnauthorized">Go <code>net/http</code> status constants — 401 and 403</a></li><li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html">OWASP Authorization Cheat Sheet — enforce authorization server-side and deny by default</a></li><li><a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519 — JSON Web Token registered claims, including <code>sub</code></a></li></ul><p class="note">Want to go further? Ask your teacher to help table-test the HTTP mapping (missing claims → 401; viewer → 403; operator → 204) with <code>httptest</code>.</p></main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'ok':'bad');f.textContent=ok?'Correct — preserve the distinction between identity verification and permission.':'Not quite. Re-read the three jobs and try again.'})));</script></body></html>
