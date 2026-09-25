@@ -1,6 +1,6 @@
 # 0052 — Plan Matching Fresh E/F Evidence
 
-**Date:** 2026-09-25  
+**Date:** 2026-09-25
 **Lesson:** `0052-plan-matching-fresh-e-f-evidence.html`
 
 ## What was taught
