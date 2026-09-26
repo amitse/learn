@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 53 — Table-Test Operations Auth Outcomes</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--ts:#69a7ed;--ok:#57cf76;--bad:#ff7881;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2rem 0 .65rem;font-size:1.35rem}h3{font-size:1rem;margin:0 0 .5rem}p,li{color:var(--muted)}.lead{font-size:1.1rem}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:21px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.note{background:#10272a;border:1px solid #1d5157;border-radius:8px;padding:14px;color:#cceff1}.warn{background:#32230e;border:1px solid #70511c;border-radius:8px;padding:14px;color:#f5d98c}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border-bottom:1px solid var(--border);padding:10px;text-align:left;color:var(--muted)}th{color:var(--text)}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.ok{color:var(--ok)}.bad{color:var(--bad)}a{color:#53d5dd}.sources li{font-size:.92rem}@media(max-width:640px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}pre{font-size:.76rem}}</style></head>
+<body><main class="wrap"><div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Table-test operations auth outcomes</h1><p class="lead">Lesson 52 connected verified JWT claims to an operations <code>Principal</code>. Now prove the HTTP boundary preserves the three outcomes: no verified identity → 401; verified but not permitted → 403; permitted → 204.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will write one table-driven <code>httptest</code> for the debug-level route. It asserts observable status codes and confirms that only the allowed request calls the sensitive control.</p></section>
+<h2>Test the contract, not token cryptography</h2><p>JWT signature validation belongs in middleware tests. This handler test starts <em>after</em> middleware has either put typed claims in the context or not. That makes the authorization mapping and HTTP response contract fast and unambiguous.</p>
+<div class="compare"><section class="card ts"><h3>TypeScript / Express + Vitest</h3><pre>it.each([
+ [undefined, 401],
+ [viewerClaims, 403],
+ [operatorClaims, 204],
+])('maps claims to status', async (claims, want) =&gt; {
+  const res = await request(app).post('/ops/log-level/debug')
+    .setClaimsForTest(claims);
+  expect(res.status).toBe(want);
+});</pre></section><section class="card go"><h3>Go / net/http + httptest</h3><pre>for _, tt := range tests {
+  t.Run(tt.name, func(t *testing.T) {
+    r := httptest.NewRequest(http.MethodPost, "/ops/log-level/debug", nil)
+    r = r.WithContext(tt.context())
+    w := httptest.NewRecorder()
+    handler.ServeHTTP(w, r)
+    if w.Code != tt.wantStatus { t.Fatal(...) }
+  })
+}</pre></section></div>
+<h2>State the outcome matrix first</h2><table><tr><th>Context evidence</th><th>Authorization result</th><th>HTTP result</th><th>Control called?</th></tr><tr><td>No typed claims</td><td>Cannot construct a principal</td><td>401</td><td>No</td></tr><tr><td>Verified <code>viewer</code> claims</td><td>Principal lacks <code>logs:write</code></td><td>403</td><td>Yes; it denies</td></tr><tr><td>Verified <code>operator</code> claims</td><td>Principal has <code>logs:write</code></td><td>204</td><td>Yes; it changes level</td></tr></table><div class="note"><strong>Important boundary:</strong> do not make “viewer” into a fake missing identity just to obtain 401. A valid viewer token is evidence of identity; authorization must visibly deny it with 403.</div>
+<h2>Use a narrow control spy</h2><p>The handler needs only an operation that receives a principal and returns an error. A small spy records calls without a mutable global logger or a real network listener.</p><pre>type levelSetter interface {
+    Set(context.Context, auth.Principal, slog.Level) error
+}
+
+type setSpy struct {
+    calls int
+    err   error
+}
+
+func (s *setSpy) Set(_ context.Context, _ auth.Principal, _ slog.Level) error {
+    s.calls++
+    return s.err
+}</pre><p>Your production <code>LogLevelControl</code> satisfies this interface. Keep the interface at the consumer boundary—the handler—so it describes exactly what the handler uses.</p>
+<h2>One table, three meaningful rows</h2><pre>func TestSetDebugAuthOutcomes(t *testing.T) {
+    claimsContext := func(role string) func() context.Context {
+        return func() context.Context {
+            claims := &amp;auth.Claims{RegisteredClaims: jwt.RegisteredClaims{
+                Subject: "user-7",
+            }, Role: role}
+            return context.WithValue(context.Background(), auth.ClaimsKey, claims)
+        }
+    }
+
+    tests := []struct {
+        name       string
+        context    func() context.Context
+        controlErr error
+        wantStatus int
+        wantCalls  int
+    }{
+        {"missing claims is unauthorized", func() context.Context {
+            return context.Background()
+        }, nil, http.StatusUnauthorized, 0},
+        {"viewer is forbidden", claimsContext("viewer"), ErrForbidden,
+            http.StatusForbidden, 1},
+        {"operator changes level", claimsContext("operator"), nil,
+            http.StatusNoContent, 1},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            control := &amp;setSpy{err: tt.controlErr}
+            h := SetDebug(control)
+            r := httptest.NewRequest(http.MethodPost, "/ops/log-level/debug", nil)
+            r = r.WithContext(tt.context())
+            w := httptest.NewRecorder()
+
+            h.ServeHTTP(w, r)
+
+            if w.Code != tt.wantStatus { t.Fatalf("status = %d, want %d", w.Code, tt.wantStatus) }
+            if control.calls != tt.wantCalls { t.Fatalf("calls = %d, want %d", control.calls, tt.wantCalls) }
+        })
+    }
+}</pre>
+<div class="warn"><strong>Make the forbidden row truthful.</strong> In the real design, <code>LogLevelControl.Set</code> independently checks <code>principal.Can("logs:write")</code> and returns <code>ErrForbidden</code>. The spy shown here supplies that result to focus this test on the handler’s translation. Retain Lesson 51’s control test, which proves denial has no state or audit side effect.</div>
+<h2>Why check calls as well as status?</h2><p>A 401 result alone does not prove the handler returned before the sensitive operation. Requiring zero calls for absent claims protects the authentication boundary. For 403, one call proves the handler passed a real principal to the control, which remains the operation-level authorization owner.</p>
+<h2>Do this now</h2><ol><li>Extract the handler’s one-method dependency if it currently receives a concrete <code>*LogLevelControl</code>.</li><li>Add the three rows above using your actual claims context key.</li><li>Keep the missing-claims row at <code>wantCalls: 0</code>.</li><li>Run <code>go test -race ./...</code>.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>A verified viewer request reaches the route. Which assertion best preserves the architecture?</h2><button class="option" data-correct="false">Expect 401 and zero control calls; viewers should look unauthenticated.</button><button class="option" data-correct="true">Expect 403 and one control call; the control makes the final permission decision.</button><button class="option" data-correct="false">Expect 204; avoid revealing whether the permission exists.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>Why does the no-claims table row also assert <code>wantCalls: 0</code>?</h2><button class="option" data-correct="true">It proves the handler stops before invoking the sensitive operation when it lacks verified identity.</button><button class="option" data-correct="false">It proves JWT signatures were cryptographically verified.</button><button class="option" data-correct="false">It makes the 401 response cacheable.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/net/http/httptest">Go <code>net/http/httptest</code> documentation — request and response-recorder test helpers</a></li><li><a href="https://go.dev/blog/subtests">Go Blog: Using Subtests and Sub-benchmarks</a></li><li><a href="https://pkg.go.dev/net/http#StatusUnauthorized">Go <code>net/http</code> status constants — 401, 403, and 204</a></li><li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html">OWASP Authorization Cheat Sheet — enforce authorization server-side</a></li></ul><p class="note">Want to go further? Ask your teacher to adapt this table to the exact package names in your server and to add a separate test for a non-authorization control failure returning 500.</p></main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'ok':'bad');f.textContent=ok?'Correct — the table protects the boundary and the control’s authority.':'Not quite. Revisit the outcome matrix, then try again.'})));</script></body></html>

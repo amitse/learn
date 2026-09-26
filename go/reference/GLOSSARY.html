@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>JWT Claims to Operations Principal (Lesson 52) <span class="new-badge">new</span></h2>
+<h2>Operations Authorization Outcome Table (Lesson 53) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>outcome matrix</td><td><code>it.each</code> HTTP contract cases</td><td>A compact table that declares the observable result for each meaningful authorization state. For the operations route: no typed verified claims → 401 and no control call; verified viewer → 403; verified operator → 204.</td></tr>
+  <tr><td>control spy</td><td>service mock that records calls</td><td>A small test double implementing only the handler's <code>Set(context.Context, Principal, slog.Level) error</code> dependency. It returns a selected result and counts calls, isolating the handler's HTTP mapping from log mutation and token verification.</td></tr>
+  <tr><td>early-return assertion</td><td>assert downstream service was not called</td><td>An assertion such as <code>control.calls == 0</code> in the missing-claims row. Alongside 401, it proves a request without verified identity did not reach the sensitive operation.</td></tr>
+</table>
+
+<h2>JWT Claims to Operations Principal (Lesson 52)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>PrincipalFromContext</code></td><td><code>principalFromClaims(req.claims)</code></td><td>An adapter at the HTTP/application boundary that reads already-verified typed claims from request context and returns the application-owned <code>Principal</code> a sensitive operation needs. It is not token verification and does not let raw request input establish authority.</td></tr>
