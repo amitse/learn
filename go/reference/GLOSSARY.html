@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Operations Authorization Outcome Table (Lesson 53) <span class="new-badge">new</span></h2>
+<h2>Unexpected-Control-Error Mapping (Lesson 54) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>unexpected control error</td><td>unhandled service exception</td><td>A non-nil result from a sensitive application operation that is not a recognized domain outcome such as <code>ErrForbidden</code>. At the HTTP boundary it maps to a generic 500 response; its detail is recorded only in server-side structured logs.</td></tr>
+  <tr><td>generic 500 contract</td><td><code>res.sendStatus(500)</code></td><td>The intentional public response for an internal failure. It communicates failure without returning <code>err.Error()</code>, which can leak infrastructure or security details. A route may deliberately use <code>WriteHeader</code> to make the body empty.</td></tr>
+  <tr><td>error-chain classification</td><td>inspect an error cause</td><td>Using <code>errors.Is(err, ErrForbidden)</code> to recognize a known sentinel even when a control added context with <code>%w</code>. Known outcomes receive their specific HTTP mapping; the fallback maps all other errors to 500.</td></tr>
+</table>
+
+<h2>Operations Authorization Outcome Table (Lesson 53)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>outcome matrix</td><td><code>it.each</code> HTTP contract cases</td><td>A compact table that declares the observable result for each meaningful authorization state. For the operations route: no typed verified claims → 401 and no control call; verified viewer → 403; verified operator → 204.</td></tr>

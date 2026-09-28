@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 54 — Map Unexpected Control Errors to 500</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--ts:#69a7ed;--ok:#57cf76;--bad:#ff7881;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2rem 0 .65rem;font-size:1.35rem}h3{font-size:1rem;margin:0 0 .5rem}p,li{color:var(--muted)}.lead{font-size:1.1rem}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:21px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.note,.warn{border-radius:8px;padding:14px}.note{background:#10272a;border:1px solid #1d5157;color:#cceff1}.warn{background:#32230e;border:1px solid #70511c;color:#f5d98c}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border-bottom:1px solid var(--border);padding:10px;text-align:left;color:var(--muted)}th{color:var(--text)}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.ok{color:var(--ok)}.bad{color:var(--bad)}a{color:#53d5dd}.sources li{font-size:.92rem}@media(max-width:640px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}</style></head>
+<body><main class="wrap"><div class="eyebrow">Go HTTP server · 7 minutes</div><h1>Map unexpected control errors to 500</h1><p class="lead">Your operations handler already distinguishes missing identity (401), forbidden identity (403), and success (204). Add exactly one remaining branch: an unexpected failure from the log-level control becomes a generic 500—without returning internal error text to the caller.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will add one table row to the existing <code>httptest</code>: an authenticated operator plus a sentinel internal error must produce <code>500 Internal Server Error</code>, an empty response body, and one control call.</p></section>
+<h2>Errors are not all client responses</h2><p><code>ErrForbidden</code> is an expected domain outcome, so the handler can deliberately map it to 403. A storage, audit-sink, or other control failure is not an authorization result. It is an internal failure: record its detail in server-side logs and give the HTTP client only a stable 500 response.</p>
+<div class="compare"><section class="card ts"><h3>TypeScript / Express</h3><pre>try {
+  await control.set(principal, "debug");
+  res.sendStatus(204);
+} catch (err) {
+  if (err === forbidden) return res.sendStatus(403);
+  logger.error({ err }, "log level change failed");
+  res.sendStatus(500); // no err.message
+}</pre></section><section class="card go"><h3>Go / net/http</h3><pre>if err := control.Set(r.Context(), p, slog.LevelDebug); err != nil {
+    if errors.Is(err, ErrForbidden) {
+        http.Error(w, "forbidden", http.StatusForbidden)
+        return
+    }
+    logger.Error("log level change failed", "error", err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+}
+w.WriteHeader(http.StatusNoContent)</pre></section></div>
+<div class="note"><strong>Order matters.</strong> Check the known sentinel with <code>errors.Is</code> first. The fallback branch then safely handles every other non-nil error, including a wrapped failure.</div>
+<h2>Keep the public and private contracts separate</h2><table><tr><th>Who needs what?</th><th>Response / record</th></tr><tr><td>HTTP client</td><td>Stable status <code>500</code>; no database URL, token, or wrapped error text.</td></tr><tr><td>Operator investigating the failure</td><td>Structured server-side event with the error attached, as in Lesson 41.</td></tr><tr><td>Test</td><td>Status, body policy, and whether the control was called—not a comparison of dynamic log lines.</td></tr></table>
+<h2>Add the fourth row</h2><p>Reuse the verified-operator context from Lesson 53. The spy supplies an internal sentinel so this test remains a handler test, not a test of an audit sink.</p><pre>var errAuditUnavailable = errors.New("audit sink: dial tcp 10.0.0.7: refused")
+
+// Add this row alongside 401, 403, and 204:
+{
+    name:       "operator with control failure gets generic 500",
+    context:    claimsContext("operator"),
+    controlErr: errAuditUnavailable,
+    wantStatus: http.StatusInternalServerError,
+    wantCalls:  1,
+    wantBody:   "", // this route exposes no internal detail
+},
+
+// After ServeHTTP:
+if body := w.Body.String(); body != tt.wantBody {
+    t.Fatalf("body = %q, want %q", body, tt.wantBody)
+}</pre>
+<div class="warn"><strong>Choose one response-body policy and test it.</strong> <code>http.Error</code> writes a text body. If your route’s contract is an empty 500, use <code>w.WriteHeader(http.StatusInternalServerError)</code>, as above. Do not accidentally expose <code>err.Error()</code> merely because it is convenient.</div>
+<h2>Why <code>errors.Is</code>?</h2><p>Controls can add context with <code>fmt.Errorf("audit level change: %w", ErrForbidden)</code>. Equality would miss that wrapped sentinel; <code>errors.Is</code> walks the error chain. It preserves the intentional 403 branch while unknown errors fall through to 500.</p>
+<h2>Do this now</h2><ol><li>Create an internal sentinel whose message contains a detail you would not send to a client.</li><li>Add the authenticated-operator / failing-control row.</li><li>Assert 500, one call, and your chosen empty-body contract.</li><li>Run <code>go test -race ./...</code>.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>The control returns <code>fmt.Errorf("audit write: %w", ErrForbidden)</code>. What should the handler return?</h2><button class="option" data-correct="true">403, because <code>errors.Is</code> recognizes the wrapped expected authorization sentinel.</button><button class="option" data-correct="false">500, because the error text has extra context.</button><button class="option" data-correct="false">204, because the caller was authenticated.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>A control error says <code>dial tcp audit.internal: connect: refused</code>. Which response is the safest route contract?</h2><button class="option" data-correct="false">500 with that exact message so the caller can debug it.</button><button class="option" data-correct="true">A generic 500 response; log the detailed error server-side.</button><button class="option" data-correct="false">403, because the operation did not finish.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/errors#Is">Go <code>errors.Is</code> documentation — inspecting wrapped error chains</a></li><li><a href="https://pkg.go.dev/net/http#StatusInternalServerError">Go <code>net/http</code> — <code>StatusInternalServerError</code></a></li><li><a href="https://pkg.go.dev/net/http#Error">Go <code>http.Error</code> documentation — its response-writing behavior</a></li><li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html">OWASP Error Handling Cheat Sheet — avoid exposing sensitive error details</a></li></ul><p class="note">Want to go further? Ask your teacher to adapt this fourth row to your route’s actual JSON error envelope or add a logger assertion without coupling the test to timestamps.</p></main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'ok':'bad');f.textContent=ok?'Correct — preserve known outcomes, and keep unknown failure detail on the server.':'Not quite. Revisit the known-sentinel branch and the public/private error boundary.'})));</script></body></html>
