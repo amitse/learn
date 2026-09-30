@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Unexpected-Control-Error Mapping (Lesson 54) <span class="new-badge">new</span></h2>
+<h2>Consistent JSON Error Envelope (Lesson 55) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>errorResponse</code></td><td><code>{ error: message }</code> response object</td><td>A small transport type such as <code>struct { Error string `json:"error"` }</code>. It defines the stable, client-visible JSON shape for an HTTP error without exposing a Go error's private text.</td></tr>
+  <tr><td><code>writeJSONError</code></td><td><code>res.status(...).json(...)</code> helper</td><td>A narrow response-rendering helper that sets <code>Content-Type: application/json</code>, writes a caller-selected status, and encodes an <code>errorResponse</code>. It renders an outcome; it does not decide whether an error means 401, 403, or 500.</td></tr>
+  <tr><td>header commitment</td><td>response headers sent before body</td><td>In <code>net/http</code>, <code>WriteHeader</code> sends the status and headers. Set headers before it, then write the body. A <code>204 No Content</code> is a separate response with no body.</td></tr>
+  <tr><td>public error contract</td><td>documented API error shape</td><td>The intentionally safe response clients receive: for example, <code>{"error":"internal server error"}</code> for an unexpected failure. Detailed causes remain a server-side structured log field.</td></tr>
+</table>
+
+<h2>Unexpected-Control-Error Mapping (Lesson 54)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>unexpected control error</td><td>unhandled service exception</td><td>A non-nil result from a sensitive application operation that is not a recognized domain outcome such as <code>ErrForbidden</code>. At the HTTP boundary it maps to a generic 500 response; its detail is recorded only in server-side structured logs.</td></tr>
@@ -96,7 +105,7 @@
   <tr><td>change audit event</td><td>structured operations action record</td><td>A structured event with a stable message and fields such as <code>actor</code>, <code>from</code>, and <code>to</code>. Test it by decoding captured JSON and asserting those owned fields.</td></tr>
 </table>
 
-<h2>Runtime slog Level Control (Lesson 48) <span class="new-badge">new</span></h2>
+<h2>Runtime slog Level Control (Lesson 48)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>slog.LevelVar</code></td><td>mutable logger-level controller</td><td>A concurrency-safe value implementing <code>slog.Leveler</code>. A handler can consult the same <code>*LevelVar</code> for each record while an authorized application control path changes its threshold with <code>Set</code>.</td></tr>
@@ -105,7 +114,7 @@
   <tr><td>level transition test</td><td>assert logs before/after controller update</td><td>A buffer-backed test that requires a DEBUG event to be absent at INFO, calls <code>Set(slog.LevelDebug)</code>, and requires a later DEBUG event to be present. It proves the observable live policy change.</td></tr>
 </table>
 
-<h2>Configurable slog Minimum-Level Policy (Lesson 47) <span class="new-badge">new</span></h2>
+<h2>Configurable slog Minimum-Level Policy (Lesson 47)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>LogLevel</code></td><td><code>logLevel</code> config field</td><td>A typed <code>slog.Level</code> configuration value that transports an environment's minimum output threshold from configuration loading to logger construction. It is deployment policy, not a decision for handlers or individual log calls.</td></tr>

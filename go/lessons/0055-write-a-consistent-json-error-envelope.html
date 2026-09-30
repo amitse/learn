@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 55 — Write a Consistent JSON Error Envelope</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--ts:#69a7ed;--ok:#57cf76;--bad:#ff7881;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2rem 0 .65rem;font-size:1.35rem}h3{font-size:1rem;margin:0 0 .5rem}p,li,td{color:var(--muted)}.lead{font-size:1.1rem}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:21px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.note,.warn{border-radius:8px;padding:14px}.note{background:#10272a;border:1px solid #1d5157;color:#cceff1}.warn{background:#32230e;border:1px solid #70511c;color:#f5d98c}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border-bottom:1px solid var(--border);padding:10px;text-align:left}th{color:var(--text)}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.ok{color:var(--ok)}.bad{color:var(--bad)}a{color:#53d5dd}.sources li{font-size:.92rem}@media(max-width:640px){.compare{grid-template-columns:1fr}.wrap{padding:28px 15px 48px}}
+</style></head>
+<body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 8 minutes</div><h1>Write a consistent JSON error envelope</h1>
+<p class="lead">Lesson 54 kept internal errors out of the response. Now make the client-facing part deliberate: every error from this API has one small JSON shape, while the server still logs the detailed cause privately.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will define <code>errorResponse</code> and a tiny <code>writeJSONError</code> helper that emits <code>{"error":"…"}</code> with the correct HTTP status and <code>Content-Type</code>.</p></section>
+<h2>One public shape, many statuses</h2>
+<p>A status tells a client <em>what class</em> of result occurred; a predictable body gives it a stable value to display or branch on. Keep the public message intentional. An unexpected failure can say <code>internal server error</code>, never the value of <code>err.Error()</code>.</p>
+<table><tr><th>Situation</th><th>Status</th><th>Public JSON</th></tr><tr><td>No verified identity</td><td><code>401</code></td><td><code>{"error":"unauthorized"}</code></td></tr><tr><td>Verified caller lacks permission</td><td><code>403</code></td><td><code>{"error":"forbidden"}</code></td></tr><tr><td>Unexpected control failure</td><td><code>500</code></td><td><code>{"error":"internal server error"}</code></td></tr></table>
+<div class="compare"><section class="card ts"><h3>TypeScript / Express</h3><pre>function sendError(res: Response,
+  status: number, message: string) {
+  res.status(status).json({ error: message });
+}
+
+sendError(res, 403, "forbidden");</pre></section><section class="card go"><h3>Go / net/http</h3><pre>type errorResponse struct {
+    Error string `json:"error"`
+}
+
+func writeJSONError(w http.ResponseWriter,
+    status int, message string) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    _ = json.NewEncoder(w).Encode(errorResponse{Error: message})
+}</pre></section></div>
+<div class="note"><strong>The ordering is part of the contract.</strong> Set headers before <code>WriteHeader</code>. In <code>net/http</code>, writing the status commits the headers; encoding after that writes the response body.</div>
+<h2>Use it at the handler boundary</h2>
+<p>The handler still classifies errors. The helper only renders the selected public outcome, so it cannot accidentally turn every failure into a 403 or leak a private cause.</p>
+<pre>if err := control.Set(r.Context(), principal, level); err != nil {
+    if errors.Is(err, ErrForbidden) {
+        writeJSONError(w, http.StatusForbidden, "forbidden")
+        return
+    }
+    logger.Error("log level change failed", "error", err)
+    writeJSONError(w, http.StatusInternalServerError, "internal server error")
+    return
+}
+w.WriteHeader(http.StatusNoContent)</pre>
+<div class="warn"><strong>Do not use this helper for 204.</strong> A <code>204 No Content</code> response must not include a body. It remains a separate success branch with <code>w.WriteHeader(http.StatusNoContent)</code>.</div>
+<h2>Make the contract executable</h2>
+<pre>func TestWriteJSONError(t *testing.T) {
+    w := httptest.NewRecorder()
+
+    writeJSONError(w, http.StatusInternalServerError,
+        "internal server error")
+
+    if w.Code != http.StatusInternalServerError { t.Fatal(w.Code) }
+    if got := w.Header().Get("Content-Type"); got != "application/json" {
+        t.Fatalf("Content-Type = %q", got)
+    }
+    var body errorResponse
+    if err := json.NewDecoder(w.Body).Decode(&body); err != nil { t.Fatal(err) }
+    if body.Error != "internal server error" { t.Fatal(body.Error) }
+}</pre>
+<p>For a production API, you may later choose a versioned or code-bearing error schema. Today, own only the smallest stable contract: one <code>error</code> field, correct media type, and no internal details.</p>
+<h2>Do this now</h2><ol><li>Add <code>errorResponse</code> and <code>writeJSONError</code> near your HTTP transport helpers.</li><li>Replace the operations route’s 401, 403, and 500 rendering with explicit public messages.</li><li>Keep the existing detailed <code>logger.Error</code> call for the 500 branch.</li><li>Run <code>go test -race ./...</code>.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>A database error contains a hostname and credentials. What should a 500 body contain?</h2><button class="option" data-correct="false">The full <code>err.Error()</code>, so the API client can debug it.</button><button class="option" data-correct="true"><code>{"error":"internal server error"}</code>, while the detailed error is logged server-side.</button><button class="option" data-correct="false"><code>{"error":"forbidden"}</code>, because the request failed.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>Where must <code>Content-Type: application/json</code> be set?</h2><button class="option" data-correct="true">Before <code>WriteHeader</code>, before the response headers are committed.</button><button class="option" data-correct="false">After encoding JSON, because the body determines the header.</button><button class="option" data-correct="false">Only in the caller, never in the rendering helper.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/net/http#ResponseWriter">Go <code>http.ResponseWriter</code> documentation — headers and <code>WriteHeader</code> ordering</a></li><li><a href="https://pkg.go.dev/encoding/json#Encoder.Encode">Go <code>json.Encoder.Encode</code> documentation — writing JSON values</a></li><li><a href="https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.21">RFC 9110 §15.5.21 — 500 Internal Server Error</a></li><li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html">OWASP Error Handling Cheat Sheet — avoid exposing sensitive error details</a></li></ul><p class="note">Want to go further? Ask your teacher to adapt this envelope to your actual API or add a handler-level test that proves 500 never contains the control error text.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'ok':'bad');f.textContent=ok?'Correct — a stable public envelope and private diagnostics serve different audiences.':'Not quite. Revisit the public/private error boundary and header ordering.'})));</script></body></html>
