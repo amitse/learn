@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 73 — Write a Checkable Next Instruction</title>
+  <style>
+    :root{--ink:#202033;--muted:#66657a;--paper:#fcfbff;--panel:#f1edff;--line:#ded7f5;--violet:#6439c7;--violet-dark:#42208e;--good:#126b50;--bad:#9a3850}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(135deg,#f8f6ff,#fffdf9);color:var(--ink);font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:720px;margin:auto;padding:28px 18px 52px}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--violet)}h1{font-size:clamp(2rem,6vw,3.25rem);line-height:1.05;letter-spacing:-.045em;margin:.35rem 0 .8rem}h2{font-size:1.22rem;margin:0 0 .55rem}.lede{font-size:1.12rem;color:var(--muted);max-width:62ch}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin:18px 0;box-shadow:0 8px 25px rgba(61,35,130,.06)}.focus{background:var(--panel);border-left:5px solid var(--violet)}.label{display:block;font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--violet-dark);margin:13px 0 5px}input,textarea,select{width:100%;border:1px solid #bbb2df;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:inherit}textarea{min-height:78px;resize:vertical}button{border:0;border-radius:10px;background:var(--violet);color:white;font:inherit;font-weight:750;padding:11px 15px;cursor:pointer;margin-top:14px}button:hover{background:var(--violet-dark)}.feedback{display:none;margin-top:14px;padding:12px;border-radius:10px;font-weight:650}.feedback.good{display:block;background:#e7f7ef;color:var(--good)}.feedback.needs{display:block;background:#fff0f3;color:var(--bad)}.template{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#292243;color:#f6f2ff;border-radius:11px;padding:14px;overflow-wrap:anywhere}.tiny{font-size:.9rem;color:var(--muted)}ol{padding-left:1.25rem}li+li{margin-top:.42rem}a{color:var(--violet-dark)}.timer{font-variant-numeric:tabular-nums;font-size:1.45rem;font-weight:800;color:var(--violet-dark);margin:10px 0}.check{display:flex;gap:9px;align-items:flex-start;margin:.7rem 0}.check input{width:auto;margin-top:.35rem}@media (min-width:650px){main{padding-top:48px}.card{padding:26px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Calm Execution · Lesson 73</div>
+  <h1>Write a checkable next instruction</h1>
+  <p class="lede">Your last step classified two <em>followed</em> attempts. Now turn that reading into one sentence that can be enacted—and audited—over the next two ordinary attempts.</p>
+
+  <section class="card focus">
+    <h2>One skill</h2>
+    <p>Write a two-attempt instruction with a visible next move and a stable baseline. It is not a promise to be productive; it is a small instruction whose enactment can be checked later.</p>
+    <div class="template">For the next two ordinary attempts, [retain and gather / use one named existing test]. After [observable cue], [exact two-minute action].</div>
+  </section>
+
+  <section class="card">
+    <h2>Choose the branch from your classified pair</h2>
+    <ol>
+      <li>If the pair was <strong>none</strong>, mixed, or <strong>unclear</strong>, choose <strong>retain and gather</strong>.</li>
+      <li>If both labels were the same readable break and an <strong>already-specified matching test</strong> exists, choose that one test.</li>
+      <li>Do not invent a new test here. Do not add duration, catch-up work, or a second change.</li>
+    </ol>
+    <p class="tiny">This is a practical decision rule for keeping your personal experiment readable, not a claim that two records establish a cause.</p>
+  </section>
+
+  <section class="card" aria-labelledby="exercise-title">
+    <h2 id="exercise-title">10-minute applied exercise</h2>
+    <p>Set a ten-minute timer. Read your last classified pair, write the instruction below, then run the checklist. This becomes the sentence you will compare against the next two attempts.</p>
+    <div class="timer" id="timer" aria-live="polite">10:00</div>
+    <button type="button" id="timerButton">Start 10-minute timer</button>
+
+    <label class="label" for="branch">1. Your branch</label>
+    <select id="branch">
+      <option value="">Choose one…</option>
+      <option value="retain">Retain and gather two ordinary attempts</option>
+      <option value="test">Use one already-specified matching test</option>
+    </select>
+    <label class="label" for="instruction">2. Write your exact instruction</label>
+    <textarea id="instruction" placeholder="For the next two ordinary attempts, retain and gather. After I close my lunch container, I open the project brief and write its first heading for two minutes."></textarea>
+
+    <label class="check"><input type="checkbox" id="move"> <span>It names one next move: retain/gather or one existing test.</span></label>
+    <label class="check"><input type="checkbox" id="cue"> <span>It names an observable cue (“After I …”), not a time range or a feeling.</span></label>
+    <label class="check"><input type="checkbox" id="action"> <span>It names my exact two-minute physical action.</span></label>
+    <label class="check"><input type="checkbox" id="two"> <span>It says this applies to two ordinary attempts—no catch-up.</span></label>
+    <button type="button" id="checkButton">Check my instruction</button>
+    <div id="feedback" class="feedback" role="status"></div>
+  </section>
+
+  <section class="card">
+    <h2>After you write it</h2>
+    <p>Place the sentence beside your start record. For each of the next two attempts, first note whether the sentence was <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>. Only a pair of <strong>followed</strong> attempts is ready for the familiar cue-then-start reading.</p>
+    <p class="tiny">Context: repeated behavior in stable contexts is discussed as a basis for habit formation in <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>. Today’s exercise is deliberately smaller: make one chosen next action clear enough to enact and inspect.</p>
+  </section>
+
+  <p class="tiny">Questions or a messy real example? Ask your agent-teacher. A useful next instruction is allowed to be plain.</p>
+</main>
+<script>
+  const $=id=>document.getElementById(id);
+  let remaining=600, interval=null;
+  function render(){const m=Math.floor(remaining/60),s=remaining%60;$('timer').textContent=`${m}:${String(s).padStart(2,'0')}`}
+  $('timerButton').addEventListener('click',()=>{if(interval){clearInterval(interval);interval=null;$('timerButton').textContent='Resume timer';return} $('timerButton').textContent='Pause timer';interval=setInterval(()=>{if(remaining>0){remaining--;render()}else{clearInterval(interval);interval=null;$('timerButton').textContent='Timer complete';$('timer').textContent='Done — write the next instruction.'}},1000)});
+  $('checkButton').addEventListener('click',()=>{
+    const text=$('instruction').value.trim(), branch=$('branch').value;
+    const boxes=['move','cue','action','two'].filter(id=>$(id).checked);
+    const f=$('feedback');
+    const lacks=[];
+    if(!branch) lacks.push('choose a branch');
+    if(text.length<25) lacks.push('write the actual sentence');
+    if(boxes.length<4) lacks.push('confirm every check');
+    if(lacks.length){f.className='feedback needs';f.textContent=`Not yet: ${lacks.join('; ')}. Keep it small and specific.`;return}
+    f.className='feedback good';
+    f.textContent=branch==='retain' ? 'Ready: you have a bounded retain-and-gather instruction for two ordinary attempts. Audit enactment before interpreting the pair.' : 'Ready: you have one bounded existing-test instruction for two ordinary attempts. Audit enactment before interpreting the pair.';
+  });
+</script>
+</body>
+</html>
