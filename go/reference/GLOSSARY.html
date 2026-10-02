@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Consistent JSON Error Envelope (Lesson 55) <span class="new-badge">new</span></h2>
+<h2>Table-Test JSON Error Contracts (Lesson 56) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>wantError</code></td><td>expected JSON error message</td><td>A table-test field holding the deliberate public message expected for an error row, such as <code>"forbidden"</code> or <code>"internal server error"</code>. An empty value can document the distinct 204 no-body success contract.</td></tr>
+  <tr><td>decoded response assertion</td><td><code>expect(await res.json()).toEqual(...)</code></td><td>Decode an <code>httptest.ResponseRecorder</code> body into <code>errorResponse</code> and compare owned fields. This tests JSON meaning without coupling the test to whitespace or serialization formatting.</td></tr>
+  <tr><td>no-leak assertion</td><td><code>expect(text).not.toContain(privateValue)</code></td><td>A response-boundary check using a distinctive fake internal value, such as <code>password=secret</code>, and requiring it to be absent from the client body. It proves the route did not serialize an unexpected <code>err.Error()</code>.</td></tr>
+  <tr><td>handler contract table</td><td>route outcome matrix</td><td>A table-driven <code>httptest</code> that exercises error classification and rendering together: context and control result in, public status/media type/body out.</td></tr>
+</table>
+
+<h2>Consistent JSON Error Envelope (Lesson 55)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>errorResponse</code></td><td><code>{ error: message }</code> response object</td><td>A small transport type such as <code>struct { Error string `json:"error"` }</code>. It defines the stable, client-visible JSON shape for an HTTP error without exposing a Go error's private text.</td></tr>

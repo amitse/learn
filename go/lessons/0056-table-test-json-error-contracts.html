@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 56 — Table-Test JSON Error Contracts</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#a8aec3;--accent:#00adb5;--ts:#69a7ed;--ok:#57cf76;--bad:#ff7881;--code:#11141d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:930px;margin:auto;padding:42px 20px 64px}.eyebrow,.label{color:var(--accent);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:750}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.12;margin:.35rem 0 1rem}h2{margin:2rem 0 .65rem;font-size:1.35rem}h3{font-size:1rem;margin:0 0 .5rem}p,li,td{color:var(--muted)}.lead{font-size:1.1rem}.card,.quiz{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:21px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code",Consolas,monospace}code{background:#252a39;padding:.12em .32em;border-radius:4px;color:#e9faff}pre{background:var(--code);border:1px solid var(--border);padding:16px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.55;color:#d8e2f0}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ts h3{color:var(--ts)}.go h3{color:var(--accent)}.note,.warn{border-radius:8px;padding:14px}.note{background:#10272a;border:1px solid #1d5157;color:#cceff1}.warn{background:#32230e;border:1px solid #70511c;color:#f5d98c}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border-bottom:1px solid var(--border);padding:10px;text-align:left}th{color:var(--text)}.option{display:block;width:100%;text-align:left;background:#232838;color:var(--text);border:1px solid #343b50;border-radius:8px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}.option:hover{border-color:var(--accent)}.feedback{min-height:1.5em;margin-top:10px;font-weight:650}.ok{color:var(--ok)}.bad{color:var(--bad)}a{color:#53d5dd}.sources li{font-size:.92rem}@media(max-width:640px){.compare{grid-template-columns:1fr}.wrap{padding:28px 15px 48px}}
+</style></head>
+<body><main class="wrap">
+<div class="eyebrow">Go HTTP server · 9 minutes</div><h1>Table-test JSON error contracts</h1>
+<p class="lead">Lesson 55 gave your API one error body. Now protect it at the route boundary: each failing outcome must select the right status, JSON message, and safe public surface.</p>
+<section class="card goal"><div class="label">Tangible win</div><p>You will add error rows to an existing <code>httptest</code> table and decode the response into <code>errorResponse</code>, proving an internal cause never reaches a client.</p></section>
+<h2>Test what a client actually receives</h2>
+<p>Testing <code>writeJSONError</code> once is useful, but the handler can still choose the wrong status or message. A handler table tests the public contract at the decision point: request state → selected HTTP response.</p>
+<table><tr><th>Case</th><th>Control result</th><th>Expected response</th><th>Why it matters</th></tr><tr><td>missing claims</td><td>not called</td><td>401, <code>unauthorized</code></td><td>No identity reaches the operation.</td></tr><tr><td>viewer</td><td><code>ErrForbidden</code></td><td>403, <code>forbidden</code></td><td>Known domain denial stays specific.</td></tr><tr><td>operator + internal fault</td><td><code>errors.New("db host=…")</code></td><td>500, <code>internal server error</code></td><td>Unexpected detail remains private.</td></tr></table>
+<div class="compare"><section class="card ts"><h3>TypeScript / Jest</h3><pre>expect(response.status).toBe(500);
+expect(await response.json()).toEqual({
+  error: "internal server error",
+});
+expect(response.text()).not.toContain("db host");</pre></section><section class="card go"><h3>Go / httptest</h3><pre>if got := w.Code; got != http.StatusInternalServerError {
+    t.Fatalf("status = %d", got)
+}
+var body errorResponse
+json.NewDecoder(w.Body).Decode(&amp;body)
+if body.Error != "internal server error" {
+    t.Fatalf("error = %q", body.Error)
+}</pre></section></div>
+<h2>Extend the existing table</h2>
+<p>Keep the control spy from Lesson 53. Add expected public fields to each row. The only special case is 204: it deliberately has no JSON body, so the test skips decoding it.</p>
+<pre>tests := []struct {
+    name       string
+    ctx        context.Context
+    controlErr error
+    wantStatus int
+    wantError  string // empty means: no body expected
+}{
+    {
+        name:       "missing claims",
+        ctx:        context.Background(),
+        wantStatus: http.StatusUnauthorized,
+        wantError:  "unauthorized",
+    },
+    {
+        name:       "unexpected control error is generic",
+        ctx:        verifiedOperatorContext(),
+        controlErr: errors.New("postgres: password=secret"),
+        wantStatus: http.StatusInternalServerError,
+        wantError:  "internal server error",
+    },
+}</pre>
+<h2>Decode—and prove the private string is absent</h2>
+<pre>t.Run(tc.name, func(t *testing.T) {
+    control := &amp;controlSpy{err: tc.controlErr}
+    h := newOperationsHandler(control, logger)
+    req := httptest.NewRequest(http.MethodPut, "/ops/log-level", nil).
+        WithContext(tc.ctx)
+    w := httptest.NewRecorder()
+
+    h.ServeHTTP(w, req)
+
+    if w.Code != tc.wantStatus { t.Fatalf("status = %d", w.Code) }
+    if tc.wantError == "" { return } // 204 case
+    if got := w.Header().Get("Content-Type"); got != "application/json" {
+        t.Fatalf("Content-Type = %q", got)
+    }
+    var body errorResponse
+    if err := json.NewDecoder(w.Body).Decode(&amp;body); err != nil { t.Fatal(err) }
+    if body.Error != tc.wantError { t.Fatalf("error = %q", body.Error) }
+    if strings.Contains(w.Body.String(), "password=secret") {
+        t.Fatal("response leaked internal error")
+    }
+})</pre>
+<div class="note"><strong>Decode before asserting.</strong> JSON has insignificant whitespace and encoding order can change as a response grows. Decoding asserts the API meaning instead of its incidental byte formatting.</div>
+<div class="warn"><strong>Scope the no-leak assertion.</strong> Use a distinctive fake internal value such as <code>password=secret</code>, then require that exact value not to occur in the response. Do not make a vague assertion that the body “looks safe.”</div>
+<h2>Do this now</h2><ol><li>Add <code>wantError string</code> to your route’s existing outcome table.</li><li>Add 401, 403, and unexpected-500 rows with their public messages.</li><li>For JSON rows, assert the media type and decode <code>errorResponse</code>.</li><li>Use a distinctive internal error in the 500 row and assert it is absent from the body.</li><li>Run <code>go test -race ./...</code>.</li></ol>
+<section class="quiz"><div class="label">Instant check</div><h2>Why decode the body into <code>errorResponse</code> instead of comparing its exact bytes?</h2><button class="option" data-correct="false">Because <code>httptest</code> cannot expose raw response bytes.</button><button class="option" data-correct="true">It asserts the JSON contract while ignoring irrelevant whitespace or field-formatting details.</button><button class="option" data-correct="false">Decoding automatically proves that no internal error was leaked.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="quiz"><div class="label">One more</div><h2>What should the 500 test use as <code>wantError</code> if the control returns <code>errors.New("postgres: password=secret")</code>?</h2><button class="option" data-correct="false"><code>postgres: password=secret</code></button><button class="option" data-correct="false"><code>forbidden</code></button><button class="option" data-correct="true"><code>internal server error</code>, plus an assertion that the private text is absent.</button><p class="feedback" aria-live="polite"></p></section>
+<h2>Sources</h2><ul class="sources"><li><a href="https://pkg.go.dev/net/http/httptest#ResponseRecorder">Go <code>httptest.ResponseRecorder</code> documentation</a></li><li><a href="https://pkg.go.dev/encoding/json#Decoder.Decode">Go <code>json.Decoder.Decode</code> documentation</a></li><li><a href="https://go.dev/blog/subtests">Go Blog: Using Subtests and Sub-benchmarks</a></li><li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html">OWASP Error Handling Cheat Sheet — avoid leaking implementation details</a></li></ul><p class="note">Want help adapting this table to your actual handler signature? Ask your teacher and paste the handler plus its current tests.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('.option').forEach(b=>b.addEventListener('click',()=>{const f=q.querySelector('.feedback'),ok=b.dataset.correct==='true';f.className='feedback '+(ok?'ok':'bad');f.textContent=ok?'Correct — response tests should preserve the meaningful API contract.':'Not quite. Revisit what is public contract versus an implementation detail.'})));</script></body></html>
