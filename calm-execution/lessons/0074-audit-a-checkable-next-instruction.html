@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 74 — Audit a Checkable Next Instruction</title>
+  <style>
+    :root{--ink:#20202a;--muted:#656572;--paper:#fffdf9;--wash:#f3efff;--line:#ded7ed;--accent:#6d35c4;--good:#176b49;--warn:#875900}*{box-sizing:border-box}body{margin:0;background:#eeeaf5;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:clamp(22px,5vw,40px);box-shadow:0 8px 26px #32205712}.eyebrow{margin:0 0 8px;color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(1.75rem,7vw,2.6rem);line-height:1.08;margin:0 0 14px}h2{font-size:1.15rem;margin:28px 0 8px}.lead{font-size:1.1rem;margin:0}.rule{background:var(--wash);border-left:4px solid var(--accent);border-radius:8px;padding:15px 16px;margin:20px 0;font-weight:650}.steps{padding-left:1.25rem}.steps li{margin:8px 0}.practice{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:22px}label{display:block;font-weight:700;margin:16px 0 6px}textarea,select{width:100%;border:1px solid #bdb5cd;border-radius:9px;padding:10px;font:inherit;background:#fff}textarea{min-height:84px;resize:vertical}button{appearance:none;border:0;border-radius:9px;background:var(--accent);color:#fff;padding:11px 15px;font:inherit;font-weight:750;cursor:pointer;margin-top:16px}button:focus,textarea:focus,select:focus{outline:3px solid #cbb8ef;outline-offset:2px}.feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:9px;background:#edf8f2;color:var(--good);font-weight:650}.feedback.warn{background:#fff7e6;color:var(--warn)}.tiny{color:var(--muted);font-size:.9rem}.source{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}a{color:#54259c}@media (prefers-color-scheme:dark){body{background:#17131e}.card{background:#211d29;color:#f4f0f8;border-color:#4b415c}.rule{background:#2d2540}.practice{border-color:#4b415c}textarea,select{background:#19151f;color:#f4f0f8;border-color:#766b87}.source{border-color:#4b415c}.tiny{color:#beb6c9}}</style>
+</head>
+<body><main class="page"><article class="card">
+  <p class="eyebrow">Calm Execution · Lesson 74 · 10 minutes</p>
+  <h1>Audit a checkable next instruction</h1>
+  <p class="lead">Before interpreting whether a plan worked, check whether you actually used the exact plan you wrote.</p>
+  <div class="rule">For each of the two covered attempts, use one label only: <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>.</div>
+  <h2>The one skill</h2>
+  <ol class="steps"><li>Read the previous instruction exactly as written.</li><li>Compare it with attempt 1, then attempt 2. Do not read cue or start outcomes yet.</li><li>If both are <em>followed</em>, the pair is ready for the existing cue-then-start classification.</li><li>If either is <em>not followed</em> or <em>unclear</em>, repeat the same instruction for two ordinary attempts. No redesign, catch-up, or verdict.</li></ol>
+  <p>This is a practical measurement rule for your own experiment, not a judgment about effort.</p>
+  <section class="practice" aria-labelledby="practice-title"><h2 id="practice-title">Practice: run the audit</h2><p class="tiny">Use your Lesson 73 sentence and its two actual attempts. This should take 5–10 minutes.</p>
+    <label for="instruction">Exact instruction</label><textarea id="instruction" placeholder="After I put down my coffee, I will open the proposal and write its title for two ordinary attempts."></textarea>
+    <label for="one">Attempt 1: was the exact instruction followed?</label><select id="one"><option value="">Choose one…</option><option>followed</option><option>not followed</option><option>unclear</option></select>
+    <label for="two">Attempt 2: was the exact instruction followed?</label><select id="two"><option value="">Choose one…</option><option>followed</option><option>not followed</option><option>unclear</option></select>
+    <button type="button" id="check">Get the next move</button><div class="feedback" id="feedback" aria-live="polite"></div>
+  </section>
+  <h2>Close the loop</h2><p>Copy the result into your one-line record. Then take the next ordinary attempt. A readable audit is useful evidence; it is not a score.</p>
+  <p class="tiny">Questions or a tricky real record? Ask your teacher agent and include the exact instruction plus the two labels.</p>
+  <p class="source">Background: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012), “Making health habitual”</a> discusses habits as cue-driven behaviour in stable contexts. This lesson uses a deliberately small, repeatable cue-and-action practice.</p>
+</article></main>
+<script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const text=$('instruction').value.trim(),a=$('one').value,b=$('two').value,f=$('feedback');f.className='feedback';if(!text||!a||!b){f.textContent='Complete the exact instruction and both labels first.';f.classList.add('warn')}else if(a==='followed'&&b==='followed'){f.textContent='Ready: both attempts followed the instruction. Now use the existing cue-then-start classification; do not add a new change here.'}else{f.textContent='Next move: repeat this exact instruction for two ordinary attempts. Keep the cue and two-minute action unchanged; the outcome is not yet readable.';f.classList.add('warn')}f.style.display='block'});
+</script></body></html>
