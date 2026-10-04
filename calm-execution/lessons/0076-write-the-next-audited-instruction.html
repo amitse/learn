@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 76 — Write the Next Audited Instruction</title>
+  <style>
+    :root{--ink:#20202a;--muted:#656572;--paper:#fffdf9;--wash:#f3efff;--line:#ded7ed;--accent:#6d35c4;--good:#176b49;--warn:#875900}*{box-sizing:border-box}body{margin:0;background:#eeeaf5;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:clamp(22px,5vw,40px);box-shadow:0 8px 26px #32205712}.eyebrow{margin:0 0 8px;color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(1.75rem,7vw,2.6rem);line-height:1.08;margin:0 0 14px}h2{font-size:1.15rem;margin:28px 0 8px}.lead{font-size:1.1rem;margin:0}.rule{background:var(--wash);border-left:4px solid var(--accent);border-radius:8px;padding:15px 16px;margin:20px 0;font-weight:650}.steps{padding-left:1.25rem}.steps li{margin:8px 0}.practice{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:22px}label{display:block;font-weight:700;margin:16px 0 6px}select,input{width:100%;border:1px solid #bdb5cd;border-radius:9px;padding:10px;font:inherit;background:#fff}button{appearance:none;border:0;border-radius:9px;background:var(--accent);color:#fff;padding:11px 15px;font:inherit;font-weight:750;cursor:pointer;margin-top:16px}button:focus,select:focus,input:focus{outline:3px solid #cbb8ef;outline-offset:2px}.feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:9px;background:#edf8f2;color:var(--good);font-weight:650}.feedback.warn{background:#fff7e6;color:var(--warn)}.tiny{color:var(--muted);font-size:.9rem}.source{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}a{color:#54259c}@media (prefers-color-scheme:dark){body{background:#17131e}.card{background:#211d29;color:#f4f0f8;border-color:#4b415c}.rule{background:#2d2540}.practice{border-color:#4b415c}select,input{background:#191621;color:#f4f0f8;border-color:#70647f}.source{border-color:#4b415c}}
+  </style>
+</head>
+<body><main class="page"><article class="card">
+  <p class="eyebrow">Calm Execution · Lesson 76 · 10 minutes</p>
+  <h1>Write the next audited instruction</h1>
+  <p class="lead">Turn the pair you classified into one small instruction you can actually audit—rather than a promise to “do better.”</p>
+  <div class="rule">Name the same <strong>observable cue</strong>, the same <strong>exact two-minute action</strong>, and one next move for <strong>two ordinary attempts</strong>.</div>
+
+  <h2>The one skill</h2>
+  <ol class="steps">
+    <li>Use only the result of a pair that passed the enactment audit and was classified cue-first.</li>
+    <li>If the pair was mixed, working, or unclear: write <em>retain and gather</em>—keep the cue and action for two ordinary attempts.</li>
+    <li>If the same readable break appeared twice: write only the one already-specified matching test. Keep all other parts stable.</li>
+    <li>Do not add a second test, catch-up work, or a verdict about yourself.</li>
+  </ol>
+  <p>This is a practical experiment for maintaining a calm starting system. Repeating behaviour in a stable context can support cue-driven habit formation; this lesson only asks you to make your next two attempts observable, not to prove a habit.</p>
+
+  <section class="practice" aria-labelledby="practice-title">
+    <h2 id="practice-title">Practice: generate your two-attempt instruction</h2>
+    <p class="tiny">Use your Lesson 75 pair. This takes 5–10 minutes.</p>
+    <label for="result">What did the verified pair show?</label>
+    <select id="result"><option value="">Choose one…</option><option value="retain">Mixed, working, or incomplete evidence</option><option value="cue">Cue appeared as the same readable break twice</option><option value="start">Start-side appeared as the same readable break twice</option></select>
+    <label for="cue">Your observable cue</label>
+    <input id="cue" placeholder="e.g., after I put my lunch dish in the sink">
+    <label for="action">Your exact two-minute action</label>
+    <input id="action" placeholder="e.g., open the proposal and write its first heading">
+    <label for="test">Already-specified matching test <span class="tiny">(needed only for a repeated break)</span></label>
+    <input id="test" placeholder="e.g., place proposal tab first before the cue">
+    <button type="button" id="check">Write my instruction</button>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+  </section>
+
+  <h2>Close the loop</h2>
+  <p>Copy the instruction into your record. Run it for two ordinary attempts; the next lesson audits whether you followed this exact sentence before reading outcomes.</p>
+  <p class="tiny">Questions or a difficult real record? Ask your teacher agent and include your pair labels plus the sentence you wrote.</p>
+  <p class="source">Background: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012)</a>. The decision rule here is a practical course experiment, not a diagnostic tool.</p>
+</article></main>
+<script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const r=$('result').value,c=$('cue').value.trim(),a=$('action').value.trim(),t=$('test').value.trim(),f=$('feedback');f.className='feedback';if(!r||!c||!a){f.textContent='Choose the pair result and name both the observable cue and exact two-minute action.';f.classList.add('warn')}else if(r==='retain'){f.textContent=`For the next two ordinary attempts: when ${c}, ${a} for two minutes. Keep this instruction unchanged; then audit whether it was followed.`}else if(!t){f.textContent='A repeated readable break supports only one already-specified matching test. Name that test before writing the instruction.';f.classList.add('warn')}else{const link=r==='cue'?'cue':'start-side';f.textContent=`For the next two ordinary attempts: test “${t}.” When ${c}, ${a} for two minutes. Keep every other part stable. This is one ${link} test, not a redesign.`}f.style.display='block'});
+</script></body></html>
