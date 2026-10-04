@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Table-Test JSON Error Contracts (Lesson 56) <span class="new-badge">new</span></h2>
+<h2>Private Error Logging Tests (Lesson 57) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>public/private error boundary</td><td>safe API error + private logger metadata</td><td>The deliberate split for an unexpected failure: a stable generic HTTP message goes to the client while the original error is retained only in a structured server-side event. It prevents an API from becoming an error-detail transport.</td></tr>
+  <tr><td>buffer-backed slog test</td><td>captured logger transport test</td><td>A focused test that constructs <code>slog.NewJSONHandler(&amp;bytes.Buffer{}, nil)</code>, injects the resulting logger, and examines emitted events without a real log collector or global logger.</td></tr>
+  <tr><td>distinctive private value</td><td>sentinel diagnostic string</td><td>A deliberately unusual internal error value supplied by a test double. Requiring it to be absent from <code>httptest.ResponseRecorder.Body</code> and present in captured logs proves containment and observability at once.</td></tr>
+  <tr><td>structured error attribute</td><td><code>{ err }</code> log property</td><td>A named logging field such as <code>"error", err</code> passed to <code>logger.Error</code>. Keep the event message stable and put the changing private cause in this attribute.</td></tr>
+</table>
+
+<h2>Table-Test JSON Error Contracts (Lesson 56)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>wantError</code></td><td>expected JSON error message</td><td>A table-test field holding the deliberate public message expected for an error row, such as <code>"forbidden"</code> or <code>"internal server error"</code>. An empty value can document the distinct 204 no-body success contract.</td></tr>

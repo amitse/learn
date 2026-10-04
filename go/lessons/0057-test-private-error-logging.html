@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 57 — Test Private Error Logging</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b7;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--code:#111522}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:840px;margin:auto;padding:38px 20px 70px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.08;margin:.35rem 0 .8rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#24293a;border-radius:4px;padding:.12em .32em;color:#d8f6f7}pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:17px;overflow:auto;font-size:.84rem;line-height:1.5}pre code{padding:0;background:none;color:#e8eaf0}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.label{font-size:.75rem;font-weight:800;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin-bottom:-8px}.rule{display:grid;grid-template-columns:32px 1fr;gap:10px;margin:12px 0}.num{width:28px;height:28px;border-radius:50%;background:#123d43;color:#aaf4f7;text-align:center;font-weight:800}.quiz button{width:100%;text-align:left;padding:12px 14px;margin:7px 0;border-radius:8px;border:1px solid var(--border);background:#202432;color:var(--text);font:inherit;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:700;margin-top:10px}.good{color:var(--good)}.bad{color:var(--bad)}a{color:#68dce1}.check{padding:14px 16px;background:#112a20;border-radius:9px;border:1px solid #28563a}.small{font-size:.9rem}@media(max-width:650px){.split{grid-template-columns:1fr}.wrap{padding-top:25px}}
+</style>
+</head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP Server · Lesson 57 · ~8 minutes</p>
+<h1>Test private error logging<br>without leaking it to clients</h1>
+<p class="lead">Your JSON error contract is now tested. Close the observability loop: an unexpected failure must be <strong>generic in the HTTP response</strong> and <strong>specific in the server log</strong>.</p>
+<section class="card goal"><strong>Win:</strong> write one focused test that proves the same internal cause is visible to operators but absent from the public response.</section>
+
+<h2>The boundary has two audiences</h2>
+<div class="split"><section class="card"><p class="label">Client</p><h3>Safe contract</h3><p><code>500</code> + <code>{"error":"internal server error"}</code>. No database host, token, or wrapped implementation text.</p></section><section class="card"><p class="label">Operator</p><h3>Useful evidence</h3><p>A structured event with a stable message and the actual error as a named attribute.</p></section></div>
+<p>This is not contradictory. The handler <em>classifies</em> the error for the client, then logs the private cause for the operator.</p>
+
+<h2>The smallest route change</h2>
+<pre><code>if err := control.Set(r.Context(), principal, level); err != nil {
+    if errors.Is(err, ErrForbidden) {
+        writeJSONError(w, http.StatusForbidden, "forbidden")
+        return
+    }
+
+    logger.Error("log-level change failed", "error", err)
+    writeJSONError(w, http.StatusInternalServerError, "internal server error")
+    return
+}</code></pre>
+<p class="muted small"><code>slog.Logger.Error</code> records an error-level event; named attributes make the cause queryable. Do not put <code>err.Error()</code> into the public JSON message.</p>
+
+<h2>TS ↔ Go: same separation, different tools</h2>
+<div class="split"><section class="card"><p class="label">TypeScript / Node</p><pre><code>logger.error({ err }, "change failed");
+res.status(500).json({
+  error: "internal server error"
+});</code></pre></section><section class="card"><p class="label">Go</p><pre><code>logger.Error("change failed",
+  "error", err)
+writeJSONError(w, 500,
+  "internal server error")</code></pre></section></div>
+
+<h2>Test both sides of the boundary</h2>
+<p>Use a distinctive fake private value. It makes a weak test precise: if that exact value appears in the response, the route leaked it; if it is absent from the log, observability was lost.</p>
+<pre><code>func TestSetLevel_internalErrorIsLoggedButNotExposed(t *testing.T) {
+    var logs bytes.Buffer
+    logger := slog.New(slog.NewJSONHandler(&amp;logs, nil))
+    private := errors.New("postgres://admin:secret@db.internal:5432")
+    control := &amp;controlSpy{err: private}
+    h := newSetLevelHandler(control, logger)
+
+    r := httptest.NewRequest(http.MethodPut, "/ops/log-level", nil)
+    r = r.WithContext(withOperator(r.Context()))
+    w := httptest.NewRecorder()
+    h.ServeHTTP(w, r)
+
+    if w.Code != http.StatusInternalServerError { t.Fatalf("got %d", w.Code) }
+    if strings.Contains(w.Body.String(), private.Error()) { t.Fatal("private cause leaked") }
+    if !strings.Contains(logs.String(), private.Error()) { t.Fatal("private cause not logged") }
+}</code></pre>
+<div class="card"><strong>Why raw-string checks are right here:</strong> you already decode the client JSON to test its public contract (Lesson 56). This test asks a different question—whether one exact diagnostic value crossed each boundary. A captured <code>bytes.Buffer</code> answers it without a real server or external log sink.</div>
+
+<h2>Do it in this order</h2>
+<div class="rule"><div class="num">1</div><div>Create a <code>bytes.Buffer</code> and inject a JSON <code>slog</code> logger into the handler.</div></div>
+<div class="rule"><div class="num">2</div><div>Make the existing control spy return a distinctive unexpected error—not <code>ErrForbidden</code>.</div></div>
+<div class="rule"><div class="num">3</div><div>Require <code>500</code>, then prove the private string is absent from <code>w.Body</code>.</div></div>
+<div class="rule"><div class="num">4</div><div>Require that same string in the captured structured log. Keep the stable event message separate from the changing cause.</div></div>
+
+<h2>Quick check</h2>
+<section class="card quiz" data-answer="b"><p><strong>An unexpected error says <code>dial tcp 10.0.0.8: connection refused</code>. Which outcome is correct?</strong></p><button data-choice="a">A. Return that string in the JSON response so the client can diagnose it.</button><button data-choice="b">B. Return a generic 500 JSON error and log the exact cause as a structured attribute.</button><button data-choice="c">C. Return an empty 500 and do not log it, to avoid exposing infrastructure.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="card quiz" data-answer="c"><p><strong>What is the key assertion for the client side of this test?</strong></p><button data-choice="a">A. The response body exactly equals the full JSON byte sequence.</button><button data-choice="b">B. The response body contains the private error so support can copy it.</button><button data-choice="c">C. The response body does not contain the distinctive private value.</button><p class="feedback" aria-live="polite"></p></section>
+
+<section class="check"><strong>Carry forward:</strong> a safe public error and a useful private log are a paired contract. When you add an unexpected-error path, test both—generic response out, diagnostic event retained.</section>
+<h2>Sources</h2><ul class="small"><li><a href="https://pkg.go.dev/log/slog">Go <code>log/slog</code> package documentation</a> — logger methods, structured attributes, and JSON handlers.</li><li><a href="https://pkg.go.dev/net/http#Error">Go <code>net/http</code> documentation</a> — why response rendering is an explicit HTTP-boundary decision.</li><li><a href="https://pkg.go.dev/net/http/httptest">Go <code>httptest</code> documentation</a> — <code>ResponseRecorder</code> for handler tests.</li></ul>
+<p class="muted small">Questions or a failing test? Ask your teacher with the handler and test snippet—especially if your logger is constructed outside the route.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{const ok=b.dataset.choice===q.dataset.answer, f=q.querySelector('.feedback');q.querySelectorAll('button').forEach(x=>x.style.borderColor='');b.style.borderColor=ok?'#3ab54a':'#ff6b6b';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — preserve operator detail privately while keeping the client contract safe.':'Not quite — separate the public HTTP contract from the private structured diagnostic.'})))</script>
+</body></html>
