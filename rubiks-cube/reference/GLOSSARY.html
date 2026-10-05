@@ -469,6 +469,13 @@
   <dt>Valid miss (F2L)</dt><dd>A first mismatch observed at the planned checkpoint while all four condition fields are retained. It is usable evidence, not an invalid row and not a reason to change the algorithm during collection.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 56 — Audit an Evidence-Matched Fresh E/F Verdict (2026-10-03)</p>
+<h2>F2L Audited-Verdict Repair</h2>
+<dl>
+  <dt>Repair target</dt><dd>The earliest failed audit component in a Fresh E/F verdict: condition, evidence, or action. It determines the smallest valid repair.</dd>
+  <dt>Minimal verdict repair</dt><dd>Replacing only the unsupported condition, evidence, or action clause while leaving accurate recorded observations and matching clauses intact. It does not introduce a cause, new algorithm, target-pair change, or second action.</dd>
+  <dt>Repair classification</dt><dd>The label applied after repair: <strong>ACT</strong> when comparable Fresh E/F, accurate evidence, and one evidence-matched action all pass; <strong>FRESH EVIDENCE</strong> when condition drift requires a matching replacement attempt.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 57 — Repair One Audited Fresh E/F Verdict (2026-10-05)</p>
 </body>
 </html>
