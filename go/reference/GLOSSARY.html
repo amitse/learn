@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Private Error Logging Tests (Lesson 57) <span class="new-badge">new</span></h2>
+<h2>Decoded Private Error Log Events (Lesson 58) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>logEvent</code> decoder</td><td>selected parsed log-object shape</td><td>A deliberately narrow struct with JSON tags for stable owned fields such as <code>level</code>, <code>msg</code>, and <code>error</code>. Decode into it rather than coupling a test to every field emitted by a handler.</td></tr>
+  <tr><td>decoded event assertion</td><td><code>JSON.parse(line)</code> property assertions</td><td>A test that converts a captured JSON log record to data, then asserts the event level, stable message, and named error field. It verifies a structured observability contract rather than a substring alone.</td></tr>
+  <tr><td>volatile log field</td><td>dynamic timestamp / stack metadata</td><td>Record data such as <code>time</code>, a source path, or JSON key order that can change without changing the route's behavior. Do not assert it exactly in a focused handler test.</td></tr>
+  <tr><td><code>bytes.TrimSpace</code></td><td><code>line.trim()</code></td><td>Removes the trailing newline emitted by <code>slog.NewJSONHandler</code> before decoding a one-record buffer with <code>json.Unmarshal</code>.</td></tr>
+</table>
+
+<h2>Private Error Logging Tests (Lesson 57)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>public/private error boundary</td><td>safe API error + private logger metadata</td><td>The deliberate split for an unexpected failure: a stable generic HTTP message goes to the client while the original error is retained only in a structured server-side event. It prevents an API from becoming an error-detail transport.</td></tr>

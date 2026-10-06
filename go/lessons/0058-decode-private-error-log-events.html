@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 58 — Decode Private Error Log Events</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#9aa0b7;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--code:#111522}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:840px;margin:auto;padding:38px 20px 70px}.eyebrow{color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.08;margin:.35rem 0 .8rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#24293a;border-radius:4px;padding:.12em .32em;color:#d8f6f7}pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:17px;overflow:auto;font-size:.84rem;line-height:1.5}pre code{padding:0;background:none;color:#e8eaf0}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.label{font-size:.75rem;font-weight:800;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin-bottom:-8px}.quiz button{width:100%;text-align:left;padding:12px 14px;margin:7px 0;border-radius:8px;border:1px solid var(--border);background:#202432;color:var(--text);font:inherit;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:700;margin-top:10px}.good{color:var(--good)}.bad{color:var(--bad)}a{color:#68dce1}.check{padding:14px 16px;background:#112a20;border-radius:9px;border:1px solid #28563a}.small{font-size:.9rem}@media(max-width:650px){.split{grid-template-columns:1fr}.wrap{padding-top:25px}}
+</style>
+</head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP Server · Lesson 58 · ~8 minutes</p>
+<h1>Decode the error event,<br>not just its text</h1>
+<p class="lead">Lesson 57 proved a private cause reached your logs. Now make that test robust: decode the JSON event and assert the <strong>event contract</strong>—level, stable message, and error field.</p>
+<section class="card goal"><strong>Win:</strong> turn a buffer of JSON logs into one decoded event and test only the fields your server owns.</section>
+
+<h2>Why a substring test is not enough</h2>
+<div class="split"><section class="card"><p class="label">Too broad</p><pre><code>if !strings.Contains(logs.String(),
+    private.Error()) { ... }</code></pre><p>It proves some bytes appeared. A changed message, wrong level, or malformed event can still slip through.</p></section><section class="card"><p class="label">Contract-level</p><pre><code>var got logEvent
+json.Unmarshal(line, &amp;got)
+// assert got.Level, got.Msg,
+// and got.Error</code></pre><p>It checks the shape an operator or log collector actually consumes—without coupling to timestamps.</p></section></div>
+<p><code>slog.NewJSONHandler</code> emits one JSON object followed by a newline per record. In a focused test with one logged error, trim the newline, decode the object, then assert selected fields.</p>
+
+<h2>TS ↔ Go: parse the structured payload</h2>
+<div class="split"><section class="card"><p class="label">TypeScript / Node</p><pre><code>const event = JSON.parse(logLine);
+expect(event.level).toBe("error");
+expect(event.msg).toBe("log-level change failed");
+expect(event.error).toContain(privateText);</code></pre></section><section class="card"><p class="label">Go</p><pre><code>var event logEvent
+if err := json.Unmarshal(line, &amp;event); err != nil {
+    t.Fatal(err)
+}
+if event.Level != "ERROR" { ... }
+if event.Msg != "log-level change failed" { ... }</code></pre></section></div>
+
+<h2>Use a deliberately small decoder type</h2>
+<p>The JSON handler includes dynamic fields such as <code>time</code>. Do not mirror the entire handler output. Decode only the stable fields this route promises.</p>
+<pre><code>type logEvent struct {
+    Level string `json:"level"`
+    Msg   string `json:"msg"`
+    Error string `json:"error"`
+}
+
+func TestSetLevel_logsStructuredUnexpectedError(t *testing.T) {
+    var logs bytes.Buffer
+    logger := slog.New(slog.NewJSONHandler(&amp;logs, nil))
+    private := errors.New("dial tcp db.internal:5432: refused")
+    h := newSetLevelHandler(&amp;controlSpy{err: private}, logger)
+
+    r := httptest.NewRequest(http.MethodPut, "/ops/log-level", nil)
+    r = r.WithContext(withOperator(r.Context()))
+    w := httptest.NewRecorder()
+    h.ServeHTTP(w, r)
+
+    line := bytes.TrimSpace(logs.Bytes())
+    var got logEvent
+    if err := json.Unmarshal(line, &amp;got); err != nil {
+        t.Fatalf("decode log event: %v\nlog: %s", err, line)
+    }
+    if got.Level != "ERROR" { t.Errorf("level = %q, want ERROR", got.Level) }
+    if got.Msg != "log-level change failed" { t.Errorf("msg = %q", got.Msg) }
+    if got.Error != private.Error() { t.Errorf("error = %q", got.Error) }
+}</code></pre>
+<div class="card"><strong>Keep the public assertion:</strong> this complements—not replaces—the Lesson 57 check that <code>w.Body</code> excludes <code>private.Error()</code>. One test can assert both the safe HTTP response and the decoded private log event.</div>
+
+<h2>Three choices that keep the test durable</h2>
+<ol><li><strong>Decode one record:</strong> keep the fixture focused so one handler invocation emits one line.</li><li><strong>Assert owned fields:</strong> event <code>level</code>, <code>msg</code>, and <code>error</code> are this route's contract.</li><li><strong>Ignore volatile fields:</strong> do not assert the timestamp, source path, or exact serialized JSON order.</li></ol>
+
+<h2>Quick check</h2>
+<section class="card quiz" data-answer="b"><p><strong>Which field should this test intentionally avoid asserting exactly?</strong></p><button data-choice="a">A. The stable event message.</button><button data-choice="b">B. The event timestamp.</button><button data-choice="c">C. The error-level label.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="card quiz" data-answer="c"><p><strong>Why decode into a small <code>logEvent</code> struct?</strong></p><button data-choice="a">A. It prevents the JSON handler from adding a timestamp.</button><button data-choice="b">B. It makes the logger return HTTP errors.</button><button data-choice="c">C. It asserts the event fields the route owns while ignoring unrelated, changing fields.</button><p class="feedback" aria-live="polite"></p></section>
+<section class="check"><strong>Carry forward:</strong> logs are structured data. For an unexpected HTTP failure, preserve the two-audience boundary and test the operator event by decoding its owned fields, not by snapshotting a whole line.</section>
+<h2>Sources</h2><ul class="small"><li><a href="https://pkg.go.dev/log/slog#JSONHandler">Go <code>log/slog.JSONHandler</code> documentation</a> — JSON records and handler options.</li><li><a href="https://pkg.go.dev/encoding/json#Unmarshal">Go <code>encoding/json.Unmarshal</code> documentation</a> — decoding a JSON object into a struct.</li><li><a href="https://pkg.go.dev/bytes#TrimSpace">Go <code>bytes.TrimSpace</code> documentation</a> — remove the record newline before decoding.</li></ul>
+<p class="muted small">Questions or a failing test? Ask your teacher with the captured log line and the decoder struct.</p>
+</main><script>document.querySelectorAll('.quiz').forEach(q=>q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{const ok=b.dataset.choice===q.dataset.answer,f=q.querySelector('.feedback');q.querySelectorAll('button').forEach(x=>x.style.borderColor='');b.style.borderColor=ok?'#3ab54a':'#ff6b6b';f.className='feedback '+(ok?'good':'bad');f.textContent=ok?'Correct — target stable, owned event data.':'Not quite — stable event fields are fair assertions; timestamps and formatting are not.'})))</script>
+</body></html>
