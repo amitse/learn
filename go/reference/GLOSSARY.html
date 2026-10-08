@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Decoded Private Error Log Events (Lesson 58) <span class="new-badge">new</span></h2>
+<h2>Request IDs at the HTTP Boundary (Lesson 59) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>request ID</td><td>request correlation ID</td><td>An opaque, server-generated value that labels one HTTP request across its safe client response and server-side structured events. It supports support correlation; it is not an error explanation or a secret.</td></tr>
+  <tr><td><code>requestIDKey</code></td><td>private request-property symbol</td><td>An unexported custom context-key type, such as <code>type requestIDKey struct{}</code>. Use it with <code>context.WithValue</code> rather than a string key to avoid package collisions.</td></tr>
+  <tr><td><code>r.WithContext(ctx)</code></td><td>derived request with metadata</td><td>Returns a shallow copy of the request carrying a derived context. Middleware passes this copy to the next handler so downstream code can retrieve request-scoped metadata.</td></tr>
+  <tr><td><code>X-Request-ID</code></td><td>response correlation header</td><td>A safe response header containing the generated request ID. A client can quote it to support, and a test can require it to match the <code>request_id</code> field of the corresponding log event.</td></tr>
+</table>
+
+<h2>Decoded Private Error Log Events (Lesson 58)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>logEvent</code> decoder</td><td>selected parsed log-object shape</td><td>A deliberately narrow struct with JSON tags for stable owned fields such as <code>level</code>, <code>msg</code>, and <code>error</code>. Decode into it rather than coupling a test to every field emitted by a handler.</td></tr>

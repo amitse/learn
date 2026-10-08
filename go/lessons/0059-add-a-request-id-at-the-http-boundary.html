@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 59 — Add a Request ID at the HTTP Boundary</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.steps{counter-reset:s}.step{position:relative;padding:0 0 0 46px;margin:18px 0}.step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;background:var(--accent);color:#062426;border-radius:50%;font-weight:800;width:29px;height:29px;text-align:center;line-height:29px}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:11px 13px;border-radius:8px;margin:8px 0;cursor:pointer;font:inherit}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:650;margin-top:10px}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#68dce0}.foot{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);color:var(--muted);font-size:.9rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · observability boundary</p><span class="time">8 minutes</span>
+<h1>Add a request ID at the HTTP boundary</h1>
+<p class="lead">When an operator sees an unexpected-error event, a request ID lets them find the matching client report without putting the private error into the response. Today you will generate one ID per request, carry it in the request context, and use the same value in a response header and an error log.</p>
+<div class="card goal"><strong>Tangible win:</strong> every request to your operations route has one server-generated <code>X-Request-ID</code> that the client can quote and the server can log.</div>
+
+<h2>The one rule</h2>
+<p>Create the ID once at the HTTP boundary. Put it on the derived request context; downstream handlers read it but do not invent replacements. In Go, use a private key type for <code>context.WithValue</code> so unrelated packages cannot collide with a plain string key. The <a href="https://pkg.go.dev/context#WithValue">context package documentation</a> explicitly recommends defining keys as an unexported type to avoid collisions.</p>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Express</h3><pre>app.use((req, res, next) => {
+  const id = crypto.randomUUID()
+  req.requestId = id
+  res.setHeader("X-Request-ID", id)
+  next()
+})</pre></section><section class="pane go"><h3>Go / net/http</h3><pre>func RequestID(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    id := newRequestID()
+    w.Header().Set("X-Request-ID", id)
+    ctx := context.WithValue(r.Context(), requestIDKey{}, id)
+    next.ServeHTTP(w, r.WithContext(ctx))
+  })
+}</pre></section></div>
+
+<h2>Build the narrow seam</h2>
+<div class="card"><div class="step"><strong>Define a private key and reader.</strong> Keep the typed key and the accessor in your transport package. A handler asks for the ID; it never knows the storage key.</div><pre>type requestIDKey struct{}
+
+func RequestIDFromContext(ctx context.Context) string {
+    id, _ := ctx.Value(requestIDKey{}).(string)
+    return id
+}</pre><p class="muted">The comma-<code>ok</code> assertion makes a missing value safe. Middleware is responsible for ensuring normal requests have one.</p></div>
+<div class="card"><div class="step"><strong>Generate an opaque, server-issued value.</strong> <code>crypto/rand</code> supplies cryptographically secure random bytes; <code>hex.EncodeToString</code> makes them header/log friendly. Do not accept a caller-provided correlation ID for this first version—otherwise a caller can choose confusing or forged log labels.</div><pre>func newRequestID() string {
+    b := make([]byte, 16)
+    if _, err := rand.Read(b); err != nil {
+        panic("generate request ID: " + err.Error())
+    }
+    return hex.EncodeToString(b)
+}</pre><p class="muted">This is process-initialization-grade randomness used per request. If your system has an availability policy for entropy failure, inject an ID generator and test that policy; do not silently use a predictable counter.</p></div>
+<div class="card"><div class="step"><strong>Wrap the mux once.</strong> Set the header before calling the next handler, then pass <code>r.WithContext(ctx)</code>. That derived request is what carries the ID downstream.</div><pre>mux := http.NewServeMux()
+mux.HandleFunc("POST /ops/log-level", handleLogLevel)
+
+handler := RequestID(mux)
+server := &amp;http.Server{Addr: cfg.Addr, Handler: handler}</pre></div>
+<div class="card"><div class="step"><strong>Join the same value to the private error event.</strong> The response still says only <code>internal server error</code>; the ID is safe correlation metadata, not an explanation of the failure.</div><pre>logger.Error("log-level change failed",
+    "request_id", RequestIDFromContext(r.Context()),
+    "error", err,
+)
+writeJSONError(w, http.StatusInternalServerError, "internal server error")</pre></div>
+
+<h2>One focused test</h2>
+<p>Use a deterministic generator seam in production code if you want an exact assertion. The contract is simpler than the randomness: the response header and emitted log event must contain <em>the same non-empty value</em>.</p>
+<pre>func TestUnexpectedErrorCarriesRequestID(t *testing.T) {
+    // exercise RequestID(handler) with a control spy that returns privateErr
+    // decode the JSON log event as in Lesson 58
+    if got := w.Header().Get("X-Request-ID"); got == "" {
+        t.Fatal("missing X-Request-ID")
+    }
+    if event.RequestID != w.Header().Get("X-Request-ID") {
+        t.Errorf("log ID = %q, want response ID %q", event.RequestID,
+            w.Header().Get("X-Request-ID"))
+    }
+    // Keep Lesson 57: privateErr.Error() is absent from w.Body.String().
+}</pre>
+
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>Where should this middleware attach the correlation ID?</strong></p><button data-correct="false">Inside each handler, after an unexpected error happens</button><button data-correct="true">Once before the mux delegates to handlers, on a derived request context</button><button data-correct="false">In the JSON error body, using the internal error text as the ID</button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Add the private key, accessor, and <code>RequestID</code> middleware.</label><label class="check"><input type="checkbox"> Wrap your mux and confirm any route returns a non-empty <code>X-Request-ID</code>.</label><label class="check"><input type="checkbox"> Add <code>request_id</code> to the unexpected-error log and test it equals the response header.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://pkg.go.dev/context#WithValue">Go context: WithValue</a> (key guidance); <a href="https://pkg.go.dev/crypto/rand">crypto/rand</a> (secure random data); <a href="https://pkg.go.dev/net/http#Request.WithContext">net/http Request.WithContext</a>; <a href="https://pkg.go.dev/log/slog">log/slog</a>. Ask your teacher a follow-up if you want to decide whether trusted upstream IDs should be accepted at a proxy boundary.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback');const ok=b.dataset.correct==='true';f.textContent=ok?'Correct — boundary middleware creates exactly one value before handlers run.':'Not quite — handlers should consume one boundary-created ID, not create it after failure.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>
