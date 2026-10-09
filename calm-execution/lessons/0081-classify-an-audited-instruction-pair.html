@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 81 — Classify an Audited Instruction Pair</title>
+<style>
+:root{--ink:#20202a;--muted:#656572;--paper:#fffdf9;--wash:#f3efff;--line:#ded7ed;--accent:#6d35c4;--good:#176b49;--warn:#875900}*{box-sizing:border-box}body{margin:0;background:#eeeaf5;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:clamp(22px,5vw,40px);box-shadow:0 8px 26px #32205712}.eyebrow{margin:0 0 8px;color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(1.75rem,7vw,2.6rem);line-height:1.08;margin:0 0 14px}h2{font-size:1.15rem;margin:28px 0 8px}.lead{font-size:1.1rem;margin:0}.rule{background:var(--wash);border-left:4px solid var(--accent);border-radius:8px;padding:15px 16px;margin:20px 0;font-weight:650}.steps{padding-left:1.25rem}.steps li{margin:8px 0}.practice{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:22px}label{display:block;font-weight:700;margin:16px 0 6px}select{width:100%;border:1px solid #bdb5cd;border-radius:9px;padding:10px;font:inherit;background:#fff}button{appearance:none;border:0;border-radius:9px;background:var(--accent);color:#fff;padding:11px 15px;font:inherit;font-weight:750;cursor:pointer;margin-top:16px}button:focus,select:focus{outline:3px solid #cbb8ef;outline-offset:2px}.feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:9px;background:#edf8f2;color:var(--good);font-weight:650;white-space:pre-line}.feedback.warn{background:#fff7e6;color:var(--warn)}.tiny{color:var(--muted);font-size:.9rem}.source{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}a{color:#54259c}@media (prefers-color-scheme:dark){body{background:#17131e}.card{background:#211d29;color:#f4f0f8;border-color:#4b415c}.rule{background:#2d2540}.practice{border-color:#4b415c}select{background:#191621;color:#f4f0f8;border-color:#716682}.source,.tiny{color:#c7c0d0}a{color:#cdb3ff}}
+</style>
+</head>
+<body><main class="page"><article class="card">
+<p class="eyebrow">Calm Execution · Lesson 81 · 10 minutes</p>
+<h1>Classify an audited instruction pair</h1>
+<p class="lead">Once both attempts followed the instruction, read each outcome in the same order: cue first, then the two-minute start.</p>
+<div class="rule">For each readable attempt: no cue = <strong>cue</strong>; cue but no start = <strong>start-side</strong>; cue and start = <strong>none</strong>. Missing evidence = <strong>unclear</strong>.</div>
+<h2>The one skill</h2>
+<ol class="steps">
+<li>Use only the two attempts that passed Lesson 80’s enactment audit.</li>
+<li>For each, ask: did the observable cue occur? If not, label it <em>cue</em>.</li>
+<li>If the cue occurred, ask: did the exact two-minute action start? If not, label it <em>start-side</em>; if yes, label it <em>none</em>.</li>
+<li>When either fact cannot be read, label the attempt <em>unclear</em>. Do not infer it from effort or mood.</li>
+</ol>
+<p>This is a practical course experiment: separating cue evidence from start evidence helps keep one small plan testable. It is not a diagnosis or a judgment of your ability.</p>
+<section class="practice" aria-labelledby="practice-title">
+<h2 id="practice-title">Practice: read the audited pair</h2>
+<p class="tiny">Allow 5–10 minutes. Pull out the two records that were both marked <em>followed</em> in Lesson 80.</p>
+<label for="one">Attempt 1 outcome</label>
+<select id="one"><option value="">Choose one…</option><option value="cue">Cue did not occur</option><option value="start">Cue occurred; two-minute action did not start</option><option value="none">Cue occurred; two-minute action started</option><option value="unclear">Evidence is unclear</option></select>
+<label for="two">Attempt 2 outcome</label>
+<select id="two"><option value="">Choose one…</option><option value="cue">Cue did not occur</option><option value="start">Cue occurred; two-minute action did not start</option><option value="none">Cue occurred; two-minute action started</option><option value="unclear">Evidence is unclear</option></select>
+<button type="button" id="check">Classify the pair</button>
+<div class="feedback" id="feedback" aria-live="polite"></div>
+</section>
+<h2>Close the loop</h2>
+<p>Write the two labels beside the records. If the same readable break appears twice and you already have one matching bounded test specified, that test is the next move. Otherwise retain the plan and gather two ordinary records. Do not add a new test, catch-up work, guilt, or punishment. Ask your teacher agent if a record is hard to classify.</p>
+<p class="source">Background reading: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012)</a>. The classification rule on this page is a practical course exercise.</p>
+</article></main><script>
+const $=id=>document.getElementById(id);$('check').addEventListener('click',()=>{const a=$('one').value,b=$('two').value,f=$('feedback');f.className='feedback';if(!a||!b){f.textContent='Classify both audited attempts before choosing a next move.';f.classList.add('warn')}else if(a==='cue'&&b==='cue'){f.textContent='Repeated cue break: both readable records show no cue. Use one already-specified cue-side test if you have one; otherwise retain the plan and gather two ordinary records.'}else if(a==='start'&&b==='start'){f.textContent='Repeated start-side break: both readable records show the cue but no two-minute start. Use one already-specified start-side test if you have one; otherwise retain the plan and gather two ordinary records.'}else{f.textContent='No repeated readable earliest break in this pair. Retain the current cue, two-minute action, and instruction; gather two ordinary records. Mixed or unclear evidence is not a reason to redesign.';if(a==='unclear'||b==='unclear')f.classList.add('warn')}f.style.display='block'});
+</script></body></html>
