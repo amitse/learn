@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Request IDs at the HTTP Boundary (Lesson 59) <span class="new-badge">new</span></h2>
+<h2>Deterministic Request-ID Generator (Lesson 60) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>IDGenerator</code></td><td><code>() =&gt; string</code> dependency</td><td>A named function type such as <code>func() (string, error)</code> that supplies one opaque request ID. Production passes a secure random implementation; a focused test supplies a known value.</td></tr>
+  <tr><td>deterministic test seam</td><td>injected fixed callback</td><td>A deliberately small injected behavior that makes a test repeatable. Here it returns a selected ID such as <code>req-test-42</code>, allowing exact header and context assertions without weakening production randomness.</td></tr>
+  <tr><td>generator failure</td><td>failed dependency call</td><td>The non-nil error from an ID generator. Middleware must stop before delegating and return the existing safe generic error response; it must not silently substitute a predictable ID or expose the private cause.</td></tr>
+</table>
+
+<h2>Request IDs at the HTTP Boundary (Lesson 59)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>request ID</td><td>request correlation ID</td><td>An opaque, server-generated value that labels one HTTP request across its safe client response and server-side structured events. It supports support correlation; it is not an error explanation or a secret.</td></tr>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 60 — Inject a Deterministic Request-ID Generator</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.steps{counter-reset:s}.step{position:relative;padding:0 0 0 46px;margin:18px 0}.step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;background:var(--accent);color:#062426;border-radius:50%;font-weight:800;width:29px;height:29px;text-align:center;line-height:29px}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:12px;margin:8px 0;border-radius:7px;cursor:pointer;font:inherit}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.5em;font-weight:700}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#78dce8}.foot{margin-top:2.4rem;color:var(--muted);font-size:.88rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · test seam</p><span class="time">8 minutes</span>
+<h1>Inject a deterministic request-ID generator</h1>
+<p class="lead">Lesson 59 made a random request ID at the HTTP boundary. That is right in production—but a handler test should not have to discover a random value and thread it through every assertion. Today you will make ID creation a tiny dependency, so a test can deliberately use <code>req-test-42</code>.</p>
+<div class="card goal"><strong>Tangible win:</strong> your test can prove the exact same request ID reaches the response header, request context, and structured error event.</div>
+
+<h2>The one idea</h2>
+<p>Inject the <em>behavior</em> that produces an ID, not a random package or a global variable. In Go, a named function type is a small interface: production supplies a secure generator; the test supplies a fixed function. This keeps the request-ID middleware deterministic without making production IDs predictable.</p>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>type IDGenerator = () =&gt; string
+
+const requestID = (makeID: IDGenerator) =&gt;
+  (req, res, next) =&gt; {
+    const id = makeID()
+    res.setHeader("X-Request-ID", id)
+    next()
+  }</pre></section><section class="pane go"><h3>Go / net/http</h3><pre>type IDGenerator func() (string, error)
+
+func RequestID(next http.Handler,
+    makeID IDGenerator) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter,
+      r *http.Request) {
+    id, err := makeID()
+    // attach id, then delegate
+  })
+}</pre></section></div>
+
+<h2>Make one narrow seam</h2>
+<div class="card"><div class="step"><strong>Name the dependency by what it does.</strong> A function signature communicates the only capability middleware needs. Returning an error lets the production implementation surface a rare randomness failure rather than silently falling back to a counter.</div><pre>type IDGenerator func() (string, error)
+
+func NewRandomID() (string, error) {
+    b := make([]byte, 16)
+    if _, err := rand.Read(b); err != nil {
+        return "", fmt.Errorf("read random bytes: %w", err)
+    }
+    return hex.EncodeToString(b), nil
+}</pre><p class="muted">The <a href="https://pkg.go.dev/crypto/rand">crypto/rand</a> package provides cryptographically secure random bytes. Keep that production choice outside the test.</p></div>
+<div class="card"><div class="step"><strong>Pass it into the middleware constructor.</strong> Generate once, before setting the header or deriving the context. The middleware still owns where the value goes; callers only choose how it is produced.</div><pre>func RequestID(next http.Handler, makeID IDGenerator) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        id, err := makeID()
+        if err != nil {
+            writeJSONError(w, http.StatusInternalServerError,
+                "internal server error")
+            return
+        }
+
+        w.Header().Set("X-Request-ID", id)
+        ctx := context.WithValue(r.Context(), requestIDKey{}, id)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+
+handler := RequestID(mux, NewRandomID)</pre><p class="muted">The standard library’s <a href="https://pkg.go.dev/net/http#Handler">http.Handler</a> contract is unchanged: middleware returns a handler that delegates to the next handler.</p></div>
+<div class="card"><div class="step"><strong>Use a fixed generator in the focused test.</strong> Now the test asserts the contract directly rather than merely checking that an unknown string is non-empty.</div><pre>func TestRequestIDUsesGeneratedValue(t *testing.T) {
+    const wantID = "req-test-42"
+    makeID := func() (string, error) { return wantID, nil }
+
+    next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if got := RequestIDFromContext(r.Context()); got != wantID {
+            t.Errorf("context ID = %q, want %q", got, wantID)
+        }
+    })
+    w := httptest.NewRecorder()
+    RequestID(next, makeID).ServeHTTP(w, httptest.NewRequest("GET", "/", nil))
+
+    if got := w.Header().Get("X-Request-ID"); got != wantID {
+        t.Errorf("header = %q, want %q", got, wantID)
+    }
+}</pre></div>
+
+<h2>Keep responsibilities separate</h2>
+<p><strong>The generator</strong> produces an opaque string. <strong>The middleware</strong> puts that one string in the header and context. <strong>The handler</strong> reads it for an error event. Do not put a test-only constant in production wiring, and do not make the handler call the generator again—two generated values would break correlation.</p>
+
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>What is the best assertion for the normal request-ID path?</strong></p><button data-correct="false">The header has any non-empty random-looking value.</button><button data-correct="true">A fixed test generator’s exact value appears in both the header and downstream context.</button><button data-correct="false">The handler generates a second ID that matches the header by chance.</button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Define <code>IDGenerator func() (string, error)</code> and change your middleware to accept it.</label><label class="check"><input type="checkbox"> Wire <code>NewRandomID</code> at the application boundary.</label><label class="check"><input type="checkbox"> Add a test with <code>req-test-42</code> that checks both context and <code>X-Request-ID</code>.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://pkg.go.dev/crypto/rand">Go crypto/rand</a>; <a href="https://pkg.go.dev/net/http#Handler">Go net/http Handler</a>; <a href="https://go.dev/doc/effective_go#functions">Effective Go: functions</a>. Ask your teacher a follow-up if you want to add a focused test for the generator-failure branch without leaking its private error.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — a fixed generator lets the test prove value propagation exactly.':'Not quite — random output is a production concern; inject a fixed generator to test the contract.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>
