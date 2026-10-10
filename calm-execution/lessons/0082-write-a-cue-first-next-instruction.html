@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 82 — Write a Cue-First Next Instruction</title>
+<style>
+:root{--ink:#20202a;--muted:#656572;--paper:#fffdf9;--wash:#f3efff;--line:#ded7ed;--accent:#6d35c4;--good:#176b49;--warn:#875900}*{box-sizing:border-box}body{margin:0;background:#eeeaf5;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:clamp(22px,5vw,40px);box-shadow:0 8px 26px #32205712}.eyebrow{margin:0 0 8px;color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(1.75rem,7vw,2.6rem);line-height:1.08;margin:0 0 14px}h2{font-size:1.15rem;margin:28px 0 8px}.lead{font-size:1.1rem;margin:0}.rule{background:var(--wash);border-left:4px solid var(--accent);border-radius:8px;padding:15px 16px;margin:20px 0;font-weight:650}.steps{padding-left:1.25rem}.steps li{margin:8px 0}.practice{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:22px}label{display:block;font-weight:700;margin:16px 0 6px}input,select{width:100%;border:1px solid #bdb5cd;border-radius:9px;padding:10px;font:inherit;background:#fff}button{appearance:none;border:0;border-radius:9px;background:var(--accent);color:#fff;padding:11px 15px;font:inherit;font-weight:750;cursor:pointer;margin-top:16px}button:focus,input:focus,select:focus{outline:3px solid #cbb8ef;outline-offset:2px}.feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:9px;background:#edf8f2;color:var(--good);font-weight:650;white-space:pre-line}.feedback.warn{background:#fff7e6;color:var(--warn)}.tiny{color:var(--muted);font-size:.9rem}.source{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}a{color:#54259c}@media (prefers-color-scheme:dark){body{background:#17131e}.card{background:#211d29;color:#f4f0f8;border-color:#4b415c}.rule{background:#2d2540}.practice{border-color:#4b415c}input,select{background:#191621;color:#f4f0f8;border-color:#716682}.source,.tiny{color:#c8c1d1}a{color:#c9a9ff}}</style>
+</head>
+<body><main class="page"><article class="card">
+<p class="eyebrow">Calm Execution · Lesson 82 · 10 minutes</p>
+<h1>Write a cue-first next instruction</h1>
+<p class="lead">Turn the two labels from your audit-passed pair into one instruction you can actually enact—and audit—over the next two ordinary attempts.</p>
+<div class="rule">A checkable instruction names <strong>one move + the same observable cue + the exact two-minute action + a two-attempt boundary</strong>.</div>
+<h2>The one skill</h2>
+<ol class="steps">
+<li>Use only the pair that passed Lesson 80’s enactment audit and that you classified in Lesson 81.</li>
+<li>If the same readable break appears twice <em>and</em> you already specified its matching bounded test, write that one test as the move.</li>
+<li>For every other result—mixed, <em>none</em>, or <em>unclear</em>—write: retain the existing plan and gather two ordinary records.</li>
+<li>Copy the sentence somewhere visible. Do not add a second change, catch-up work, guilt, or a verdict about yourself.</li>
+</ol>
+<p>This is a practical course rule for keeping one small start ritual testable. It is not a diagnosis or a claim that a single pair proves why a start did or did not happen.</p>
+<section class="practice" aria-labelledby="practice-title">
+<h2 id="practice-title">Practice: make the next instruction</h2>
+<p class="tiny">Allow 5–10 minutes. Have the two Lesson 81 labels and your existing cue/action in front of you.</p>
+<label for="one">First pair label</label>
+<select id="one"><option value="">Choose one…</option><option value="cue">cue</option><option value="start-side">start-side</option><option value="none">none</option><option value="unclear">unclear</option></select>
+<label for="two">Second pair label</label>
+<select id="two"><option value="">Choose one…</option><option value="cue">cue</option><option value="start-side">start-side</option><option value="none">none</option><option value="unclear">unclear</option></select>
+<label for="cue">Your observable cue</label><input id="cue" placeholder="e.g., after I put down my breakfast mug">
+<label for="action">Your exact two-minute action</label><input id="action" placeholder="e.g., open the proposal and write its heading">
+<label for="test">Matching bounded test already specified?</label>
+<select id="test"><option value="">Choose one…</option><option value="yes">Yes—one matching test is already written</option><option value="no">No / not sure</option></select>
+<button type="button" id="build">Build my instruction</button>
+<div class="feedback" id="feedback" aria-live="polite"></div>
+</section>
+<h2>Close the loop</h2>
+<p>Use the sentence for two ordinary attempts, then audit whether it was followed before reading outcomes again. The aim remains one calm, pre-chosen start—not a streak, a punishment, or more output. Ask your teacher agent if a label or a “matching test” is unclear.</p>
+<p class="source">Background reading: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012)</a>. The decision rule on this page is a practical course exercise.</p>
+</article></main><script>
+const $=id=>document.getElementById(id);$('build').addEventListener('click',()=>{const a=$('one').value,b=$('two').value,c=$('cue').value.trim(),x=$('action').value.trim(),t=$('test').value,f=$('feedback');f.className='feedback';if(!a||!b||!c||!x||!t){f.textContent='Complete both labels, the cue, the exact two-minute action, and the test check first.';f.classList.add('warn')}else{const repeated=(a===b&&(a==='cue'||a==='start-side'));const move=repeated&&t==='yes'?'use the one already-specified matching bounded test':'retain this plan and gather records';f.textContent='Your next instruction:\nFor the next two ordinary attempts, '+move+'. When '+c+', '+x+'.\n\nKeep every other link stable. After both attempts, audit whether this exact instruction was followed before interpreting the outcome.';if(repeated&&t!=='yes'){f.textContent+='\n\nA repeated '+a+' break is present, but no matching test is confirmed. Retain and gather rather than inventing a new change.';f.classList.add('warn')}}f.style.display='block'});
+</script></body></html>
