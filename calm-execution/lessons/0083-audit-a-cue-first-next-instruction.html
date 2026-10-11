@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 83 — Audit a Cue-First Next Instruction</title>
+<style>
+:root{--ink:#20202a;--muted:#656572;--paper:#fffdf9;--wash:#f3efff;--line:#ded7ed;--accent:#6d35c4;--good:#176b49;--warn:#875900}*{box-sizing:border-box}body{margin:0;background:#eeeaf5;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;padding:24px 16px 48px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:clamp(22px,5vw,40px);box-shadow:0 8px 26px #32205712}.eyebrow{margin:0 0 8px;color:var(--accent);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}h1{font-size:clamp(1.75rem,7vw,2.6rem);line-height:1.08;margin:0 0 14px}h2{font-size:1.15rem;margin:28px 0 8px}.lead{font-size:1.1rem;margin:0}.rule{background:var(--wash);border-left:4px solid var(--accent);border-radius:8px;padding:15px 16px;margin:20px 0;font-weight:650}.steps{padding-left:1.25rem}.steps li{margin:8px 0}.practice{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:22px}label{display:block;font-weight:700;margin:16px 0 6px}input,select{width:100%;border:1px solid #bdb5cd;border-radius:9px;padding:10px;font:inherit;background:#fff}button{appearance:none;border:0;border-radius:9px;background:var(--accent);color:#fff;padding:11px 15px;font:inherit;font-weight:750;cursor:pointer;margin-top:16px}button:focus,input:focus,select:focus{outline:3px solid #cbb8ef;outline-offset:2px}.feedback{display:none;margin-top:14px;padding:13px 14px;border-radius:9px;background:#edf8f2;color:var(--good);font-weight:650;white-space:pre-line}.feedback.warn{background:#fff7e6;color:var(--warn)}.tiny{color:var(--muted);font-size:.9rem}.source{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}a{color:#54259c}@media (prefers-color-scheme:dark){body{background:#17131e}.card{background:#211d29;color:#f4f0f8;border-color:#4b415c}.rule{background:#2d2540}.practice{border-color:#4b415c}input,select{background:#191621;color:#f4f0f8;border-color:#655b76}.feedback{background:#173529;color:#bcebd1}.feedback.warn{background:#402f14;color:#ffdc91}.source{border-color:#4b415c}a{color:#d3b8ff}}</style>
+</head>
+<body><main class="page"><article class="card">
+<p class="eyebrow">Calm Execution · Lesson 83 · 8 minutes</p>
+<h1>Audit a cue-first next instruction</h1>
+<p class="lead">Before interpreting another pair of starts, check whether you actually used the exact instruction you wrote in Lesson 82.</p>
+<div class="rule">Read enactment first: label each of the two covered attempts <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>.</div>
+<h2>The one skill</h2>
+<ol class="steps">
+<li>Put your Lesson 82 sentence beside the two ordinary attempt records it covers.</li>
+<li>For each attempt, ask only: did the named move, observable cue, and exact two-minute action occur as written?</li>
+<li>Label it <em>followed</em>, <em>not followed</em>, or <em>unclear</em>. Do not grade the outcome yet.</li>
+<li>If either label is <em>not followed</em> or <em>unclear</em>, repeat the same sentence for two ordinary attempts. If both are <em>followed</em>, classify cue then start next.</li>
+</ol>
+<p>This is a practical course rule: it separates “the plan was not clearly enacted” from “the enacted plan had an outcome.” It is not a diagnosis or a verdict about you.</p>
+<section class="practice" aria-labelledby="practice-title">
+<h2 id="practice-title">Practice: run the audit</h2>
+<p class="tiny">Allow 5–8 minutes. Use your exact Lesson 82 sentence and the two attempts it covered.</p>
+<label for="instruction">Your exact cue-first instruction</label><input id="instruction" placeholder="e.g., For the next two ordinary attempts...">
+<label for="one">Attempt 1 enactment</label><select id="one"><option value="">Choose one…</option><option value="followed">followed</option><option value="not followed">not followed</option><option value="unclear">unclear</option></select>
+<label for="two">Attempt 2 enactment</label><select id="two"><option value="">Choose one…</option><option value="followed">followed</option><option value="not followed">not followed</option><option value="unclear">unclear</option></select>
+<button type="button" id="audit">Read my next move</button><div class="feedback" id="feedback" aria-live="polite"></div>
+</section>
+<h2>Close the loop</h2>
+<p>Copy the resulting move beside your record. No catch-up work is required. You are protecting one calm, pre-chosen start from urgency and self-punishment. Ask your teacher agent if “followed” or “unclear” is hard to call.</p>
+<p class="source">Background reading: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle, “Making health habitual” (2012)</a>. The audit rule on this page is a practical course exercise.</p>
+</article></main><script>
+const $=id=>document.getElementById(id);$('audit').addEventListener('click',()=>{const i=$('instruction').value.trim(),a=$('one').value,b=$('two').value,f=$('feedback');f.className='feedback';if(!i||!a||!b){f.textContent='Add the exact instruction and both enactment labels first.';f.classList.add('warn')}else if(a==='followed'&&b==='followed'){f.textContent='Audit passed. Keep the instruction evidence separate from outcomes: next, classify these two attempts cue first and start second.'}else{f.textContent='Audit not yet readable. Repeat this exact instruction for the next two ordinary attempts; do not add a new change or interpret cue/start outcomes yet.';f.classList.add('warn')}f.style.display='block'});
+</script></body></html>
