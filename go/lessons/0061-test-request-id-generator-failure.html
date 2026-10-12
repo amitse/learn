@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 61 — Test Request-ID Generator Failure</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.steps{counter-reset:s}.step{position:relative;padding:0 0 0 46px;margin:18px 0}.step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;background:var(--accent);color:#062426;border-radius:50%;font-weight:800;width:29px;height:29px;text-align:center;line-height:29px}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:12px;border-radius:7px;margin:9px 0;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.5em;font-weight:700}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#8ce9e7}.foot{margin-top:30px;border-top:1px solid var(--border);padding-top:18px;color:var(--muted);font-size:.9rem}@media(max-width:650px){.compare{grid-template-columns:1fr}}
+</style></head><body><main class="wrap">
+<p class="eyebrow">Go HTTP server · failure-path contract</p><span class="time">8 minutes</span>
+<h1>Test a request-ID generator failure</h1>
+<p class="lead">Lesson 60 made request IDs deterministic on the normal path. Now close the other branch: if the injected generator fails, your middleware must send the existing safe JSON 500 and <strong>must not call the downstream handler</strong>.</p>
+<div class="card goal"><strong>Tangible win:</strong> one focused test proves that an internal entropy failure neither leaks its private cause nor runs application code without a request ID.</div>
+<h2>The one idea</h2>
+<p>A request ID is created before middleware can set <code>X-Request-ID</code> or derive request context. When creation fails, stop at that boundary. Render the same public error contract used for unexpected failures; retain the detailed error only for server-side diagnostics if you have a logger there.</p>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>try {
+  const id = makeID()
+  res.setHeader("X-Request-ID", id)
+  next()
+} catch (err) {
+  res.status(500).json({
+    error: "internal server error"
+  })
+  // no next()
+}</pre></section><section class="pane go"><h3>Go / net/http</h3><pre>id, err := makeID()
+if err != nil {
+  writeJSONError(w,
+    http.StatusInternalServerError,
+    "internal server error")
+  return // no next.ServeHTTP
+}
+// attach id, then delegate</pre></section></div>
+<h2>Build the test from the observable contract</h2>
+<div class="card"><div class="step"><strong>Return a distinctive private error.</strong> The generator is already a seam, so no real randomness needs to fail. Use an unmistakable value and later prove it is absent from the HTTP body.</div><pre>const privateCause = "entropy device unavailable"
+makeID := func() (string, error) {
+    return "", errors.New(privateCause)
+}</pre><p class="muted">Go errors are values; the conventional branch is to check a returned non-nil error immediately. See <a href="https://go.dev/blog/error-handling-and-go">Error handling and Go</a>.</p></div>
+<div class="card"><div class="step"><strong>Make delegation observable.</strong> A boolean is enough here. The handler deliberately does no useful HTTP work—its only job is to prove it was not reached.</div><pre>called := false
+next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    called = true
+})</pre></div>
+<div class="card"><div class="step"><strong>Assert all three public-boundary facts.</strong> Require 500, decode the owned JSON envelope, and require no delegation. Also reject the private cause in the body; that keeps the public/private split from Lesson 57 intact.</div><pre>func TestRequestIDGeneratorFailureIsSafe(t *testing.T) {
+    const privateCause = "entropy device unavailable"
+    makeID := func() (string, error) {
+        return "", errors.New(privateCause)
+    }
+    called := false
+    next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        called = true
+    })
+
+    w := httptest.NewRecorder()
+    RequestID(next, makeID).ServeHTTP(w,
+        httptest.NewRequest(http.MethodGet, "/", nil))
+
+    if w.Code != http.StatusInternalServerError {
+        t.Fatalf("status = %d, want 500", w.Code)
+    }
+    var got errorResponse
+    if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+        t.Fatal(err)
+    }
+    if got.Error != "internal server error" {
+        t.Errorf("public error = %q", got.Error)
+    }
+    if strings.Contains(w.Body.String(), privateCause) {
+        t.Error("private generator error leaked to client")
+    }
+    if called { t.Error("next handler was called") }
+}</pre></div>
+<h2>Why no downstream call?</h2><p>Without an ID, a downstream error event may lose the correlation contract you just established. More importantly, execution after a failed prerequisite is accidental behavior. The early <code>return</code> makes the policy explicit: either one ID exists for the request, or the request ends safely at the boundary.</p>
+<div class="card"><strong>Optional next refinement:</strong> if your request-ID middleware has an injected <code>*slog.Logger</code>, log a stable event with the generator error as a private <code>"error"</code> attribute. Keep that separate from this HTTP contract test: the response must never serialize <code>err.Error()</code>.</div>
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>Which assertion best proves the generator-failure branch is safe?</strong></p><button data-correct="false">The response contains the generator's error so support can diagnose it.</button><button data-correct="true">The response is the generic JSON 500, the private cause is absent, and the next handler was not called.</button><button data-correct="false">The next handler is called and creates a second request ID.</button><p class="feedback" aria-live="polite"></p></div>
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Make <code>IDGenerator</code> return <code>errors.New("entropy device unavailable")</code>.</label><label class="check"><input type="checkbox"> Assert a generic 500 <code>errorResponse</code>, not the returned error text.</label><label class="check"><input type="checkbox"> Add the <code>called == false</code> assertion for the downstream handler.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://go.dev/blog/error-handling-and-go">Go Blog: Error handling and Go</a>; <a href="https://pkg.go.dev/net/http#Handler">Go net/http Handler</a>; <a href="https://pkg.go.dev/net/http/httptest">Go net/http/httptest</a>. Ask your teacher a follow-up if you want to add a private structured log event for this branch without coupling your test to log formatting.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — test the safe response and the stopped control flow; retain private diagnostics server-side.':'Not quite — private causes stay out of the response, and the failed prerequisite must prevent delegation.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

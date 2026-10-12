@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Deterministic Request-ID Generator (Lesson 60) <span class="new-badge">new</span></h2>
+<h2>Request-ID Generator Failure Contract (Lesson 61) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>boundary prerequisite</td><td>required middleware setup</td><td>Work that must succeed before a request can safely reach application code. Request-ID generation is a prerequisite because middleware needs its one resulting value before it can set the response header and derive request context.</td></tr>
+  <tr><td>early-return assertion</td><td><code>expect(next).not.toHaveBeenCalled()</code></td><td>A focused test check that downstream handling did not run after a prerequisite failed. A boolean set in a small <code>http.HandlerFunc</code> is enough to prove the middleware returned instead of calling <code>next.ServeHTTP</code>.</td></tr>
+  <tr><td>private-cause containment</td><td>safe 500 without thrown-error text</td><td>The requirement that a distinctive internal error such as <code>entropy device unavailable</code> is absent from an HTTP response, while the client receives the stable generic JSON 500 envelope. A server-side structured event may retain the cause separately.</td></tr>
+</table>
+
+<h2>Deterministic Request-ID Generator (Lesson 60)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>IDGenerator</code></td><td><code>() =&gt; string</code> dependency</td><td>A named function type such as <code>func() (string, error)</code> that supplies one opaque request ID. Production passes a secure random implementation; a focused test supplies a known value.</td></tr>
