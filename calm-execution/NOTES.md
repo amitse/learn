@@ -88,4 +88,5 @@
 - Lesson 83 added an enactment audit for the cue-first next instruction: compare its exact sentence with both covered attempts, label each `followed`, `not followed`, or `unclear`, and repeat it unchanged for two ordinary attempts unless both labels are `followed`.
 - Lesson 84 added cue-first outcome classification after the audit gate: when both attempts are `followed`, label each `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and supports one already-specified matching test.
 - Lesson 85 added an audited cue-first next-instruction sentence: translate the classified pair into one retain-and-gather instruction or one already-specified matching-test instruction with the stable observable cue, exact two-minute action, and a two-attempt boundary; audit enactment next.
+- Lesson 86 added the enactment audit for that instruction: label both covered attempts `followed`, `not followed`, or `unclear`; repeat the exact instruction for two ordinary attempts unless both are `followed`.
 - Increase difficulty only when the basic start ritual is reliable.
