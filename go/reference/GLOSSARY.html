@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Request-ID Generator Failure Contract (Lesson 61) <span class="new-badge">new</span></h2>
+<h2>Private Request-ID Generator Failure Event (Lesson 62) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>failure-event contract</td><td>stable structured error log</td><td>The private operational output for a request-ID generator failure: a stable ERROR event message such as <code>"request ID generation failed"</code> plus the original cause in a named <code>"error"</code> attribute. It is separate from the generic JSON 500 sent to a client.</td></tr>
+  <tr><td>owned log fields</td><td>selected parsed logger properties</td><td>The small set of fields a test deliberately owns—here <code>level</code>, <code>msg</code>, and <code>error</code>. Decode and assert these rather than timestamps, JSON ordering, or every field produced by an <code>slog</code> handler.</td></tr>
+  <tr><td>pre-ID failure event</td><td>failure before correlation setup</td><td>An event emitted before a request ID exists. It must not invent or claim a <code>request_id</code>; the prerequisite failed before middleware could create its correlation value.</td></tr>
+</table>
+
+<h2>Request-ID Generator Failure Contract (Lesson 61)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>boundary prerequisite</td><td>required middleware setup</td><td>Work that must succeed before a request can safely reach application code. Request-ID generation is a prerequisite because middleware needs its one resulting value before it can set the response header and derive request context.</td></tr>

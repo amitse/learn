@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 62 — Log Request-ID Generator Failures Privately</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.steps{counter-reset:s}.step{position:relative;padding:0 0 0 46px;margin:18px 0}.step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;background:var(--accent);color:#062426;border-radius:50%;font-weight:800;width:29px;height:29px;text-align:center;line-height:29px}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:12px;margin:9px 0;border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#78dce0}.foot{color:var(--muted);font-size:.88rem;margin-top:2.5rem}@media(max-width:650px){.compare{grid-template-columns:1fr}}
+</style></head><body><main class="wrap">
+<p class="eyebrow">Go HTTP server · observability boundary</p><span class="time">8 minutes</span>
+<h1>Log a request-ID generator failure privately</h1>
+<p class="lead">Lesson 61 proved a failed ID generator returns a safe JSON 500 and stops the handler chain. Now make that failure diagnosable <strong>without changing the HTTP response</strong>: emit one structured server-side error event containing the private cause.</p>
+<div class="card goal"><strong>Tangible win:</strong> a focused test decodes one captured <code>slog</code> event and proves the failure is observable while the client still sees only the generic 500.</div>
+<h2>The one idea: two outputs, two audiences</h2>
+<p>On this branch, the middleware has two jobs. The client gets the stable contract from Lesson 55. Operators get a stable event name plus the original error as a named attribute. Do not put error text in the event message, and never serialize it into the response.</p>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>try {
+  const id = makeID()
+  next()
+} catch (err) {
+  logger.error({ err },
+    "request ID generation failed")
+  res.status(500).json({
+    error: "internal server error"
+  })
+}</pre></section><section class="pane go"><h3>Go / net/http + slog</h3><pre>id, err := makeID()
+if err != nil {
+  logger.Error("request ID generation failed",
+    "error", err)
+  writeJSONError(w,
+    http.StatusInternalServerError,
+    "internal server error")
+  return
+}
+_ = id</pre></section></div>
+<h2>Put the event at the failure boundary</h2>
+<div class="card"><div class="step"><strong>Inject a logger; do not use the global default.</strong> It keeps middleware testable and lets the application choose JSON, level, and destination. A nil logger should have an explicit policy; the simplest is to require a non-nil logger when constructing production middleware.</div><pre>func RequestID(next http.Handler, makeID IDGenerator,
+    logger *slog.Logger) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    id, err := makeID()
+    if err != nil {
+      logger.Error("request ID generation failed", "error", err)
+      writeJSONError(w, http.StatusInternalServerError,
+        "internal server error")
+      return
+    }
+    // set header/context, then next.ServeHTTP(w, r)
+    _ = id
+  })
+}</pre></div>
+<div class="card"><div class="step"><strong>Capture one JSON record.</strong> A buffer-backed <code>slog.NewJSONHandler</code> is an in-process log sink. Give the generator a distinctive cause so the test can prove where that detail belongs.</div><pre>var logs bytes.Buffer
+logger := slog.New(slog.NewJSONHandler(&amp;logs, nil))
+privateErr := errors.New("entropy device unavailable")
+makeID := func() (string, error) { return "", privateErr }</pre></div>
+<div class="card"><div class="step"><strong>Decode only your event contract.</strong> Assert the stable message, ERROR level, and named error field. Independently decode the response and require the generic public text. Do not assert timestamps, key order, or every field emitted by <code>slog</code>.</div><pre>type logEvent struct {
+    Level string `json:"level"`
+    Msg   string `json:"msg"`
+    Error string `json:"error"`
+}
+
+func TestRequestIDFailureLogsPrivateCause(t *testing.T) {
+    var logs bytes.Buffer
+    logger := slog.New(slog.NewJSONHandler(&amp;logs, nil))
+    privateErr := errors.New("entropy device unavailable")
+    makeID := func() (string, error) { return "", privateErr }
+
+    w := httptest.NewRecorder()
+    RequestID(http.NotFoundHandler(), makeID, logger).ServeHTTP(w,
+        httptest.NewRequest(http.MethodGet, "/", nil))
+
+    var event logEvent
+    if err := json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &amp;event); err != nil {
+        t.Fatal(err)
+    }
+    if event.Level != "ERROR" || event.Msg != "request ID generation failed" {
+        t.Errorf("event = %#v", event)
+    }
+    if event.Error != privateErr.Error() {
+        t.Errorf("logged error = %q", event.Error)
+    }
+    if strings.Contains(w.Body.String(), privateErr.Error()) {
+        t.Error("private cause leaked to client")
+    }
+}</pre></div>
+<h2>Why test the response again?</h2><p>The log and the response are separate contracts. A logging change can accidentally tempt someone to reuse <code>err.Error()</code> as the JSON message. Keeping the no-leak assertion beside the decoded log event proves the intended split: rich private evidence, minimal public disclosure.</p>
+<div class="card"><strong>Scope rule:</strong> this event has no request ID attribute—generation failed before one existed. Do not invent a fallback correlation ID merely to fill the field. If you need to correlate infrastructure events, use an independent operational mechanism rather than claiming a request ID was issued.</div>
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>What is the correct contract when ID generation fails?</strong></p><button data-correct="false">Return the generator error in JSON and omit the log event.</button><button data-correct="true">Log a stable ERROR event with the private error attribute; return the existing generic JSON 500 and stop.</button><button data-correct="false">Generate a predictable replacement ID and continue to the next handler.</button><p class="feedback" aria-live="polite"></p></div>
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Inject a <code>*slog.Logger</code> into the request-ID middleware.</label><label class="check"><input type="checkbox"> Emit <code>"request ID generation failed"</code> with <code>"error", err</code> before writing the 500.</label><label class="check"><input type="checkbox"> Decode the captured JSON event and keep the response no-leak assertion.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://pkg.go.dev/log/slog">Go <code>log/slog</code> package</a>; <a href="https://go.dev/blog/slog">Go Blog: Structured Logging with slog</a>; <a href="https://pkg.go.dev/encoding/json">Go <code>encoding/json</code> package</a>. Ask your teacher a follow-up if you want to add a failure metric without turning error text into a high-cardinality metric label.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — the log retains private evidence; the HTTP response remains the safe public contract.':'Not quite — do not expose or work around a failed prerequisite. Log the private cause and return the generic 500.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>
