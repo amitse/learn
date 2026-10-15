@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 87 — Classify an Enacted Cue-First Pair</title>
+<style>
+:root{--ink:#20232b;--muted:#606776;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5f0;--accent:#6846b7;--good:#17643c;--warn:#9a5610}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;background:var(--paper);min-height:100vh;padding:clamp(24px,6vw,56px)}.eyebrow{color:var(--accent);font-weight:750;letter-spacing:.08em;text-transform:uppercase;font-size:.75rem}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.07;letter-spacing:-.04em;margin:.45rem 0 1rem}h2{font-size:1.25rem;margin:2rem 0 .65rem}.lede{font-size:1.18rem;color:var(--muted)}.card{border:1px solid var(--line);border-radius:16px;padding:1.15rem;margin:1.25rem 0;background:#fff}.rule{border-left:4px solid var(--accent);padding:.15rem 0 .15rem 1rem;font-weight:650}.steps{padding-left:1.3rem}.steps li{margin:.55rem 0}label{display:block;font-weight:700;margin:1rem 0 .35rem}select,button{font:inherit;border-radius:10px;padding:.7rem .8rem}select{width:100%;border:1px solid #aaa;background:#fff}button{border:0;background:var(--accent);color:white;font-weight:750;margin-top:1rem;cursor:pointer}#result{display:none;margin-top:1rem;border-radius:10px;padding:.85rem;font-weight:650}.ok{background:#e9f7ed;color:var(--good)}.hold{background:#fff3df;color:var(--warn)}small{color:var(--muted)}a{color:var(--accent)}.foot{margin-top:2.4rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}
+</style>
+</head>
+<body><main class="page">
+<p class="eyebrow">Calm Execution · Lesson 87</p>
+<h1>Classify an enacted cue-first pair</h1>
+<p class="lede">Once two attempts really followed the same instruction, read what happened in a fixed order. This keeps a result from becoming a story about your character.</p>
+<div class="card"><p class="rule">For each enacted attempt: cue first, start second.</p><ol class="steps"><li><strong>cue</strong> — the cue did not occur.</li><li><strong>start-side</strong> — the cue occurred, but the exact two-minute action did not begin.</li><li><strong>none</strong> — both the cue occurred and the action began.</li><li><strong>unclear</strong> — one of those facts was not recorded.</li></ol></div>
+<p>This is a practical reading rule, not a verdict. It preserves the small cue-action experiment. Repetition in a stable context is commonly discussed as a route by which behaviour can become more cue-linked; this lesson simply helps you keep the evidence legible rather than changing several parts at once. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+<h2>Your 8-minute exercise</h2>
+<p>Take the two ordinary attempts covered by your current written instruction. First confirm both were marked <strong>followed</strong>. Then use the chooser for each attempt. Do not fill gaps from memory.</p>
+<div class="card">
+<label for="one">Attempt 1</label><select id="one"><option value="">Choose a label…</option><option value="cue">cue — cue absent</option><option value="start">start-side — cue present, action absent</option><option value="none">none — cue and action present</option><option value="unclear">unclear — evidence missing</option></select>
+<label for="two">Attempt 2</label><select id="two"><option value="">Choose a label…</option><option value="cue">cue — cue absent</option><option value="start">start-side — cue present, action absent</option><option value="none">none — cue and action present</option><option value="unclear">unclear — evidence missing</option></select>
+<button type="button" id="check">Read the pair</button><div id="result" aria-live="polite"></div>
+</div>
+<p><strong>Decision boundary:</strong> two matching readable <em>cue</em> or <em>start-side</em> labels may use one already-specified matching test. Any mixed pair, <em>none</em>, or <em>unclear</em> means retain the current cue and exact two-minute action and gather two ordinary records. No catch-up work.</p>
+<p class="foot">Next: turn the pair into one exact two-attempt instruction. Ask your teacher if a label or the boundary is unclear.</p>
+</main><script>
+const labels={cue:'cue',start:'start-side',none:'none',unclear:'unclear'};
+document.getElementById('check').onclick=()=>{const a=one.value,b=two.value,r=document.getElementById('result');if(!a||!b){r.className='hold';r.textContent='Choose one label for both attempts first.';r.style.display='block';return}if(a===b&&(a==='cue'||a==='start')){r.className='ok';r.textContent=`Both attempts are ${labels[a]}. If you already have one matching bounded test, it is the only change eligible for the next two attempts.`}else{r.className='hold';r.textContent=`This pair is ${labels[a]} + ${labels[b]}. Retain the current instruction and gather two ordinary readable records; do not redesign today.`}r.style.display='block'};
+</script></body></html>
