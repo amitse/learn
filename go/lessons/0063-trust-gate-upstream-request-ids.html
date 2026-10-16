@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 63 — Trust-Gate Upstream Request IDs</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.step{border-left:3px solid var(--accent);padding-left:15px;margin:18px 0}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:11px;border-radius:7px;margin:8px 0;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:700}.ok{color:var(--good)}.no{color:var(--bad)}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.foot{margin-top:2.4rem;color:var(--muted);font-size:.88rem}.foot a{color:#86e8e5}@media(max-width:650px){.compare{grid-template-columns:1fr}}
+</style></head><body><main class="wrap">
+<p class="eyebrow">Go HTTP server · request identity boundary</p><span class="time">8 minutes</span>
+<h1>Trust-gate upstream request IDs</h1>
+<p class="lead">Your middleware can now generate and log a request ID safely. Before it ever reuses an ID from <code>X-Request-ID</code>, make one fact explicit: <strong>did this request arrive through infrastructure you trust to set that header?</strong></p>
+<div class="card goal"><strong>Tangible win:</strong> write and test a tiny policy that ignores a client-supplied ID unless a trusted proxy boundary has already vouched for the request.</div>
+<h2>The header is data, not proof</h2>
+<p>Any direct client can send <code>X-Request-ID: invoice-42</code>. The header’s presence therefore cannot establish where it came from. Trust must be established outside this middleware—for example, by routing that only a private proxy can reach, then attaching a server-owned <code>trustedProxy</code> fact to the request. This lesson is only about the gate; format validation comes next.</p>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>function chooseID(input: {
+  trustedProxy: boolean
+  upstreamID: string
+  generatedID: string
+}) {
+  return input.trustedProxy && input.upstreamID !== ""
+    ? input.upstreamID
+    : input.generatedID
+}</pre></section><section class="pane go"><h3>Go</h3><pre>func chooseRequestID(trustedProxy bool,
+    upstreamID, generatedID string) string {
+    if trustedProxy &amp;&amp; upstreamID != "" {
+        return upstreamID
+    }
+    return generatedID
+}</pre></section></div>
+<div class="card"><strong>Boundary rule:</strong> <code>r.Header.Get("X-Request-ID")</code> tells you only the supplied value. It does <em>not</em> tell you whether a trusted proxy supplied it. Keep network authentication / proxy routing at the edge, and pass a server-owned trust decision inward.</div>
+<h2>Make the policy testable</h2>
+<div class="step"><strong>Keep selection pure.</strong> The selector has no <code>*http.Request</code>, no environment lookup, and no network-address parsing. That makes its security rule easy to see and table-test.</div>
+<pre>func TestChooseRequestID(t *testing.T) {
+    tests := []struct {
+        name                    string
+        trustedProxy            bool
+        upstreamID, generatedID string
+        want                    string
+    }{
+        {"trusted proxy may preserve ID", true, "edge-91", "new-7", "edge-91"},
+        {"direct client cannot choose ID", false, "attacker-picked", "new-7", "new-7"},
+        {"trusted proxy with no ID gets generated one", true, "", "new-7", "new-7"},
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := chooseRequestID(tt.trustedProxy, tt.upstreamID, tt.generatedID)
+            if got != tt.want { t.Errorf("got %q; want %q", got, tt.want) }
+        })
+    }
+}</pre>
+<div class="step"><strong>Wire the trusted fact, not a client claim.</strong> An outer proxy/authentication layer can place a private typed marker in context. Request-ID middleware reads that marker and the header, then calls the selector. Do not use a public header such as <code>X-Forwarded-For</code> as the trust signal: it is also input unless your edge has defined how it is sanitized.</div>
+<pre>type trustedProxyKey struct{}
+
+func withTrustedProxy(r *http.Request) *http.Request {
+    ctx := context.WithValue(r.Context(), trustedProxyKey{}, true)
+    return r.WithContext(ctx)
+}
+
+func isFromTrustedProxy(ctx context.Context) bool {
+    trusted, _ := ctx.Value(trustedProxyKey{}).(bool)
+    return trusted
+}
+
+// At the request-ID boundary:
+id := chooseRequestID(isFromTrustedProxy(r.Context()),
+    r.Header.Get("X-Request-ID"), generatedID)</pre>
+<div class="card"><strong>Important scope:</strong> this context marker is a transport-internal capability, not authentication by itself. Only edge code that has already enforced the proxy boundary may call <code>withTrustedProxy</code>. A later lesson will validate and normalize an accepted upstream ID before it becomes a response header or log field.</div>
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>A direct internet client sends <code>X-Request-ID: payroll-admin</code>. The header is non-empty, but the request is not marked trusted. What should the middleware use?</strong></p><button data-correct="false">Reuse <code>payroll-admin</code>; a non-empty header is enough.</button><button data-correct="true">Use a newly generated server ID; the header value does not establish trust.</button><button data-correct="false">Return 400; every untrusted header is a malformed request.</button><p class="feedback" aria-live="polite"></p></div>
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Write the three-row table test before adding proxy wiring.</label><label class="check"><input type="checkbox"> Ensure an untrusted client’s non-empty header selects the generated ID.</label><label class="check"><input type="checkbox"> Name the one infrastructure boundary allowed to mark a request as trusted.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://pkg.go.dev/net/http#Header.Get">Go <code>net/http.Header.Get</code></a> (header access returns a value, not provenance); <a href="https://cheatsheetseries.owasp.org/cheatsheets/Abuse_Case_Cheat_Sheet.html">OWASP Abuse Case Cheat Sheet</a> (design for attacker-controlled input); <a href="https://www.w3.org/TR/trace-context/">W3C Trace Context</a> (propagated tracing identifiers have explicit trust and mutation considerations). Ask your teacher a follow-up if you want to design the allowed character/length policy for a trusted upstream ID.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — a header value is data, not evidence of a trusted source. Generate a server ID.':'Not quite — an untrusted client can choose any header value. Reuse an upstream ID only after a server-owned trust decision.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

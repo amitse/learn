@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Private Request-ID Generator Failure Event (Lesson 62) <span class="new-badge">new</span></h2>
+<h2>Trust-Gated Upstream Request IDs (Lesson 63) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>trust gate</td><td>trusted-ingress boolean check</td><td>The explicit policy that permits reuse of an upstream correlation ID only after a server-owned fact says the request crossed a trusted proxy boundary. A non-empty HTTP header does not establish that fact.</td></tr>
+  <tr><td>trusted-proxy marker</td><td>internal <code>req.trustedProxy</code> capability</td><td>A private typed context value that transports an already-established edge decision through Go middleware. Only infrastructure code that has enforced the boundary may attach it; it is not client-supplied authentication.</td></tr>
+  <tr><td>pure ID selector</td><td>pure <code>chooseID</code> function</td><td>A small function choosing a trusted non-empty upstream ID or a generated fallback. Keeping it independent of <code>*http.Request</code>, network parsing, and environment state makes the security policy simple to table-test.</td></tr>
+</table>
+
+<h2>Private Request-ID Generator Failure Event (Lesson 62)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>failure-event contract</td><td>stable structured error log</td><td>The private operational output for a request-ID generator failure: a stable ERROR event message such as <code>"request ID generation failed"</code> plus the original cause in a named <code>"error"</code> attribute. It is separate from the generic JSON 500 sent to a client.</td></tr>
