@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 64 — Validate Trusted Upstream Request IDs</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.step{border-left:3px solid var(--accent);padding-left:15px;margin:18px 0}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:11px;border-radius:7px;margin:8px 0;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:700}.ok{color:var(--good)}.no{color:var(--bad)}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.foot{margin-top:2.4rem;color:var(--muted);font-size:.86rem}.foot a{color:#86e8e5}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<p class="eyebrow">Go HTTP server · request identity boundary</p><span class="time">8 minutes</span>
+<h1>Validate trusted upstream request IDs</h1>
+<p class="lead">Lesson 63 decided <em>who</em> may supply an upstream ID. Now decide <strong>which values</strong> may enter your response headers, request context, and logs. Trust and validity are separate checks.</p>
+<div class="card goal"><strong>Tangible win:</strong> add one bounded allowlist validator so a trusted proxy’s malformed <code>X-Request-ID</code> falls back to a server-generated ID.</div>
+<h2>Trust first, then validate</h2>
+<p>A trusted ingress can still send a buggy or unexpectedly large value. Define the small contract your application accepts: 1–128 ASCII characters, each a letter, digit, <code>-</code>, <code>_</code>, or <code>.</code>. This is an application policy—not a claim that other header values are universally invalid.</p>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>const validID = (id: string) =&gt;
+  /^[A-Za-z0-9._-]{1,128}$/.test(id)
+
+function selectID(trusted: boolean,
+  upstream: string, generated: string) {
+  return trusted &amp;&amp; validID(upstream)
+    ? upstream : generated
+}</pre></section><section class="pane go"><h3>Go</h3><pre>func validUpstreamID(id string) bool {
+    if len(id) == 0 || len(id) &gt; 128 {
+        return false
+    }
+    for _, c := range id {
+        if !(c &gt;= 'a' &amp;&amp; c &lt;= 'z' ||
+            c &gt;= 'A' &amp;&amp; c &lt;= 'Z' ||
+            c &gt;= '0' &amp;&amp; c &lt;= '9' ||
+            c == '-' || c == '_' || c == '.') {
+            return false
+        }
+    }
+    return true
+}</pre></section></div>
+<div class="card"><strong>Why an allowlist?</strong> It gives a predictable, bounded identifier contract. In particular, reject whitespace, control characters, and arbitrary Unicode rather than “cleaning” them into a different identifier. When validation fails, use the already-generated server ID—not an error message and not a partially repaired upstream value.</div>
+<h2>Compose the two gates</h2>
+<div class="step"><strong>Generate first.</strong> Preserve the earlier failure behavior: if generation fails, return the safe 500 and do not continue.</div>
+<pre>generatedID, err := generateID()
+if err != nil {
+    logger.Error("request ID generation failed", "error", err)
+    writeJSONError(w, http.StatusInternalServerError, "internal server error")
+    return
+}
+
+upstreamID := r.Header.Get("X-Request-ID")
+id := generatedID
+if isFromTrustedProxy(r.Context()) &amp;&amp; validUpstreamID(upstreamID) {
+    id = upstreamID
+}
+
+w.Header().Set("X-Request-ID", id)
+next.ServeHTTP(w, r.WithContext(withRequestID(r.Context(), id)))</pre>
+<div class="step"><strong>Do not trim or normalize here.</strong> If <code>" edge-91 "</code> becomes <code>"edge-91"</code>, logs and a response silently describe a value the proxy never supplied. Reject it and retain the generated ID. If your organization needs another identifier grammar, document and test that exact grammar instead.</div>
+<h2>Table-test the policy</h2>
+<pre>func TestChooseRequestID(t *testing.T) {
+    tests := []struct {
+        name                    string
+        trusted                 bool
+        upstream, generated, want string
+    }{
+        {"trusted allowed value", true, "edge-91.ab", "new-7", "edge-91.ab"},
+        {"trusted value with space falls back", true, "edge 91", "new-7", "new-7"},
+        {"trusted oversized value falls back", true, strings.Repeat("a", 129), "new-7", "new-7"},
+        {"untrusted allowed-looking value falls back", false, "attacker-91", "new-7", "new-7"},
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := chooseRequestID(tt.trusted, tt.upstream, tt.generated)
+            if got != tt.want { t.Errorf("got %q; want %q", got, tt.want) }
+        })
+    }
+}</pre>
+<p class="muted">Have <code>chooseRequestID</code> call <code>validUpstreamID</code>. The test rows state the full policy: provenance must be trusted <em>and</em> the value must obey the bounded grammar.</p>
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>A request is marked as arriving from the trusted proxy, but it carries <code>X-Request-ID: order 42</code> (contains a space). What is the correct ID?</strong></p><button data-correct="false">Reuse <code>order 42</code>; trusted origin makes every value valid.</button><button data-correct="false">Trim it to <code>order42</code> so it matches the allowlist.</button><button data-correct="true">Use the generated server ID; the trusted value failed the documented grammar.</button><p class="feedback" aria-live="polite"></p></div>
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Implement the 1–128-character allowlist validator.</label><label class="check"><input type="checkbox"> Add an invalid-character and an over-length table-test row.</label><label class="check"><input type="checkbox"> Confirm invalid or untrusted IDs never reach the response header, context, or logs.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://pkg.go.dev/net/http#Header.Get">Go <code>net/http.Header.Get</code></a> (HTTP header access); <a href="https://pkg.go.dev/net/http#Header.Set">Go <code>net/http.Header.Set</code></a> (response-header API); <a href="https://www.rfc-editor.org/rfc/rfc9110#section-5.5">RFC 9110 §5.5</a> (field-value constraints); <a href="https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html">OWASP Input Validation Cheat Sheet</a> (allowlist validation). Ask your teacher a follow-up if you want to choose a compatible policy for a particular proxy or tracing system.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — trusted provenance and a valid value are both required. Fall back to the server-generated ID.':'Not quite — trust answers who supplied it; validation answers whether its value meets your bounded contract. Do not silently repair it.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

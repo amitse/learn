@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Trust-Gated Upstream Request IDs (Lesson 63) <span class="new-badge">new</span></h2>
+<h2>Validated Trusted Upstream Request IDs (Lesson 64) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>allowlist validator</td><td>bounded regular-expression check</td><td>A small function that accepts only the application’s documented request-ID grammar. Here it permits 1–128 ASCII letters, digits, dots, underscores, and hyphens; it rejects whitespace, control characters, arbitrary Unicode, and oversized values.</td></tr>
+  <tr><td>generated fallback</td><td>server-created default correlation ID</td><td>The already-issued server ID used whenever an upstream value is untrusted or invalid. It keeps response headers, request context, and private log fields bounded without returning a validation detail to the client.</td></tr>
+  <tr><td>exact-value policy</td><td>reject rather than <code>trim()</code></td><td>The rule that a malformed upstream ID is not silently repaired before reuse. If a proxy supplied <code>" edge-91 "</code>, converting it to another value would make the returned and logged ID differ from the supplied value; reject it and use the generated fallback.</td></tr>
+</table>
+
+<h2>Trust-Gated Upstream Request IDs (Lesson 63)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>trust gate</td><td>trusted-ingress boolean check</td><td>The explicit policy that permits reuse of an upstream correlation ID only after a server-owned fact says the request crossed a trusted proxy boundary. A non-empty HTTP header does not establish that fact.</td></tr>
