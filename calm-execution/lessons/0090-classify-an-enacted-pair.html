@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 90 — Classify an Enacted Pair</title>
+<style>
+:root{--ink:#20232b;--muted:#606776;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5f0;--accent:#6846b7;--good:#17643c;--warn:#9a5610}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;background:var(--paper);min-height:100vh;padding:clamp(24px,6vw,56px)}.eyebrow{color:var(--accent);font-weight:750;letter-spacing:.08em;text-transform:uppercase;font-size:.75rem}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.07;letter-spacing:-.04em;margin:.45rem 0 1rem}h2{font-size:1.25rem;margin:2rem 0 .65rem}.lede{font-size:1.18rem;color:var(--muted)}.card{border:1px solid var(--line);border-radius:16px;padding:1.15rem;margin:1.25rem 0;background:#fff}.rule{border-left:4px solid var(--accent);padding:.15rem 0 .15rem 1rem;font-weight:650}label{display:block;font-weight:700;margin:1rem 0 .35rem}select,button{font:inherit;border-radius:10px;padding:.7rem .8rem}select{width:100%;border:1px solid #aaa;background:#fff}button{border:0;background:var(--accent);color:white;font-weight:750;margin-top:1rem;cursor:pointer}#result{display:none;margin-top:1rem;border-radius:10px;padding:.85rem;font-weight:650}.ok{background:#e9f7ed;color:var(--good)}.hold{background:#fff3df;color:var(--warn)}small{color:var(--muted)}a{color:var(--accent)}.foot{margin-top:2.4rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}</style>
+</head>
+<body><main class="page">
+<p class="eyebrow">Calm Execution · Lesson 90</p>
+<h1>Classify an enacted pair</h1>
+<p class="lede">Once the same instruction was followed twice, read each outcome in one fixed order: cue first, then the two-minute start.</p>
+<div class="card"><p class="rule">For each readable attempt: cue absent = <strong>cue</strong>; cue present + no start = <strong>start-side</strong>; both present = <strong>none</strong>.</p><p>If either fact is missing, label it <strong>unclear</strong>. Do not turn a label into a verdict about yourself. It is only a compact description of where this attempt became unreadable or stopped.</p></div>
+<p>This is a practical record-reading exercise, not a claim that two attempts establish a cause. Repetition in a stable context can support inspection of a cue and a response separately; the small classification below makes that inspection explicit. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+<h2>Your 10-minute real-world exercise</h2>
+<p>Use the two ordinary attempts that passed Lesson 89’s enactment audit. For each, answer only the two questions below. Then check the result. If the same readable break appears twice, use one <em>already-specified</em> matching test; otherwise retain the plan and gather two more ordinary records.</p>
+<div class="card">
+<label for="cue1">Attempt 1 — did the observable cue occur?</label><select id="cue1"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+<label for="start1">Attempt 1 — did the exact two-minute action start?</label><select id="start1"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+<label for="cue2">Attempt 2 — did the observable cue occur?</label><select id="cue2"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+<label for="start2">Attempt 2 — did the exact two-minute action start?</label><select id="start2"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+<button type="button" id="check">Classify the pair</button><div id="result" aria-live="polite"></div>
+</div>
+<p><strong>Boundary:</strong> A repeated label permits at most one matching test that you already wrote down. If no such test exists—or if the evidence is mixed, working, or unclear—keep the cue and exact two-minute action unchanged for two ordinary attempts. No catch-up work or punishment.</p>
+<p class="foot">Next: write one exact next instruction from this classification. Ask your teacher if “cue,” “start-side,” or the matching-test boundary is unclear.</p>
+</main><script>
+const ids=['cue1','start1','cue2','start2'], result=document.getElementById('result');
+function classify(cue,start){if(!cue||!start||cue==='unclear'||start==='unclear')return 'unclear';if(cue==='no')return 'cue';if(start==='no')return 'start-side';return 'none'}
+document.getElementById('check').onclick=()=>{const v=ids.map(id=>document.getElementById(id).value);if(v.some(x=>!x)){result.className='hold';result.textContent='Answer both cue-first questions for both attempts before classifying.'}else{const a=classify(v[0],v[1]),b=classify(v[2],v[3]);let next;if(a===b&&(a==='cue'||a==='start-side')){next=`Attempt 1: ${a}. Attempt 2: ${b}. The same readable break appeared twice. Use one already-specified matching test only; otherwise retain the plan and gather records.`;result.className='ok'}else{next=`Attempt 1: ${a}. Attempt 2: ${b}. Retain the current cue and exact two-minute action for two ordinary attempts; gather evidence rather than redesigning.`;result.className='hold'}result.textContent=next}result.style.display='block'};
+</script></body></html>
