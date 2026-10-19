@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 91 — Write a Classified Next Instruction</title>
+<style>
+:root{--ink:#20232b;--muted:#606776;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5f0;--accent:#6846b7;--good:#17643c;--warn:#9a5610}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;background:var(--paper);min-height:100vh;padding:clamp(24px,6vw,56px)}.eyebrow{color:var(--accent);font-weight:750;letter-spacing:.08em;text-transform:uppercase;font-size:.75rem}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.07;letter-spacing:-.04em;margin:.45rem 0 1rem}h2{font-size:1.25rem;margin:2rem 0 .65rem}.lede{font-size:1.18rem;color:var(--muted)}.card{border:1px solid var(--line);border-radius:16px;padding:1.15rem;margin:1.25rem 0;background:#fff}.rule{border-left:4px solid var(--accent);padding:.15rem 0 .15rem 1rem;font-weight:650}label{display:block;font-weight:700;margin:1rem 0 .35rem}textarea,select,button{font:inherit;border-radius:10px;padding:.7rem .8rem}textarea,select{width:100%;border:1px solid #aaa;background:#fff}textarea{min-height:8rem;resize:vertical}button{border:0;background:var(--accent);color:#fff;font-weight:750;margin-top:1rem;cursor:pointer}#result{display:none;margin-top:1rem;border-radius:10px;padding:.85rem;font-weight:650}.ok{background:#e9f7ed;color:var(--good)}.hold{background:#fff3df;color:var(--warn)}small{color:var(--muted)}.foot{margin-top:2.4rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}</style>
+</head>
+<body><main class="page">
+<p class="eyebrow">Calm Execution · Lesson 91</p>
+<h1>Write a classified next instruction</h1>
+<p class="lede">Turn your pair’s labels into one sentence you can actually audit after two ordinary attempts.</p>
+<div class="card"><p class="rule">One sentence = one move + the same observable cue + the exact two-minute action + two attempts.</p><p>Mixed, working, or unclear labels mean <strong>retain and gather</strong>. The same readable <strong>cue</strong> or <strong>start-side</strong> label twice may use one <em>already-specified</em> matching test. Everything else stays stable.</p></div>
+<p>This is a practical planning exercise, not a claim that two records establish a cause. Its purpose is to make tomorrow’s small start observable without adding pressure.</p>
+<h2>Your 10-minute real-world exercise</h2>
+<p>Use the pair you classified in Lesson 90. Choose the supported move. Then write one instruction and use it for the next two ordinary attempts.</p>
+<div class="card">
+<label for="move">What did the pair support?</label>
+<select id="move"><option value="">Choose…</option><option value="retain">Mixed, none, or unclear → retain and gather</option><option value="test">Same readable break twice + an existing matching test → use that one test</option></select>
+<label for="instruction">Your exact next instruction</label>
+<textarea id="instruction" placeholder="For the next two ordinary attempts: after [observable cue], I will [exact two-minute action]. I will [retain and gather / use the already-specified ___ test]."></textarea>
+<small>Do not invent a test today. “After coffee” is a cue; “open the project and write the first heading for two minutes” is an action.</small>
+<button type="button" id="check">Check my instruction</button><div id="result" aria-live="polite"></div>
+</div>
+<p><strong>Boundary:</strong> stopping after the two-minute action remains valid. No catch-up work, guilt, or extra change is required.</p>
+<p class="foot">Next: audit whether this exact sentence was followed in both attempts. Ask your teacher if the labels, matching-test boundary, or wording is unclear.</p>
+</main><script>
+const move=document.getElementById('move'),instruction=document.getElementById('instruction'),result=document.getElementById('result');
+document.getElementById('check').onclick=()=>{const text=instruction.value.trim().toLowerCase();if(!move.value||!text){result.className='hold';result.textContent='Choose the supported move and write one sentence first.'}else{const cue=/\bafter\b|\bwhen\b/.test(text),action=/\bopen\b|\bwrite\b|\bread\b|\bdraft\b|\bstart\b|\bbegin\b/.test(text),twoMinute=/two-minute|two minute|2-minute|2 minute/.test(text),boundary=/next two|two ordinary|two attempts/.test(text);if(cue&&action&&twoMinute&&boundary){result.className='ok';result.textContent=move.value==='retain'?'Ready: use this unchanged instruction for two ordinary attempts, then audit enactment.':'Ready only if the matching test was already specified. Keep every other link stable for two ordinary attempts, then audit enactment.'}else{result.className='hold';result.textContent='Make the sentence checkable: name an observable cue, an exact two-minute action, and a two-attempt boundary.'}}result.style.display='block'};
+</script></body></html>
