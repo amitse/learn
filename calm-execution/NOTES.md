@@ -94,4 +94,5 @@
 - Lesson 89 added an enactment audit for the enacted-pair instruction: compare its exact sentence with both covered attempts, label each `followed`, `not followed`, or `unclear`, and repeat it unchanged for two ordinary attempts unless both labels are `followed`.
 - Lesson 90 added enacted-pair outcome classification: after both attempts are `followed`, read `cue occurred?` then `two-minute action started?`, label each `cue`, `start-side`, `none`, or `unclear`, and retain/gather records unless the same readable break appears twice and has one already-specified matching test.
 - Lesson 91 added a classified next-instruction sentence: turn the enacted cue-first pair into one retain-and-gather instruction or one already-specified matching-test instruction with the same observable cue, exact two-minute action, and two-attempt boundary; audit enactment next.
+- Lesson 92 added an enactment audit for that instruction: label both covered attempts `followed`, `not followed`, or `unclear`; repeat the exact instruction for two ordinary attempts unless both are `followed`.
 - Increase difficulty only when the basic start ritual is reliable.

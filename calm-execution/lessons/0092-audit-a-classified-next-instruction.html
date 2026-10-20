@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 92 — Audit a Classified Next Instruction</title>
+<style>
+:root{--ink:#20232b;--muted:#606776;--paper:#fffdf9;--wash:#f2edff;--line:#ddd5f0;--accent:#6846b7;--good:#17643c;--warn:#9a5610}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.page{max-width:720px;margin:auto;background:var(--paper);min-height:100vh;padding:clamp(24px,6vw,56px)}.eyebrow{color:var(--accent);font-weight:750;letter-spacing:.08em;text-transform:uppercase;font-size:.75rem}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.07;letter-spacing:-.04em;margin:.45rem 0 1rem}h2{font-size:1.25rem;margin:2rem 0 .65rem}.lede{font-size:1.18rem;color:var(--muted)}.card{border:1px solid var(--line);border-radius:16px;padding:1.15rem;margin:1.25rem 0;background:#fff}.rule{border-left:4px solid var(--accent);padding:.15rem 0 .15rem 1rem;font-weight:650}label{display:block;font-weight:700;margin:1rem 0 .35rem}select,button{font:inherit;border-radius:10px;padding:.7rem .8rem}select{width:100%;border:1px solid #aaa;background:#fff}button{border:0;background:var(--accent);color:#fff;font-weight:750;margin-top:1rem;cursor:pointer}#result{display:none;margin-top:1rem;border-radius:10px;padding:.85rem;font-weight:650}.ok{background:#e9f7ed;color:var(--good)}.hold{background:#fff3df;color:var(--warn)}small{color:var(--muted)}.foot{margin-top:2.4rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}a{color:var(--accent)}</style>
+</head>
+<body><main class="page">
+<p class="eyebrow">Calm Execution · Lesson 92</p>
+<h1>Audit a classified next instruction</h1>
+<p class="lede">Before reading outcomes, check whether the exact instruction from Lesson 91 was actually used in both ordinary attempts.</p>
+<div class="card"><p class="rule">Compare the written sentence—not your intention or the result—with each attempt.</p><p>Label each attempt <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>. Only two <strong>followed</strong> labels make the pair ready to read cue and start outcomes. Any other pair means: repeat the same instruction for two ordinary attempts.</p></div>
+<p>Keeping an action tied to a stable context is a common habit-formation practice; this audit is a practical way to keep your own small experiment readable, not a test of willpower. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+<h2>Your 10-minute real-world exercise</h2>
+<p>Put the exact Lesson 91 sentence beside the two attempts it covered. For each attempt, ask only: did its cue, exact two-minute action, and stated move match the sentence? Pick one label per attempt. Then follow the feedback below.</p>
+<div class="card">
+<label for="first">Attempt 1</label>
+<select id="first"><option value="">Choose a label…</option><option value="followed">followed</option><option value="not">not followed</option><option value="unclear">unclear</option></select>
+<label for="second">Attempt 2</label>
+<select id="second"><option value="">Choose a label…</option><option value="followed">followed</option><option value="not">not followed</option><option value="unclear">unclear</option></select>
+<small>“Unclear” is a valid label when the record does not show enough to compare. Do not reconstruct it from memory.</small>
+<button type="button" id="check">Check the audit</button><div id="result" aria-live="polite"></div>
+</div>
+<p><strong>Boundary:</strong> this is not a cue to catch up, extend the two-minute action, or add a new test. A not-followed or unclear attempt asks for the same calm instruction again—not a verdict.</p>
+<p class="foot">Next: if both labels are <em>followed</em>, classify each outcome cue-first, then start-second. Ask your teacher if it is hard to tell whether the written instruction was followed.</p>
+</main><script>
+const a=document.getElementById('first'),b=document.getElementById('second'),r=document.getElementById('result');
+document.getElementById('check').onclick=()=>{if(!a.value||!b.value){r.className='hold';r.textContent='Choose one enactment label for each attempt first.'}else if(a.value==='followed'&&b.value==='followed'){r.className='ok';r.textContent='Audit passed: now read each record in order—did the cue occur, then did the exact two-minute action start? Do not change the plan yet.'}else{r.className='hold';r.textContent='Keep the Lesson 91 sentence unchanged and use it for two more ordinary attempts. Gather readable enactment evidence before interpreting outcomes.'}r.style.display='block'};
+</script></body></html>
