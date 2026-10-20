@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 65 — Test Selected Request-ID Propagation</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:880px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.step{border-left:3px solid var(--accent);padding-left:15px;margin:18px 0}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:11px;border-radius:7px;margin:8px 0;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:700}.ok{color:var(--good)}.no{color:var(--bad)}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.foot{margin-top:2.4rem;color:var(--muted);font-size:.88rem}.foot a{color:#86e8e5}@media(max-width:650px){.compare{grid-template-columns:1fr}}</style></head>
+<body><main class="wrap"><p class="eyebrow">Go HTTP server · correlation contract</p><span class="time">8 minutes</span><h1>Test the selected request ID across outputs</h1><p class="lead">Your middleware now chooses either a valid trusted upstream ID or a generated fallback. Prove that the <strong>one selected value</strong>—not the raw header—reaches both the client response and private error log.</p>
+<div class="card goal"><strong>Tangible win:</strong> write one focused test that catches an accidental leak of an invalid upstream ID into <code>X-Request-ID</code> or structured logs.</div>
+<h2>Test the decision, not the implementation</h2><p>Lesson 64 table-tested the selector. This test exercises the middleware boundary: supply a trusted but invalid upstream header, force the next handler to fail, then compare two observable outputs. The raw value must appear in neither.</p>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>const res = await request(app)
+  .get("/boom")
+  .set("X-Request-ID", "bad id")
+
+expect(res.headers["x-request-id"])
+  .toBe("generated-7")
+expect(logEvent.request_id)
+  .toBe("generated-7")
+expect(JSON.stringify(logEvent))
+  .not.toContain("bad id")</pre></section><section class="pane go"><h3>Go</h3><pre>req := httptest.NewRequest("GET", "/boom", nil)
+req.Header.Set("X-Request-ID", "bad id")
+req = req.WithContext(withTrustedProxy(req.Context()))
+
+rr := httptest.NewRecorder()
+middleware(next).ServeHTTP(rr, req)
+
+if got := rr.Header().Get("X-Request-ID"); got != "generated-7" {
+    t.Fatalf("header = %q", got)
+}
+// Decode one captured JSON log event, then assert request_id.</pre></section></div>
+<div class="card"><strong>Why force an error?</strong> A normal response proves the header path. A deliberately failing downstream handler also causes your existing private error logging path to run, giving this single test two independent sinks to compare. The public JSON error must remain generic.</div>
+<h2>One end-to-end contract test</h2><pre>func TestInvalidTrustedUpstreamIDUsesGeneratedIDEverywhere(t *testing.T) {
+    var logs bytes.Buffer
+    logger := slog.New(slog.NewJSONHandler(&amp;logs, nil))
+    generate := func() (string, error) { return "generated-7", nil }
+
+    next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        logger.Error("request failed", "request_id", RequestID(r.Context()))
+        writeJSONError(w, http.StatusInternalServerError, "internal server error")
+    })
+    h := RequestIDMiddleware(generate, logger)(next)
+
+    req := httptest.NewRequest(http.MethodGet, "/boom", nil)
+    req.Header.Set("X-Request-ID", "bad id")
+    req = req.WithContext(withTrustedProxy(req.Context()))
+    rr := httptest.NewRecorder()
+    h.ServeHTTP(rr, req)
+
+    if got := rr.Header().Get("X-Request-ID"); got != "generated-7" {
+        t.Fatalf("X-Request-ID = %q; want generated fallback", got)
+    }
+    if strings.Contains(rr.Body.String(), "bad id") { t.Fatal("upstream ID leaked") }
+
+    var event struct { RequestID string `json:"request_id"` }
+    if err := json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &amp;event); err != nil { t.Fatal(err) }
+    if event.RequestID != "generated-7" { t.Fatalf("log ID = %q", event.RequestID) }
+}</pre>
+<p class="muted">Adapt names to your code. The essential shape is fixed: inject a deterministic generator and buffer-backed JSON logger; make a trusted malformed header; assert the selected fallback in every output you own.</p>
+<h2>Keep the assertions deliberately narrow</h2><div class="step"><strong>Assert the header exactly.</strong> It is the client-visible correlation contract.</div><div class="step"><strong>Decode the event.</strong> Assert the owned <code>request_id</code> field, not timestamp, key ordering, or every logger field.</div><div class="step"><strong>Check absence once.</strong> A distinctive invalid value being absent from the response guards against a later accidental echo. Do not assert unrelated log formatter details.</div>
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>A trusted proxy sends <code>X-Request-ID: bad id</code>; the generator returns <code>generated-7</code>. Which test expectation is correct?</strong></p><button data-correct="false">The response header may contain <code>generated-7</code>, but the error log should preserve <code>bad id</code> for debugging.</button><button data-correct="true">Both the response header and decoded log event must contain <code>generated-7</code>; the invalid raw value is not propagated.</button><button data-correct="false">Only assert that the handler returned 500; the selected ID is an implementation detail.</button><p class="feedback" aria-live="polite"></p></div>
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Inject a fixed generator and a buffer-backed JSON logger.</label><label class="check"><input type="checkbox"> Send a trusted malformed upstream ID to a failing handler.</label><label class="check"><input type="checkbox"> Assert the generated fallback in <code>X-Request-ID</code> and decoded <code>request_id</code>.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://pkg.go.dev/net/http/httptest">Go <code>net/http/httptest</code></a> (request and response test helpers); <a href="https://pkg.go.dev/log/slog#NewJSONHandler">Go <code>slog.NewJSONHandler</code></a> (structured JSON output); <a href="https://pkg.go.dev/encoding/json#Unmarshal">Go <code>json.Unmarshal</code></a> (decode captured output); <a href="https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html">OWASP Input Validation Cheat Sheet</a> (allowlist validation). Ask your teacher a follow-up if you want to extend this into a table of trusted, untrusted, valid, and invalid propagation cases.</p></main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — one selected ID is the correlation contract across the outputs your middleware owns.':'Not quite — a rejected upstream value must not reappear in a response or log. Test the chosen fallback at both sinks.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

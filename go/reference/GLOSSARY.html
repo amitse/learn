@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Validated Trusted Upstream Request IDs (Lesson 64) <span class="new-badge">new</span></h2>
+<h2>Selected Request-ID Propagation (Lesson 65) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>cross-output correlation contract</td><td>one request ID across response and structured log</td><td>The requirement that a middleware-selected request ID is the same value in each output it owns, such as <code>X-Request-ID</code>, request context, and a private error event. The raw upstream header is not an alternate correlation value after selection.</td></tr>
+  <tr><td>propagation test</td><td>integration-style middleware assertion</td><td>A focused test that injects deterministic dependencies, runs the real middleware and a small downstream handler, then compares observable outputs. It complements a pure selector table test by checking the boundary wiring.</td></tr>
+  <tr><td>decoded log sink</td><td>parsed captured logger event</td><td>A buffer-backed JSON <code>slog</code> handler whose one emitted event is decoded into a narrow owned shape. Assert <code>request_id</code>, not timestamps, JSON key order, or other formatter details.</td></tr>
+</table>
+
+<h2>Validated Trusted Upstream Request IDs (Lesson 64)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>allowlist validator</td><td>bounded regular-expression check</td><td>A small function that accepts only the application’s documented request-ID grammar. Here it permits 1–128 ASCII letters, digits, dots, underscores, and hyphens; it rejects whitespace, control characters, arbitrary Unicode, and oversized values.</td></tr>
