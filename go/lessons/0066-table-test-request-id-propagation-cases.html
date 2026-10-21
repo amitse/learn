@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 66 — Table-Test Request-ID Propagation Cases</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.75rem}h1{line-height:1.15;font-size:clamp(2rem,5vw,3.15rem);margin:.35rem 0 .7rem}h2{margin:2.2rem 0 .65rem;font-size:1.35rem}.lead,.muted{color:var(--muted)}.time{display:inline-block;background:#123238;color:#a9eff1;padding:.25rem .6rem;border-radius:99px;font-size:.85rem}.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;padding:.08em .3em;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#0a0c11;border:1px solid var(--border);padding:16px;border-radius:9px;font-size:.82rem;line-height:1.55}strong{color:#fff}table{width:100%;border-collapse:collapse;font-size:.91rem}th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{color:#b8bfd2;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}td:last-child{color:#8de7e8}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{border:1px solid var(--border);border-radius:9px;overflow:hidden}.pane h3{margin:0;padding:8px 12px;font-size:.85rem;background:#252938}.pane.ts h3{color:#9fc9ff}.pane.go h3{color:#86e8e5}.pane pre{margin:0;border:0;border-radius:0;height:100%}.quiz button{display:block;width:100%;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);padding:11px;border-radius:7px;margin:8px 0;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:700}.ok{color:var(--good)}.no{color:var(--bad)}.check{display:flex;gap:9px;margin:.7rem 0}.check input{accent-color:var(--accent);margin-top:.35rem}.foot{margin-top:2.4rem;color:var(--muted);font-size:.88rem}.foot a{color:#82dedf}@media(max-width:700px){.compare{grid-template-columns:1fr}table{font-size:.8rem}th,td{padding:7px}}
+</style>
+</head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · request correlation</p><span class="time">8 minutes</span>
+<h1>Table-test the request-ID propagation matrix</h1>
+<p class="lead">You proved one invalid trusted-header case in Lesson 65. Now make the policy durable: one table should cover every meaningful provenance-and-format combination and require the selected ID in both observable outputs.</p>
+<div class="card goal"><strong>Tangible win:</strong> turn four request-ID rules into a compact middleware test that catches an accidental header or log propagation regression.</div>
+
+<h2>One decision matrix, two outputs</h2>
+<p>Selection has two inputs: did server-controlled infrastructure mark the request as trusted, and is the supplied ID valid? The response header and the private log event must agree with that single decision.</p>
+<div class="card"><table><thead><tr><th>Trusted marker?</th><th>Upstream header</th><th>Selected ID</th></tr></thead><tbody><tr><td>yes</td><td><code>edge-91</code> (valid)</td><td><code>edge-91</code></td></tr><tr><td>yes</td><td><code>bad id</code> (invalid)</td><td>generated fallback</td></tr><tr><td>no</td><td><code>client-9</code> (valid-looking)</td><td>generated fallback</td></tr><tr><td>either</td><td>missing</td><td>generated fallback</td></tr></tbody></table></div>
+<p class="muted">Do not add rows for every invalid spelling. That grammar belongs in the validator’s unit test. This is a <em>propagation</em> test: representative selection branches, then the two outputs your middleware owns.</p>
+
+<h2>Give every row one expected ID</h2>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>const cases = [
+  { trusted: true, upstream: "edge-91",
+    want: "edge-91" },
+  { trusted: true, upstream: "bad id",
+    want: "generated-7" },
+];
+
+for (const c of cases) {
+  const res = await request(app)
+    .get("/boom")
+    .set("X-Request-ID", c.upstream);
+  expect(res.headers["x-request-id"])
+    .toBe(c.want);
+  expect(logEvent.request_id).toBe(c.want);
+}</pre></section><section class="pane go"><h3>Go</h3><pre>tests := []struct {
+    name, upstream, want string
+    trusted              bool
+}{
+    {"trusted valid", "edge-91", "edge-91", true},
+    {"trusted invalid", "bad id", "generated-7", true},
+    {"untrusted valid", "client-9", "generated-7", false},
+    {"missing", "", "generated-7", false},
+}</pre></section></div>
+<p>The table owns the policy in plain sight. The repeated test body owns the invariant: <code>header == event.RequestID == want</code>.</p>
+
+<h2>Run the real middleware for each row</h2>
+<pre>func TestRequestIDPropagation(t *testing.T) {
+    tests := []struct {
+        name, upstream, want string
+        trusted              bool
+    }{
+        {"trusted valid", "edge-91", "edge-91", true},
+        {"trusted invalid", "bad id", "generated-7", true},
+        {"untrusted valid", "client-9", "generated-7", false},
+        {"missing upstream", "", "generated-7", false},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            var logs bytes.Buffer
+            logger := slog.New(slog.NewJSONHandler(&logs, nil))
+            next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                logger.Error("request failed", "request_id", RequestID(r.Context()))
+                writeJSONError(w, http.StatusInternalServerError, "internal server error")
+            })
+            generate := func() (string, error) { return "generated-7", nil }
+            h := RequestIDMiddleware(generate, logger)(next)
+
+            req := httptest.NewRequest(http.MethodGet, "/boom", nil)
+            if tt.upstream != "" { req.Header.Set("X-Request-ID", tt.upstream) }
+            if tt.trusted { req = req.WithContext(withTrustedProxy(req.Context())) }
+            rr := httptest.NewRecorder()
+            h.ServeHTTP(rr, req)
+
+            if got := rr.Header().Get("X-Request-ID"); got != tt.want {
+                t.Fatalf("header = %q; want %q", got, tt.want)
+            }
+            var event struct { RequestID string `json:"request_id"` }
+            if err := json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &event); err != nil { t.Fatal(err) }
+            if event.RequestID != tt.want { t.Fatalf("log ID = %q; want %q", event.RequestID, tt.want) }
+        })
+    }
+}</pre>
+<div class="card"><strong>Boundary discipline:</strong> generate a new logger and buffer inside every subtest. Otherwise an earlier JSON event can contaminate the next row, and a decoding failure tells you nothing about request-ID policy.</div>
+
+<h2>What this test deliberately does not prove</h2>
+<p>It does not retest every character rule, the secure generator’s randomness, or the logging formatter’s timestamp. Those are separate contracts. Here, deterministic generation makes the expected outcome exact, and <code>t.Run</code> names the policy branch that failed.</p>
+
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>An untrusted client supplies the valid-looking value <code>client-9</code>. The generator returns <code>generated-7</code>. What should the table row require?</strong></p><button data-correct="false">Header: <code>client-9</code>; log: <code>generated-7</code>, so operators can see both.</button><button data-correct="true">Header and decoded log event: <code>generated-7</code>, because validity does not establish provenance.</button><button data-correct="false">Only require a 500 response; correlation policy is private.</button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Write the four rows: trusted-valid, trusted-invalid, untrusted-valid-looking, and missing.</label><label class="check"><input type="checkbox"> Inject the same fixed generator in each subtest.</label><label class="check"><input type="checkbox"> Assert the row’s one expected ID in both <code>X-Request-ID</code> and decoded <code>request_id</code>.</label>
+<p class="foot"><strong>Sources:</strong> <a href="https://go.dev/blog/subtests">Go Blog: Using Subtests and Sub-benchmarks</a> (table rows with <code>t.Run</code>); <a href="https://pkg.go.dev/net/http/httptest">Go <code>net/http/httptest</code></a> (HTTP test helpers); <a href="https://pkg.go.dev/log/slog#NewJSONHandler">Go <code>slog.NewJSONHandler</code></a> (JSON structured logs); <a href="https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html">OWASP Input Validation Cheat Sheet</a> (allowlist validation). Ask your teacher a follow-up if you want to add standard trace-context propagation without treating it as an application request ID.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — provenance and format are both required before reuse; every owned output gets the selected fallback.':'Not quite — a valid-looking client header is still untrusted input. The table must require the single selected ID at both outputs.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

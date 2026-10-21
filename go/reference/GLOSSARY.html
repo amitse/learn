@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Selected Request-ID Propagation (Lesson 65) <span class="new-badge">new</span></h2>
+<h2>Request-ID Propagation Matrix (Lesson 66) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>propagation matrix</td><td><code>it.each</code> correlation cases</td><td>A small table of meaningful selection branches—trusted-valid, trusted-invalid, untrusted valid-looking, and missing upstream values. Every row declares one selected ID that must reach both the response header and private event.</td></tr>
+  <tr><td>cross-output invariant</td><td><code>header === event.request_id === want</code></td><td>The assertion repeated for each matrix row: the middleware-owned <code>X-Request-ID</code> response header and decoded private log field report the same selected value. It detects split-brain correlation caused by wiring one sink to raw input.</td></tr>
+  <tr><td>subtest isolation</td><td>fresh fixture per parameterized test</td><td>Creating a new buffer-backed JSON logger and recorder inside each <code>t.Run</code> row. This prevents one emitted event from contaminating a later row’s decode and keeps a failure attributable to its policy branch.</td></tr>
+</table>
+
+<h2>Selected Request-ID Propagation (Lesson 65)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>cross-output correlation contract</td><td>one request ID across response and structured log</td><td>The requirement that a middleware-selected request ID is the same value in each output it owns, such as <code>X-Request-ID</code>, request context, and a private error event. The raw upstream header is not an alternate correlation value after selection.</td></tr>
