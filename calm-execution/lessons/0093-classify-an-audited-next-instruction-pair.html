@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 93 — Classify an Audited Next-Instruction Pair</title>
+  <style>
+    :root { --ink:#202230; --muted:#606478; --paper:#fcfbff; --panel:#f2edff; --line:#ddd5f3; --violet:#6542b5; --good:#176b4a; --bad:#a63b36; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--paper); color:var(--ink); font:17px/1.55 Georgia, serif; }
+    main { max-width:720px; margin:auto; padding:28px 18px 54px; } .eyebrow { color:var(--violet); font:700 .78rem/1.2 system-ui,sans-serif; letter-spacing:.1em; text-transform:uppercase; }
+    h1 { font-size:clamp(2rem,7vw,3.25rem); line-height:1.05; margin:.35rem 0 .8rem; letter-spacing:-.035em; } h2 { font:700 1.25rem/1.25 system-ui,sans-serif; margin:0 0 .6rem; }
+    p { margin:.6rem 0; } .lede { font-size:1.12rem; color:var(--muted); } .card { background:var(--panel); border:1px solid var(--line); border-radius:15px; padding:18px; margin:20px 0; }
+    .rule { border-left:4px solid var(--violet); padding:3px 0 3px 15px; font-weight:700; } ol { padding-left:1.35rem; } li { margin:.45rem 0; }
+    label { display:block; font:700 .9rem/1.3 system-ui,sans-serif; margin:14px 0 5px; } select, textarea, button { width:100%; font:inherit; border:1px solid var(--line); border-radius:8px; padding:10px; background:#fff; color:var(--ink); }
+    textarea { min-height:74px; resize:vertical; } button { margin-top:13px; background:var(--violet); color:#fff; border:0; font:700 .95rem system-ui,sans-serif; cursor:pointer; } .feedback { min-height:1.5em; margin:.7rem 0 0; font-weight:700; } .good { color:var(--good); } .bad { color:var(--bad); }
+    .tiny { color:var(--muted); font-size:.9rem; } a { color:var(--violet); } footer { border-top:1px solid var(--line); margin-top:28px; padding-top:15px; color:var(--muted); font-size:.9rem; }
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 93 · 10 minutes</div>
+  <h1>Classify an audited pair</h1>
+  <p class="lede">Once both attempts followed your exact instruction, read what happened in the same order every time: <strong>cue first, then start.</strong></p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Give each fully enacted attempt one neutral label:</p>
+    <ul><li><strong>cue</strong> — the observable cue did not occur.</li><li><strong>start-side</strong> — the cue occurred, but the exact two-minute action did not start.</li><li><strong>none</strong> — the cue occurred and the two-minute action started.</li><li><strong>unclear</strong> — a needed fact is missing.</li></ul>
+    <p class="rule">Do not interpret output, mood, or character. Classify only the cue and the start.</p>
+  </div>
+
+  <h2>Why this narrow reading?</h2>
+  <p>This is a practical experiment for protecting the mission from urgency and self-punishment: a readable pair tells you which link, if any, deserves attention. Stable contexts can make behaviour more cue-driven over time; this lesson uses an observable cue so the record can be read without guessing. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+
+  <div class="card"><h2>Applied exercise — classify your last two audited attempts</h2>
+    <p>Use the exact instruction from Lesson 91 only if Lesson 92 marked <em>both</em> covered attempts <strong>followed</strong>. Spend up to 10 minutes; do not redesign the ritual today.</p>
+    <ol><li>Write the cue and exact two-minute action at the top of your paper.</li><li>For each attempt, answer: “Did the cue occur?” then “Did the action start?”</li><li>Give each attempt one label. Copy the pair into your start log.</li></ol>
+    <label for="a">Attempt A label</label><select id="a"><option value="">Choose…</option><option>cue</option><option>start-side</option><option>none</option><option>unclear</option></select>
+    <label for="b">Attempt B label</label><select id="b"><option value="">Choose…</option><option>cue</option><option>start-side</option><option>none</option><option>unclear</option></select>
+    <label for="note">Optional evidence note (facts only)</label><textarea id="note" placeholder="A: cue occurred; action did not start. B: cue occurred; action started."></textarea>
+    <button type="button" onclick="readPair()">Read this pair</button><p id="result" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p><strong>Scenario:</strong> Both attempts followed the instruction. In A, the cue happened but the action did not begin. In B, both cue and action happened. What is the pair?</p>
+    <label><input type="radio" name="q" value="wrong"> cue, none</label>
+    <label><input type="radio" name="q" value="right"> start-side, none</label>
+    <label><input type="radio" name="q" value="wrong"> unclear, none</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <div class="card"><h2>Decision boundary</h2><p>If the same readable label appears twice and you already have one matching bounded test, that test may be the next move. Otherwise retain the plan and gather another readable pair. An <strong>unclear</strong> record is a request for better facts, not a verdict.</p></div>
+  <footer>Ask your teacher if a label feels ambiguous. The goal is one calm, intentional start—not a perfect day.</footer>
+</main><script>
+function readPair(){const a=document.getElementById('a').value,b=document.getElementById('b').value,r=document.getElementById('result');if(!a||!b){r.className='feedback bad';r.textContent='Choose one label for each attempt first.';return}if(a===b&&a!=='none'&&a!=='unclear'){r.className='feedback good';r.textContent='Repeated readable '+a+' break: use only an already-specified matching test; otherwise retain and gather.'}else if(a==='unclear'||b==='unclear'){r.className='feedback good';r.textContent='At least one record is unclear: retain the plan and gather readable facts, without interpreting outcomes.'}else{r.className='feedback good';r.textContent='Mixed or working evidence: retain the plan and gather the next readable pair.'}}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. Cue occurred + no start is start-side; both occurred is none.':'Read cue first: it occurred in both attempts. Then read the start.'}
+</script></body></html>
