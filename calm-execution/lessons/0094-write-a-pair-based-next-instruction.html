@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 94 — Write a Pair-Based Next Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}ol{padding-left:1.35rem}li{margin:.45rem 0}label{display:block;font:700 .9rem/1.3 system-ui,sans-serif;margin:14px 0 5px}select,textarea,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}textarea{min-height:100px;resize:vertical}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.tiny{color:var(--muted);font-size:.9rem}a{color:var(--violet)}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 94 · 10 minutes</div>
+  <h1>Write a pair-based next instruction</h1>
+  <p class="lede">Turn two audited, classified attempts into one calm instruction for the next two ordinary attempts.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Write a next instruction that contains exactly four parts:</p>
+    <ol><li><strong>One move:</strong> retain and gather, or one already-specified matching test.</li><li><strong>The observable cue.</strong></li><li><strong>The exact two-minute action.</strong></li><li><strong>A two-attempt boundary.</strong></li></ol>
+    <p class="rule">Mixed, working, or unclear evidence → retain and gather. The same readable <em>cue</em> or <em>start-side</em> break twice → use only one already-specified matching test.</p>
+  </div>
+
+  <h2>Why keep it this small?</h2>
+  <p>This is a practical experiment in keeping the start ritual cue-led rather than urgency-led. Repetition in a stable context can make behaviour more cue-driven; here, keeping the cue and two-minute action explicit makes the next attempt readable. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+
+  <div class="card"><h2>Applied exercise — make your next instruction</h2>
+    <p>Spend 5–10 minutes with the two labels from Lesson 93. Do not add a duration, output target, catch-up task, or second change.</p>
+    <ol><li>If both labels are the same readable break and you already specified its matching test, choose <strong>one test</strong>. Otherwise choose <strong>retain and gather</strong>.</li><li>Copy your existing cue and exact two-minute action.</li><li>Write one sentence and use it for the next two ordinary attempts.</li></ol>
+    <label for="move">Pair reading / one move</label><select id="move"><option value="">Choose…</option><option value="retain">Mixed, working, or unclear → retain and gather</option><option value="test">Same readable break twice + one matching test already specified → use that test</option></select>
+    <label for="cue">Observable cue</label><textarea id="cue" placeholder="After I put my coffee cup in the sink…"></textarea>
+    <label for="action">Exact two-minute action</label><textarea id="action" placeholder="…I open the project brief and write its first heading for two minutes."></textarea>
+    <button type="button" onclick="buildInstruction()">Build my two-attempt instruction</button><p id="result" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p><strong>Pair:</strong> A = <em>cue</em>; B = <em>cue</em>. A matching cue test was already specified. Which instruction respects the boundary?</p>
+    <label><input type="radio" name="q" value="wrong"> Change the cue, action, and frequency for a week.</label>
+    <label><input type="radio" name="right"> Use that one already-specified cue test with the same two-minute action for two ordinary attempts.</label>
+    <label><input type="radio" name="wrong"> Work longer today to make up for both misses.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Ask your teacher if the pair is ambiguous. A readable next instruction is enough; the goal remains one calm, intentional start.</footer>
+</main><script>
+function clean(v){return v.trim().replace(/\s+/g,' ')}
+function buildInstruction(){const m=document.getElementById('move').value,c=clean(document.getElementById('cue').value),a=clean(document.getElementById('action').value),r=document.getElementById('result');if(!m||!c||!a){r.className='feedback bad';r.textContent='Choose one move and fill in both the cue and exact two-minute action.';return}const move=m==='retain'?'retain this plan and gather records':'use the one already-specified matching test';r.className='feedback good';r.textContent='For the next two ordinary attempts: '+move+'. Cue: '+c+' Action: '+a+' Then audit whether this exact instruction was followed.'}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. One repeated readable break can use one already-specified matching test; keep the rest stable for two attempts.':'Not this time. Keep one change only, preserve the two-minute action, and do not use catch-up work.'}
+</script></body></html>
