@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 67 — Propagate the Selected Request ID Downstream</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-size:.75rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.time{display:inline-block;margin-top:7px;padding:.24rem .65rem;border-radius:99px;background:#123238;color:#a9eff1;font-size:.85rem}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.12;margin:.4rem 0 .75rem}h2{font-size:1.35rem;margin:2.2rem 0 .65rem}.lead,.muted{color:var(--muted)}.card{margin:18px 0;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;border-radius:4px;padding:.08em .3em;font-size:.9em}pre{overflow:auto;margin:0;background:#0a0c11;border:1px solid var(--border);border-radius:9px;padding:16px;font-size:.81rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{overflow:hidden;border:1px solid var(--border);border-radius:9px}.pane h3{margin:0;padding:8px 12px;background:#252938;font-size:.85rem}.ts h3{color:#9fc9ff}.go h3{color:#86e8e5}.pane pre{border:0;border-radius:0;height:100%}.steps{padding-left:1.25rem}.steps li{padding:.22rem 0}table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid var(--border)}th{color:#b8bfd2;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase}.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}.check{display:block;margin:.55rem 0;color:var(--muted)}a{color:#86e8e5}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · request correlation</p><span class="time">8 minutes</span>
+<h1>Propagate the <em>selected</em> request ID downstream</h1>
+<p class="lead">Your middleware has chosen one safe request ID and uses it consistently in its own response and logs. When this service calls another HTTP service, carry that same selected value across the outbound boundary—never the raw inbound header.</p>
+<div class="card goal"><strong>Tangible win:</strong> write and test one small outbound-request helper that puts the context-selected request ID into a downstream <code>X-Request-ID</code> header.</div>
+
+<h2>Selection happens once</h2>
+<p>Lesson 66 established the selection contract: trusted and valid input may win; everything else gets a generated fallback. At an outbound boundary, do not reopen that decision by copying <code>r.Header.Get("X-Request-ID")</code>. Read the selected value from the request context instead.</p>
+<table><thead><tr><th>Inbound state</th><th>Selected in middleware</th><th>Outbound header</th></tr></thead><tbody><tr><td>Trusted, valid <code>edge-91</code></td><td><code>edge-91</code></td><td><code>edge-91</code></td></tr><tr><td>Untrusted, valid-looking <code>client-9</code></td><td><code>generated-7</code></td><td><code>generated-7</code></td></tr><tr><td>Trusted, invalid <code>bad id</code></td><td><code>generated-7</code></td><td><code>generated-7</code></td></tr></tbody></table>
+<div class="card"><strong>Why:</strong> blindly forwarding the inbound header would split correlation. The client could see and operators could log <code>generated-7</code>, while the downstream service receives <code>client-9</code>. The outbound call is a new boundary, but its correlation value is already decided.</div>
+
+<h2>Make a fresh outbound request, then set one header</h2>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>async function fetchProfile(req: Request) {
+  const id = req.context.requestId; // selected
+  return fetch(profileURL, {
+    headers: { "X-Request-ID": id },
+  });
+}</pre></section><section class="pane go"><h3>Go</h3><pre>func newDownstreamRequest(
+    ctx context.Context, url string,
+) (*http.Request, error) {
+    req, err := http.NewRequestWithContext(
+        ctx, http.MethodGet, url, nil)
+    if err != nil { return nil, err }
+    req.Header.Set("X-Request-ID", RequestID(ctx))
+    return req, nil
+}</pre></section></div>
+<p><code>http.NewRequestWithContext</code> gives the outbound call the existing cancellation/deadline context. <code>Header.Set</code> deliberately establishes one value for this header; it does not copy the inbound request’s whole header map, which could accidentally forward credentials or hop-by-hop headers.</p>
+
+<h2>Test the wire value with an in-process server</h2>
+<pre>func TestDownstreamRequestUsesSelectedID(t *testing.T) {
+    gotID := ""
+    downstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        gotID = r.Header.Get("X-Request-ID")
+        w.WriteHeader(http.StatusNoContent)
+    }))
+    defer downstream.Close()
+
+    ctx := context.WithValue(context.Background(), requestIDKey{}, "generated-7")
+    req, err := newDownstreamRequest(ctx, downstream.URL)
+    if err != nil { t.Fatal(err) }
+
+    res, err := downstream.Client().Do(req)
+    if err != nil { t.Fatal(err) }
+    res.Body.Close()
+    if gotID != "generated-7" {
+        t.Fatalf("downstream X-Request-ID = %q; want generated-7", gotID)
+    }
+}</pre>
+<p class="muted">This test observes the header received by the downstream handler, rather than inspecting only the request object before the client sends it. It proves the boundary contract while avoiding a real network dependency.</p>
+
+<h2>Keep the responsibility narrow</h2>
+<ul class="steps"><li><strong>Middleware</strong> selects and stores the request ID once.</li><li><strong>Outbound adapter</strong> reads that selected ID and writes it to the new downstream request.</li><li><strong>Do not</strong> copy raw inbound headers, regenerate a different ID, or introduce W3C trace-context semantics here. Those are separate policies and adapters.</li></ul>
+
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>An untrusted client sends <code>X-Request-ID: client-9</code>. Middleware selected <code>generated-7</code>. Which value belongs on an outbound request to the profile service?</strong></p><button data-correct="false"><code>client-9</code>, because it was the original header.</button><button data-correct="true"><code>generated-7</code>, because it is the one server-selected correlation value.</button><button data-correct="false">A newly generated ID, to make each service independent.</button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Locate the accessor that reads the selected request ID from context.</label><label class="check"><input type="checkbox"> Create a new outbound request with the caller’s context.</label><label class="check"><input type="checkbox"> Set <code>X-Request-ID</code> from that selected value and assert what an <code>httptest.Server</code> receives.</label>
+<p class="muted"><strong>Sources:</strong> <a href="https://pkg.go.dev/net/http#NewRequestWithContext">Go <code>http.NewRequestWithContext</code></a>; <a href="https://pkg.go.dev/net/http#Header.Set">Go <code>http.Header.Set</code></a>; <a href="https://pkg.go.dev/net/http/httptest#NewServer">Go <code>httptest.NewServer</code></a>; <a href="https://www.rfc-editor.org/rfc/rfc9110#section-7.6.1">RFC 9110: connection-specific header fields</a>. Ask your teacher a follow-up if you want to decide when a separate trace-context adapter is appropriate.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — outbound propagation carries the single ID selected at the inbound boundary.':'Not quite — raw input never regains authority after middleware selected the correlation ID.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

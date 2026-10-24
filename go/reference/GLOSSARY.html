@@ -45,7 +45,16 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Request-ID Propagation Matrix (Lesson 66) <span class="new-badge">new</span></h2>
+<h2>Outbound Selected Request-ID Propagation (Lesson 67) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>outbound propagation boundary</td><td>dependency <code>fetch</code> call</td><td>The point where this service creates a fresh HTTP request to another service. It must carry the one request ID selected at the inbound boundary, rather than rereading and forwarding raw inbound request input.</td></tr>
+  <tr><td>selected-ID propagation</td><td><code>headers["X-Request-ID"] = req.context.requestId</code></td><td>Setting an outbound request's <code>X-Request-ID</code> from the application-owned request-context accessor. It maintains one correlation value across the response, private events, and downstream call.</td></tr>
+  <tr><td>fresh outbound request</td><td>new <code>fetch</code> options, not copied request headers</td><td>A request created with <code>http.NewRequestWithContext</code>, which inherits cancellation/deadline behavior from its context while explicitly selecting the headers it sends. Do not clone an inbound header map: it may leak credentials or connection-specific fields.</td></tr>
+  <tr><td>wire-level downstream test</td><td>captured dependency-route request</td><td>An <code>httptest.NewServer</code> handler that reads the header it actually receives. It tests the outbound HTTP boundary more meaningfully than inspecting an unsent request object.</td></tr>
+</table>
+
+<h2>Request-ID Propagation Matrix (Lesson 66)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>propagation matrix</td><td><code>it.each</code> correlation cases</td><td>A small table of meaningful selection branches—trusted-valid, trusted-invalid, untrusted valid-looking, and missing upstream values. Every row declares one selected ID that must reach both the response header and private event.</td></tr>
