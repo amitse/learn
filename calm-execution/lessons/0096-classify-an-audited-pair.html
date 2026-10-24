@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 96 — Classify an Audited Pair</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}ol{padding-left:1.35rem}li{margin:.45rem 0}label{display:block;font:700 .9rem/1.3 system-ui,sans-serif;margin:14px 0 5px}select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.tiny{color:var(--muted);font-size:.9rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 96 · 10 minutes</div>
+  <h1>Classify an audited pair</h1>
+  <p class="lede">When both attempts followed the same instruction, read the pair in one order: cue first, then the two-minute start.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use your Lesson 95 audit only when both attempts were <strong>followed</strong>. For each attempt, ask:</p>
+    <ol><li><strong>Did the observable cue occur?</strong> If no, label it <strong>cue</strong>.</li><li>If yes, <strong>did the exact two-minute action start?</strong> If no, label it <strong>start-side</strong>.</li><li>If both happened, label it <strong>none</strong>. If the record cannot answer in that order, label it <strong>unclear</strong>.</li></ol>
+    <p class="rule">Retain and gather records unless the same readable break appears twice and you already have one matching test specified. Do not invent a new test from one pair.</p>
+  </div>
+
+  <div class="card"><h2>A practical experiment</h2>
+    <p>This is a deliberately narrow reading rule, not a verdict about motivation or character. Repeating a response in a stable context is one way habits can become more cue-linked; this exercise simply keeps your evidence readable before you change the system. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — classify your audited pair</h2>
+    <p>Spend 5–10 minutes with the two attempts that passed your Lesson 95 audit. For each one, read cue first and start second. Choose the label the record supports.</p>
+    <label for="a">Attempt A</label>
+    <select id="a"><option value="">Choose…</option><option value="cue">Cue did not occur</option><option value="start-side">Cue occurred; two-minute action did not start</option><option value="none">Cue occurred; two-minute action started</option><option value="unclear">Record is unclear</option></select>
+    <label for="b">Attempt B</label>
+    <select id="b"><option value="">Choose…</option><option value="cue">Cue did not occur</option><option value="start-side">Cue occurred; two-minute action did not start</option><option value="none">Cue occurred; two-minute action started</option><option value="unclear">Record is unclear</option></select>
+    <button type="button" onclick="classifyPair()">Read the pair</button><p id="result" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p>Both attempts followed the instruction. In A, the cue happened but the two-minute action did not start. In B, the cue did not happen. How should you label the pair?</p>
+    <label><input type="radio" name="q" value="wrong"> A: none; B: start-side.</label>
+    <label><input type="radio" name="q" value="right"> A: start-side; B: cue.</label>
+    <label><input type="radio" name="q" value="wrong"> Change both parts of the ritual now.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Ask your teacher if a cue or start record is hard to classify. A neutral <em>unclear</em> label is useful data; no urgency, guilt, or catch-up work is required.</footer>
+</main><script>
+function classifyPair(){const a=document.getElementById('a').value,b=document.getElementById('b').value,r=document.getElementById('result');if(!a||!b){r.className='feedback bad';r.textContent='Choose a cue-first label for both attempts.';return}if((a==='cue'||a==='start-side')&&a===b){r.className='feedback good';r.textContent='The same readable break appeared twice. If you already specified one matching test, that is the only test to consider; otherwise retain and gather.';return}r.className='feedback good';r.textContent='Retain the current plan and gather two ordinary records. Mixed, working, or unclear evidence does not call for a redesign.'}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. Read the cue before the start: A is start-side; B is cue.':'Not this time. The cue comes first: A is start-side and B is cue.'}
+</script></body></html>
