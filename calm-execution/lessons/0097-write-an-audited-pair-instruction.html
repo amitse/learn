@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 97 — Write an Audited-Pair Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .9rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.tiny{color:var(--muted);font-size:.9rem}.instruction{margin-top:14px;padding:12px;background:#fff;border:1px dashed var(--violet);border-radius:8px;font-weight:700}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 97 · 10 minutes</div>
+  <h1>Write an audited-pair instruction</h1>
+  <p class="lede">Turn a classified, audit-passed pair into one small instruction you can actually check two times.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use this only after Lesson 96: both attempts were <strong>followed</strong> and you have labelled each one cue-first.</p>
+    <p>Write exactly one next move:</p>
+    <ul><li><strong>Retain and gather</strong> for a working, mixed, or unclear pair.</li><li>Use <strong>one already-specified matching test</strong> only when the same readable break appeared twice.</li></ul>
+    <p class="rule">Name the same observable cue, the exact two-minute action, and a two-attempt boundary. Do not add a new test, output goal, or catch-up work.</p>
+  </div>
+
+  <div class="card"><h2>Why keep it small?</h2>
+    <p>This is a practical evidence-reading exercise, not a claim about your character. Repetition in a stable context is relevant to cue-linked habits; here, a narrow instruction lets you see whether the planned action was enacted before changing it again. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — make your next instruction</h2>
+    <p>Spend 5–10 minutes with your Lesson 96 pair. Copy the cue and exact two-minute action already in your plan. Then choose the move supported by that pair.</p>
+    <label for="cue">Observable cue</label><input id="cue" placeholder="e.g., After I put down my lunch plate">
+    <label for="action">Exact two-minute action</label><input id="action" placeholder="e.g., Open the draft and write its title">
+    <label for="move">Pair result → next move</label>
+    <select id="move"><option value="">Choose…</option><option value="retain">Working, mixed, or unclear → retain and gather</option><option value="test">Same readable break twice → use one specified matching test</option></select>
+    <label for="test">Matching test (only if selected)</label><input id="test" placeholder="e.g., Put the draft tab first before the cue">
+    <button type="button" onclick="makeInstruction()">Make my two-attempt instruction</button>
+    <p id="result" class="feedback" aria-live="polite"></p><div id="instruction" class="instruction" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p>Both audited attempts were followed. One is <em>none</em>; one is <em>start-side</em>. What is the supported next instruction?</p>
+    <label><input type="radio" name="q" value="wrong"> Add a new test and increase the action to 20 minutes.</label>
+    <label><input type="radio" name="right" value="right"> Keep the same cue and exact two-minute action; gather two ordinary records.</label>
+    <label><input type="radio" name="q" value="wrong"> Treat the mixed pair as a failure and catch up tonight.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Ask your teacher if the pair or a proposed test is hard to read. The aim is a calm, checkable next attempt—not urgency, guilt, or a verdict.</footer>
+</main><script>
+function makeInstruction(){const cue=document.getElementById('cue').value.trim(),action=document.getElementById('action').value.trim(),move=document.getElementById('move').value,test=document.getElementById('test').value.trim(),r=document.getElementById('result'),o=document.getElementById('instruction');if(!cue||!action||!move||(move==='test'&&!test)){r.className='feedback bad';r.textContent='Add the cue, exact action, next move, and—if testing—the one specified matching test.';o.hidden=true;return}const text=move==='retain'?`For the next two ordinary attempts, after ${cue}, I will ${action}. I will retain this plan and record each attempt.`:`For the next two ordinary attempts, after ${cue}, I will ${action}. I will use only this matching test: ${test}. I will record each attempt.`;r.className='feedback good';r.textContent='Check: one move, a named cue, an exact action, and two attempts.';o.textContent=text;o.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=right]:checked'),r=document.getElementById('quiz');r.className='feedback '+(x?'good':'bad');r.textContent=x?'Correct. A mixed pair supports retaining the plan and gathering two readable attempts.':'Not this time. Mixed evidence calls for the same small plan and two readable records, not expansion or catch-up.'}
+</script></body></html>
