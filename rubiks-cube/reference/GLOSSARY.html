@@ -538,6 +538,13 @@
   <dt>First queue failure</dt><dd>The earliest mismatch in audit order—classification, scope, then one action. It sets the repair boundary because a correct later clause cannot make an earlier failure safe.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 66 — Audit One F2L Queue Instruction (2026-10-23)</p>
+<h2>F2L Queue-Instruction Repair</h2>
+<dl>
+  <dt>Queue-instruction repair</dt><dd>A minimal correction to a proposed F2L queue line made against its selected audited-card row. Audit classification, then scope, then one action; replace only the first failed clause.</dd>
+  <dt>Repair boundary (queue)</dt><dd>The first failed item in queue-instruction audit order. A wrong label is fixed before scope; a scope drift is fixed before an extra action. Later correct text never cures an earlier failure.</dd>
+  <dt>Permitted queue action</dt><dd>The one cube-side action authorized by the source row: an <strong>ACT</strong> row permits its approved drill, while a <strong>FRESH EVIDENCE</strong> row permits one matching replacement attempt. Combining them crosses the one-action boundary.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 67 — Repair One F2L Queue Instruction (2026-10-25)</p>
 </body>
 </html>
