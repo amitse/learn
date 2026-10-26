@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 98 — Audit an Audited-Pair Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}textarea,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}textarea{min-height:96px;resize:vertical}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.decision{margin-top:14px;padding:12px;background:#fff;border:1px dashed var(--violet);border-radius:8px;font-weight:700}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}.attempt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 98 · 8 minutes</div>
+  <h1>Audit an audited-pair instruction</h1>
+  <p class="lede">Before reading whether the cue or start worked, check whether you actually used the same instruction twice.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use the exact instruction you made in Lesson 97. Compare it with each of its two covered attempts—not with your intention or the outcome.</p>
+    <ul><li><strong>Followed:</strong> the stated move, cue, and exact two-minute action were used.</li><li><strong>Not followed:</strong> a stated part was not used.</li><li><strong>Unclear:</strong> the record cannot establish it.</li></ul>
+    <p class="rule">If either attempt is <em>not followed</em> or <em>unclear</em>, repeat the exact instruction for two ordinary attempts. Do not interpret outcomes or add a change yet.</p>
+  </div>
+
+  <div class="card"><h2>Why this order?</h2>
+    <p>This is a practical evidence-reading rule: keeping the written plan stable makes the next records easier to compare. Repetition in a stable context is also central to the distinction between cue-driven habits and mere frequency. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — audit two attempts</h2>
+    <p>Spend 5–8 minutes with your Lesson 97 sentence and its two records. Copy the sentence below, then give each attempt one honest label. Missing information is <em>unclear</em>, not a guess.</p>
+    <label for="instruction">Exact Lesson 97 instruction</label>
+    <textarea id="instruction" placeholder="For the next two ordinary attempts, after …"></textarea>
+    <div class="attempt"><strong>Covered attempt 1</strong><label for="one">Did it follow that exact instruction?</label><select id="one"><option value="">Choose…</option><option value="followed">Followed</option><option value="not followed">Not followed</option><option value="unclear">Unclear</option></select></div>
+    <div class="attempt"><strong>Covered attempt 2</strong><label for="two">Did it follow that exact instruction?</label><select id="two"><option value="">Choose…</option><option value="followed">Followed</option><option value="not followed">Not followed</option><option value="unclear">Unclear</option></select></div>
+    <button type="button" onclick="audit()">Make the audit decision</button>
+    <p id="result" class="feedback" aria-live="polite"></p><div id="decision" class="decision" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p>Your exact instruction said “after putting down my lunch plate, open the draft and write its title.” Attempt 1 did that; Attempt 2 opened email instead. What happens next?</p>
+    <label><input type="radio" name="q" value="wrong"> Classify the two outcomes cue-first and design a new test.</label>
+    <label><input type="radio" name="q" value="right"> Label Attempt 2 <em>not followed</em> and repeat the exact instruction for two ordinary attempts.</label>
+    <label><input type="radio" name="q" value="wrong"> Add an extra reminder and make up the missed action tonight.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Ask your teacher if “followed” is hard to judge. The purpose is a readable next pair, not fault-finding, urgency, or catch-up work.</footer>
+</main><script>
+function audit(){const i=document.getElementById('instruction').value.trim(),a=document.getElementById('one').value,b=document.getElementById('two').value,r=document.getElementById('result'),d=document.getElementById('decision');if(!i||!a||!b){r.className='feedback bad';r.textContent='Copy the exact instruction and label both covered attempts.';d.hidden=true;return}if(a==='followed'&&b==='followed'){r.className='feedback good';r.textContent='Audit passed: both attempts are readable as followed.';d.textContent='Next: classify these two outcomes cue-first—first “cue occurred?”, then “two-minute action started?”. Keep the instruction unchanged while you read the pair.'}else{r.className='feedback good';r.textContent='Audit incomplete: do not read outcomes as evidence about the instruction yet.';d.textContent='Next: repeat this exact instruction for two ordinary attempts. Keep its cue, two-minute action, and any active matching test unchanged; then audit again.'}d.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. One unmatched attempt means the instruction has not been enacted twice; repeat it unchanged before reading outcomes.':'Not this time. The plan was not enacted twice, so repeat the exact instruction before interpreting outcomes or changing the system.'}
+</script></body></html>
