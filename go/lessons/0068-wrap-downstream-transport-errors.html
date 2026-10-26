@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 68 — Wrap Downstream Transport Errors</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-size:.75rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.time{display:inline-block;margin-top:7px;padding:.24rem .65rem;border-radius:99px;background:#123238;color:#a9eff1;font-size:.85rem}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.12;margin:.4rem 0 .75rem}h2{font-size:1.35rem;margin:2.2rem 0 .65rem}.lead,.muted{color:var(--muted)}.card{margin:18px 0;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;border-radius:4px;padding:.08em .3em;font-size:.9em}pre{overflow:auto;margin:0;background:#0a0c11;border:1px solid var(--border);border-radius:9px;padding:16px;font-size:.81rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{overflow:hidden;border:1px solid var(--border);border-radius:9px}.pane h3{margin:0;padding:8px 12px;background:#252938;font-size:.85rem}.ts h3{color:#9fc9ff}.go h3{color:#86e8e5}.pane pre{border:0;border-radius:0;height:100%}.steps{padding-left:1.25rem}.steps li{padding:.22rem 0}.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;margin:.7rem 0 0;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#75dce0}.check{display:block;margin:.55rem 0;color:#cdd2df}.check input{accent-color:var(--accent);margin-right:.5rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · dependency boundary</p><span class="time">8 minutes</span>
+<h1>Wrap a downstream transport error—without losing its cause</h1>
+<p class="lead">Your outbound helper now creates a fresh request and carries the selected request ID. Its next job is to make a failed dependency call understandable to the application while preserving the original error for cancellation and timeout checks.</p>
+<div class="card goal"><strong>Tangible win:</strong> return an error that says <em>which operation failed</em>, then prove callers can still recognize <code>context.DeadlineExceeded</code> with <code>errors.Is</code>.</div>
+
+<h2>Context for people; identity for programs</h2>
+<p>A bare transport error may say only that a deadline expired. At the dependency boundary, add a stable operation label such as <code>get profile</code>. But do not replace the error with a formatted string: callers need the original cause to decide whether it was cancellation, timeout, or something else.</p>
+<div class="card"><strong>Rule:</strong> use <code>fmt.Errorf("get profile: %w", err)</code>. The <code>%w</code> verb wraps <code>err</code>; <code>errors.Is</code> can walk that chain. Plain <code>%v</code> only prints text and loses that machine-readable relationship.</div>
+
+<h2>Same intention, different idiom</h2>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>try {
+  return await fetch(profileURL, { signal });
+} catch (err) {
+  throw new Error("get profile", { cause: err });
+}
+
+// later: inspect err.cause
+</pre></section><section class="pane go"><h3>Go</h3><pre>res, err := client.Do(req)
+if err != nil {
+    return nil, fmt.Errorf("get profile: %w", err)
+}
+return res, nil
+
+// later: errors.Is(err, cause)
+</pre></section></div>
+<p>Both add an operation boundary while retaining the underlying failure. In Go, <code>%w</code> is the deliberate signal that the cause belongs in the error chain; it is not merely string formatting.</p>
+
+<h2>A tiny adapter</h2>
+<pre>func getProfile(ctx context.Context, client *http.Client, url string) (*http.Response, error) {
+    req, err := newDownstreamRequest(ctx, url) // Lesson 67 helper
+    if err != nil {
+        return nil, fmt.Errorf("build profile request: %w", err)
+    }
+
+    res, err := client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("get profile: %w", err)
+    }
+    return res, nil
+}</pre>
+<p>The two operations are intentionally different: failure to build a URL is not failure to perform a network call. Keep the public HTTP error mapping outside this helper; this layer returns a useful application error, while the route decides what is safe to show a client.</p>
+
+<h2>Test the preserved cause, not just the sentence</h2>
+<pre>func TestGetProfileWrapsDeadline(t *testing.T) {
+    cause := context.DeadlineExceeded
+    client := &amp;http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+        return nil, cause
+    })}
+
+    _, err := getProfile(context.Background(), client, "https://profiles.example")
+    if err == nil || !errors.Is(err, cause) {
+        t.Fatalf("errors.Is(err, deadline) = false; err = %v", err)
+    }
+    if !strings.Contains(err.Error(), "get profile") {
+        t.Fatalf("error = %q; want operation context", err)
+    }
+}</pre>
+<p class="muted">A small <code>RoundTripper</code> fake avoids a real network and forces the exact transport failure. The first assertion protects behavior; the second protects the operator-facing context.</p>
+
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>A profile request returns <code>context.Canceled</code>. Which return preserves both useful operation context and cancellation identity?</strong></p><button data-correct="false"><code>return nil, errors.New("get profile")</code></button><button data-correct="false"><code>return nil, fmt.Errorf("get profile: %v", err)</code></button><button data-correct="true"><code>return nil, fmt.Errorf("get profile: %w", err)</code></button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Name one dependency operation at its outbound boundary.</label><label class="check"><input type="checkbox"> Wrap its <code>client.Do</code> failure with <code>%w</code>.</label><label class="check"><input type="checkbox"> Use a fake transport to assert both <code>errors.Is</code> and the operation label.</label>
+<p class="muted"><strong>Sources:</strong> <a href="https://pkg.go.dev/fmt#Errorf">Go <code>fmt.Errorf</code></a>; <a href="https://pkg.go.dev/errors#Is">Go <code>errors.Is</code></a>; <a href="https://pkg.go.dev/net/http#Client.Do">Go <code>http.Client.Do</code></a>. Ask your teacher a follow-up if you want to test inbound-context cancellation reaching a blocked downstream call.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — %w adds the operation label and keeps the original cancellation error discoverable.':'Not quite — the error must retain the original cause, not just its printed text.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

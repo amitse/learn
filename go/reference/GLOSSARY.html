@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Outbound Selected Request-ID Propagation (Lesson 67) <span class="new-badge">new</span></h2>
+<h2>Wrapped Downstream Transport Errors (Lesson 68) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>error wrapping</td><td><code>new Error(message, { cause })</code></td><td>Adding a stable operation label with <code>fmt.Errorf("get profile: %w", err)</code> while retaining the original error in Go's error chain. It gives operators context without converting the cause into unstructured text.</td></tr>
+  <tr><td><code>%w</code></td><td>preserve <code>cause</code></td><td>The <code>fmt.Errorf</code> formatting verb that wraps one error operand. Unlike <code>%v</code>, it lets <code>errors.Is</code> and <code>errors.As</code> inspect the underlying failure.</td></tr>
+  <tr><td>transport fake</td><td>stubbed <code>fetch</code> rejection</td><td>A small test implementation of <code>http.RoundTripper</code> that returns a selected error from <code>RoundTrip</code>. It forces an <code>http.Client</code> failure without a server or external network.</td></tr>
+</table>
+
+<h2>Outbound Selected Request-ID Propagation (Lesson 67)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>outbound propagation boundary</td><td>dependency <code>fetch</code> call</td><td>The point where this service creates a fresh HTTP request to another service. It must carry the one request ID selected at the inbound boundary, rather than rereading and forwarding raw inbound request input.</td></tr>
