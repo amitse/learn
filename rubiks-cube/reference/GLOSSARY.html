@@ -545,6 +545,13 @@
   <dt>Permitted queue action</dt><dd>The one cube-side action authorized by the source row: an <strong>ACT</strong> row permits its approved drill, while a <strong>FRESH EVIDENCE</strong> row permits one matching replacement attempt. Combining them crosses the one-action boundary.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 67 — Repair One F2L Queue Instruction (2026-10-25)</p>
+<h2>F2L Queue Execution</h2>
+<dl>
+  <dt>Queue execution (F2L)</dt><dd>One cube attempt performed from a selected repaired queue instruction. It preserves the row’s classification, target pair, empty-workspace type, retained cue, checkpoint, and one permitted action, then stops at the checkpoint.</dd>
+  <dt>Checkpoint log (queue)</dt><dd>A literal one-line record made at the exact checkpoint named by a queue instruction: attempt label, checkpoint, and visible cube state. It records an observation, not a cause, verdict, or follow-up plan.</dd>
+  <dt>Execution boundary (F2L)</dt><dd>The rule that a queue execution ends once its one permitted action has reached the stated checkpoint. Changing conditions, diagnosing a cause, or appending another drill/action belongs to a later decision, not the current attempt.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 68 — Execute One F2L Queue Instruction (2026-10-27)</p>
 </body>
 </html>
