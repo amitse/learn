@@ -102,4 +102,5 @@
 - Lesson 97 added an audited-pair next-instruction writing drill: translate a classified audit-passed pair into one retain-and-gather or one already-specified matching-test sentence, explicitly naming the observable cue, exact two-minute action, and two-attempt boundary; audit enactment next.
 - Lesson 98 added an enactment audit for the audited-pair instruction: compare its exact sentence with both covered attempts, label each `followed`, `not followed`, or `unclear`, and repeat it unchanged for two ordinary attempts unless both labels are `followed`.
 - Lesson 99 added cue-first outcome classification after the enactment audit: label each followed attempt `cue`, `start-side`, `none`, or `unclear`; retain and gather unless the same readable break appears twice and has one already-specified matching test.
+- Lesson 100 added pair-based next-instruction writing: translate an audit-passed classified pair into one two-attempt retain-and-gather instruction, or use only one already-specified matching test; always name the existing observable cue and exact two-minute action.
 - Increase difficulty only when the basic start ritual is reliable.

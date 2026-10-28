@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 100 — Write One Pair-Based Next Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.instruction{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;font-weight:700}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 100 · 8 minutes</div>
+  <h1>Write one pair-based next instruction</h1>
+  <p class="lede">Turn an audit-passed, classified pair into one small instruction you can actually follow twice.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use this only after both covered attempts were <strong>followed</strong> and Lesson 99 gave each one a label.</p>
+    <ol><li>If the pair is mixed, working, or unclear: <strong>retain and gather</strong>.</li><li>If both readable labels are the same <strong>cue</strong> or <strong>start-side</strong>, use <strong>one already-specified matching test</strong>—and nothing else.</li></ol>
+    <p class="rule">Every instruction names one move, the existing observable cue, the exact two-minute action, and a two-attempt boundary.</p>
+  </div>
+
+  <div class="card"><h2>Why this narrow format?</h2>
+    <p>This is a practical constraint, not a verdict about you: keeping the cue and action explicit makes the next two records easier to read. Repeated behaviour in a stable context is central to the distinction between cue-driven habits and mere frequency. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — make your next instruction</h2>
+    <p>Take 5–10 minutes. Copy the cue and exact action from your current plan; do not improve them today. Then use the two labels from your audit-passed pair.</p>
+    <label for="cue">Existing observable cue</label><input id="cue" placeholder="e.g. After I put down my morning coffee">
+    <label for="action">Exact two-minute action</label><input id="action" placeholder="e.g. Open the proposal and write its first heading">
+    <label for="pair">Pair result</label><select id="pair"><option value="">Choose…</option><option value="retain">Mixed, working, or unclear</option><option value="cue">Two readable cue labels</option><option value="start">Two readable start-side labels</option></select>
+    <label for="test">If the same break appeared twice, do you already have one matching bounded test specified?</label><select id="test"><option value="">Choose…</option><option value="no">No / not applicable</option><option value="yes">Yes</option></select>
+    <label for="testText">That existing test (only if applicable)</label><input id="testText" placeholder="e.g. Put the paper cue beside the mug">
+    <button type="button" onclick="buildInstruction()">Build my two-attempt instruction</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="instruction" class="instruction" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p>Your pair labels are <em>none</em> and <em>unclear</em>. What is the next move?</p>
+    <label><input type="radio" name="q" value="wrong"> Add a new reminder and lengthen the action.</label>
+    <label><input type="radio" name="q" value="right"> Retain the current plan and gather two ordinary readable attempts.</label>
+    <label><input type="radio" name="q" value="wrong"> Make up the unclear attempt tonight.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Ask your teacher if the pair or its existing test is hard to name. The target is a readable next attempt—not urgency, guilt, punishment, or catch-up work.</footer>
+</main><script>
+function buildInstruction(){const cue=document.getElementById('cue').value.trim(),action=document.getElementById('action').value.trim(),pair=document.getElementById('pair').value,test=document.getElementById('test').value,testText=document.getElementById('testText').value.trim(),f=document.getElementById('feedback'),out=document.getElementById('instruction');if(!cue||!action||!pair||!test){f.className='feedback bad';f.textContent='Complete the cue, action, pair result, and test field.';out.hidden=true;return}if(pair==='retain'){f.className='feedback good';f.textContent='Good: the evidence does not support a redesign.';out.textContent='For the next two ordinary attempts: after “'+cue+'”, start “'+action+'” for two minutes. Keep the current plan unchanged; record cue and start each time.'}else if(test!=='yes'||!testText){f.className='feedback bad';f.textContent='A repeated break can use only an already-specified matching test. If none exists, retain the current plan and gather another ordinary readable pair.';out.hidden=true;return}else{const kind=pair==='cue'?'cue-side':'start-side';f.className='feedback good';f.textContent='Good: one existing matching test, with the rest held steady.';out.textContent='For the next two ordinary attempts: use only this '+kind+' test — “'+testText+'”. After “'+cue+'”, start “'+action+'” for two minutes. Record whether the instruction was followed, then cue and start.'}out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. Mixed or incomplete evidence means retain and gather; it does not license a redesign or catch-up work.':'Not this time. The pair is not two matching readable breaks, so retain the current plan and gather another ordinary pair.'}
+</script></body></html>
