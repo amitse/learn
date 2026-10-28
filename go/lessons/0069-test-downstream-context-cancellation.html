@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 69 — Test Downstream Context Cancellation</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-size:.75rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.time{display:inline-block;margin-top:7px;padding:.24rem .65rem;border-radius:99px;background:#123238;color:#a9eff1;font-size:.85rem}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.12;margin:.4rem 0 .75rem}h2{font-size:1.35rem;margin:2.2rem 0 .65rem}.lead,.muted{color:var(--muted)}.card{margin:18px 0;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;border-radius:4px;padding:.08em .3em;font-size:.9em}pre{overflow:auto;margin:0;background:#0a0c11;border:1px solid var(--border);border-radius:9px;padding:16px;font-size:.81rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{overflow:hidden;border:1px solid var(--border);border-radius:9px}.pane h3{margin:0;padding:8px 12px;background:#252938;font-size:.85rem}.ts h3{color:#9fc9ff}.go h3{color:#86e8e5}.pane pre{border:0;border-radius:0;height:100%}.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;margin:.7rem 0 0;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#75dce0}.check{display:block;margin:.55rem 0;color:#cdd2df}.check input{accent-color:var(--accent);margin-right:.5rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · dependency boundary</p><span class="time">8 minutes</span>
+<h1>Prove cancellation reaches a blocked downstream call</h1>
+<p class="lead">Your downstream request is created with <code>http.NewRequestWithContext</code>, and its errors retain their causes. Now verify the important behavior: when the incoming work is canceled, a dependency call stops waiting too.</p>
+<div class="card goal"><strong>Tangible win:</strong> write a deterministic test that starts a blocked transport, cancels its context, and proves the adapter returns a cancellation-recognizable error.</div>
+
+<h2>One context owns the work</h2>
+<p>Pass the handler’s context to every outbound request. When its cancellation signal arrives, the request’s context is done. A real transport can then abandon its work; a test transport can wait on <code>req.Context().Done()</code> to prove that the signal arrived.</p>
+<div class="card"><strong>Test the boundary, not timing:</strong> use a <code>started</code> channel so the test cancels <em>after</em> the transport is actually waiting. Do not use <code>time.Sleep</code>; it can pass or fail based on scheduler luck.</div>
+
+<h2>Same intention, different idiom</h2>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>const controller = new AbortController();
+const pending = fetch(url, {
+  signal: controller.signal,
+});
+await downstreamStarted;
+controller.abort();
+await expect(pending).rejects.toThrow();</pre></section><section class="pane go"><h3>Go</h3><pre>ctx, cancel := context.WithCancel(context.Background())
+pending := getProfile(ctx, client, url)
+&lt;-started
+cancel()
+err := &lt;-pending
+if !errors.Is(err, context.Canceled) {
+    t.Fatal("cancellation was lost")
+}</pre></section></div>
+<p>Both approaches propagate a cancellation signal. Go puts it on <code>context.Context</code>, which travels explicitly into <code>http.NewRequestWithContext</code>.</p>
+
+<h2>Make a transport that blocks until canceled</h2>
+<pre>type roundTripFunc func(*http.Request) (*http.Response, error)
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestGetProfileCancelsBlockedRequest(t *testing.T) {
+    started := make(chan struct{})
+    client := &amp;http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+        close(started)                 // the request reached the dependency boundary
+        &lt;-r.Context().Done()           // wait for its caller to cancel
+        return nil, r.Context().Err()  // context.Canceled
+    })}
+
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+    result := make(chan error, 1)
+    go func() { _, err := getProfile(ctx, client, "https://profiles.example"); result &lt;- err }()
+
+    &lt;-started // synchronization, not a sleep
+    cancel()
+    if err := &lt;-result; !errors.Is(err, context.Canceled) {
+        t.Fatalf("error = %v; want a wrapped context.Canceled", err)
+    }
+}</pre>
+<p>The buffered <code>result</code> channel lets the goroutine finish even if the assertion fails. Returning <code>r.Context().Err()</code> models a cancellation-aware transport; the wrapper from lesson 68 must preserve it.</p>
+
+<h2>What this does—and does not—prove</h2>
+<div class="card"><strong>It proves:</strong> the exact context passed to <code>getProfile</code> reaches the outbound request, a blocked dependency observes cancellation, and the returned error remains inspectable with <code>errors.Is</code>.<br><br><strong>It does not prove:</strong> a particular external API has received a cancellation packet, or that a retry policy is correct. Those are separate contracts.</div>
+
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>Why wait for <code>&lt;-started</code> before calling <code>cancel()</code>?</strong></p><button data-correct="false">It gives the remote server extra time to respond.</button><button data-correct="true">It establishes that the transport is blocked first, so the test checks cancellation rather than a race.</button><button data-correct="false">It converts a cancellation into a deadline.</button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Build the outbound request with the handler’s context.</label><label class="check"><input type="checkbox"> Create a blocking <code>RoundTripper</code> fake and signal when it starts.</label><label class="check"><input type="checkbox"> Cancel after that signal and assert <code>errors.Is(err, context.Canceled)</code>.</label>
+<p class="muted"><strong>Sources:</strong> <a href="https://pkg.go.dev/context">Go <code>context</code></a>; <a href="https://pkg.go.dev/net/http#NewRequestWithContext">Go <code>http.NewRequestWithContext</code></a>; <a href="https://pkg.go.dev/net/http#RoundTripper">Go <code>http.RoundTripper</code></a>; <a href="https://pkg.go.dev/errors#Is">Go <code>errors.Is</code></a>. Ask your teacher a follow-up if you want to distinguish cancellation from a downstream timeout.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — the channel creates a deterministic happens-before point. No sleep is needed.':'Not quite — the signal is test synchronization: it proves the fake is waiting before cancellation.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>
