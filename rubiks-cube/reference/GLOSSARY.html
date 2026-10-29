@@ -552,6 +552,14 @@
   <dt>Execution boundary (F2L)</dt><dd>The rule that a queue execution ends once its one permitted action has reached the stated checkpoint. Changing conditions, diagnosing a cause, or appending another drill/action belongs to a later decision, not the current attempt.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 68 — Execute One F2L Queue Instruction (2026-10-27)</p>
+<h2>F2L Queue-Execution Log Classification</h2>
+<dl>
+  <dt>Valid checkpoint log</dt><dd>A queue-execution log whose target pair, empty-workspace type, retained cue/timing, and stated checkpoint all match its source instruction, and which records only a literal visible observation.</dd>
+  <dt>Drifted execution</dt><dd>A real cube attempt that cannot be used as comparable evidence for its queue instruction because at least one scope field changed or disappeared: target pair, workspace, retained cue/timing, or checkpoint.</dd>
+  <dt>Unbounded conclusion</dt><dd>A log that adds a cause, success verdict, diagnosis, or next action instead of stopping at literal checkpoint observation. It is not a valid evidence unit even when its scope fields match.</dd>
+  <dt>Log-classification order</dt><dd>First check the four scope fields; next check that the line is observation only; then label it valid, drifted, or unbounded. Stop at the first failure—do not repair or interpret while classifying.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 69 — Classify One F2L Queue-Execution Log (2026-10-29)</p>
 </body>
 </html>
