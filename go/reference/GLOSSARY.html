@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Downstream Context Cancellation (Lesson 69) <span class="new-badge">new</span></h2>
+<h2>Downstream Timeout (Lesson 70) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>child deadline context</td><td>request signal composed with <code>AbortSignal.timeout()</code></td><td>A context returned by <code>context.WithTimeout(parent, duration)</code>. It preserves cancellation from <code>parent</code> and independently becomes done when its own duration expires.</td></tr>
+  <tr><td><code>context.DeadlineExceeded</code></td><td>timeout rejection</td><td>The error reported when a context deadline expires. Recognize it with <code>errors.Is</code>, including after the dependency adapter adds operation context with <code>%w</code>.</td></tr>
+  <tr><td>dependency time budget</td><td>per-<code>fetch</code> timeout</td><td>The bounded time an application allocates to one downstream operation. It is distinct from the caller's lifetime and should be configured at the dependency boundary rather than supplied as an arbitrary request parameter.</td></tr>
+</table>
+
+<h2>Downstream Context Cancellation (Lesson 69)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>cancellation propagation</td><td><code>AbortSignal</code> reaches <code>fetch</code></td><td>The path by which a caller’s <code>context.Context</code> is attached to an outbound request with <code>http.NewRequestWithContext</code>, allowing a cancellation signal to reach the dependency operation.</td></tr>
