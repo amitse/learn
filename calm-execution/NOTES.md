@@ -104,4 +104,5 @@
 - Lesson 99 added cue-first outcome classification after the enactment audit: label each followed attempt `cue`, `start-side`, `none`, or `unclear`; retain and gather unless the same readable break appears twice and has one already-specified matching test.
 - Lesson 100 added pair-based next-instruction writing: translate an audit-passed classified pair into one two-attempt retain-and-gather instruction, or use only one already-specified matching test; always name the existing observable cue and exact two-minute action.
 - Lesson 101 added an enactment audit for the pair-based instruction: label both covered attempts `followed`, `not followed`, or `unclear`; repeat the exact instruction unchanged for two ordinary attempts unless both labels are `followed`.
+- Lesson 102 added cue-first classification for an audit-passed pair: label each attempt `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and has one already-specified matching bounded test.
 - Increase difficulty only when the basic start ritual is reliable.

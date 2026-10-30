@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 102 — Classify One Audited Instruction Pair</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.result{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;font-weight:700}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 102 · 8 minutes</div>
+  <h1>Classify one audited instruction pair</h1>
+  <p class="lede">Once both attempts followed the plan, read what happened in a fixed order: cue first, start second.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use this only after Lesson 101’s audit says both covered attempts were <strong>followed</strong>. For each attempt, ask two yes/no questions:</p>
+    <ol><li><strong>Did the observable cue occur?</strong></li><li><strong>If yes, did the exact two-minute action start?</strong></li></ol>
+    <p>Then apply one label: <strong>cue</strong> (cue did not occur), <strong>start-side</strong> (cue occurred, action did not start), <strong>none</strong> (both occurred), or <strong>unclear</strong> (the record cannot tell).</p>
+    <p class="rule">Classify before redesigning. A pair supports one already-specified matching test only when the same readable break appears twice.</p>
+  </div>
+
+  <div class="card"><h2>Why keep cue and action separate?</h2>
+    <p>This is a practical reading rule, not a verdict about you. It preserves the course’s distinction between a stable context and the action that follows it. For background on cue-dependent habit formation, see <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — classify two audited attempts</h2>
+    <p>Take 5–10 minutes. Put the exact instruction beside two attempts that you already audited as followed. Enter only what the records show.</p>
+    <label for="instruction">Exact instruction (for context)</label><input id="instruction" placeholder="e.g. After I close lunch, open the brief and write for two minutes.">
+    <label for="cue1">Attempt 1: did the cue occur?</label><select id="cue1"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <label for="start1">Attempt 1: did the exact two-minute action start?</label><select id="start1"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <label for="cue2">Attempt 2: did the cue occur?</label><select id="cue2"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <label for="start2">Attempt 2: did the exact two-minute action start?</label><select id="start2"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <button type="button" onclick="classifyPair()">Classify the pair</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="result" class="result" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p>Both attempts followed the instruction. In both, the cue occurred but the two-minute action did not start. What is the pair’s reading?</p>
+    <label><input type="radio" name="q" value="wrong"> Cue break: change the cue immediately.</label>
+    <label><input type="radio" name="q" value="right"> Start-side break twice: use one already-specified matching test, if one exists.</label>
+    <label><input type="radio" name="q" value="wrong"> No break: increase the action to ten minutes.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Ask your teacher if a record feels ambiguous. “Unclear” is usable system data; it does not call for guilt, punishment, or catch-up work.</footer>
+</main><script>
+function label(c,s){if(c==='unclear'||s==='unclear')return'unclear';if(c==='no')return'cue';if(c==='yes'&&s==='no')return'start-side';if(c==='yes'&&s==='yes')return'none';return'unclear'}
+function classifyPair(){const ids=['instruction','cue1','start1','cue2','start2'],v=Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value.trim()])),f=document.getElementById('feedback'),out=document.getElementById('result');if(Object.values(v).some(x=>!x)){f.className='feedback bad';f.textContent='Enter the instruction and all four record facts.';out.hidden=true;return}const a=label(v.cue1,v.start1),b=label(v.cue2,v.start2);f.className='feedback good';f.textContent='Attempt 1: '+a+'. Attempt 2: '+b+'.';if((a==='cue'||a==='start-side')&&a===b){out.textContent='Same readable break twice. If you already specified one matching bounded test, use that one test for the next two ordinary attempts. Otherwise retain the plan and gather readable records—do not invent several changes.'}else if(a==='unclear'||b==='unclear'){out.textContent='Evidence is incomplete. Retain the exact instruction and gather two readable ordinary attempts; do not interpret a pattern yet.'}else{out.textContent='No repeated readable break. Retain the instruction and gather two ordinary attempts. Mixed or workable evidence does not require a redesign.'}out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. The cue worked; the repeated break is on the start side. Use only one already-specified matching test, if available.':'Not this time. Read cue first, then start. Do not expand the action or redesign before classifying.'}
+</script></body></html>
