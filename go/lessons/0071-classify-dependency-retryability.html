@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 71 — Classify Dependency Retryability</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-size:.75rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.time{display:inline-block;margin-top:7px;padding:.24rem .65rem;border-radius:99px;background:#123238;color:#a9eff1;font-size:.85rem}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.12;margin:.4rem 0 .75rem}h2{font-size:1.35rem;margin:2.2rem 0 .65rem}.lead,.muted{color:var(--muted)}.card{margin:18px 0;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;border-radius:4px;padding:.08em .3em;font-size:.9em}pre{overflow:auto;margin:0;background:#0a0c11;border:1px solid var(--border);border-radius:9px;padding:16px;font-size:.81rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{overflow:hidden;border:1px solid var(--border);border-radius:9px}.pane h3{margin:0;padding:8px 12px;background:#252938;font-size:.85rem}.ts h3{color:#9fc9ff}.go h3{color:#86e8e5}.pane pre{border:0;border-radius:0;height:100%}table{width:100%;border-collapse:collapse;font-size:.93rem}th,td{text-align:left;padding:.65rem;border-bottom:1px solid var(--border);vertical-align:top}th{color:#a9eff1}.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;margin:.7rem 0 0;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#75dce0}.check{display:block;margin:.55rem 0;color:#cdd2df}.check input{accent-color:var(--accent);margin-right:.5rem}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}table{font-size:.82rem}}
+</style>
+</head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · dependency boundary</p><span class="time">8 minutes</span>
+<h1>Classify dependency failures before retrying</h1>
+<p class="lead">A retry is a new attempt, not a way to turn every error into success. First make one small, conservative decision: was this failure interrupted by our caller, or is it a transient dependency failure worth considering for a later retry policy?</p>
+<div class="card goal"><strong>Tangible win:</strong> write a pure Go classifier that keeps cancellation and deadline exhaustion out of the retryable bucket, even after errors are wrapped.</div>
+
+<h2>Start with a deliberately narrow policy</h2>
+<p>Lessons 68–70 established a useful error chain: the adapter wraps failures with <code>%w</code>, and callers recognize their causes with <code>errors.Is</code>. Reuse that contract. Cancellation and an expired deadline mean the request’s time budget is over; retrying inside that same work would usually spend more of a budget that has already ended.</p>
+<pre>func retryableDependencyError(err error) bool {
+    switch {
+    case err == nil:
+        return false
+    case errors.Is(err, context.Canceled):
+        return false
+    case errors.Is(err, context.DeadlineExceeded):
+        return false
+    default:
+        return true // narrow teaching policy: selected transport failures only
+    }
+}</pre>
+<div class="card"><strong>Important boundary:</strong> this function <em>classifies</em> errors; it does not sleep, loop, or make another request. A later lesson can add bounded attempts and backoff only where the operation is safe to repeat.</div>
+
+<h2>The error chain still matters</h2>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>function retryable(err: unknown) {
+  if (err instanceof DOMException &&
+      err.name === "AbortError") return false;
+  if (err instanceof TimeoutError) return false;
+  return true; // policy, not magic
+}</pre></section><section class="pane go"><h3>Go</h3><pre>func retryable(err error) bool {
+  if errors.Is(err, context.Canceled) {
+    return false
+  }
+  if errors.Is(err, context.DeadlineExceeded) {
+    return false
+  }
+  return err != nil
+}</pre></section></div>
+<p>In both languages, distinguish a stop signal from a failure the dependency may recover from. Go’s <code>errors.Is</code> walks an error chain, so <code>fmt.Errorf("get profile: %w", context.DeadlineExceeded)</code> remains recognizable.</p>
+
+<h2>Make the policy executable with a table</h2>
+<pre>func TestRetryableDependencyError(t *testing.T) {
+    transportErr := errors.New("connection reset")
+    cases := []struct {
+        name string
+        err  error
+        want bool
+    }{
+        {"no error", nil, false},
+        {"wrapped cancellation", fmt.Errorf("get profile: %w", context.Canceled), false},
+        {"wrapped deadline", fmt.Errorf("get profile: %w", context.DeadlineExceeded), false},
+        {"wrapped transport failure", fmt.Errorf("get profile: %w", transportErr), true},
+    }
+    for _, tc := range cases {
+        t.Run(tc.name, func(t *testing.T) {
+            if got := retryableDependencyError(tc.err); got != tc.want {
+                t.Fatalf("retryableDependencyError(%v) = %v; want %v", tc.err, got, tc.want)
+            }
+        })
+    }
+}</pre>
+<p>The default is intentionally only a starting point for the adapter layer. A production policy may also reject permanent HTTP statuses or non-idempotent operations; do not smuggle those decisions into a generic “retry everything” helper.</p>
+
+<h2>Read the result, not the wording</h2>
+<div class="card"><table><thead><tr><th>Error shape</th><th>Classify</th><th>Why</th></tr></thead><tbody><tr><td><code>context.Canceled</code>, wrapped or direct</td><td>Not retryable</td><td>The caller, client, or shutdown ended the work.</td></tr><tr><td><code>context.DeadlineExceeded</code>, wrapped or direct</td><td>Not retryable</td><td>The allocated time has been exhausted.</td></tr><tr><td>Selected transport error</td><td>Candidate</td><td>The dependency may be transiently unavailable; a later policy must still bound attempts and check safety.</td></tr></tbody></table></div>
+
+<h2>Quick check</h2>
+<div class="card quiz" id="quiz"><p><strong>An adapter returns <code>fmt.Errorf("get profile: %w", context.DeadlineExceeded)</code>. What should the classifier return?</strong></p><button data-correct="false">Retryable, because the visible text starts with “get profile”.</button><button data-correct="true">Not retryable, because <code>errors.Is</code> recognizes the wrapped deadline cause.</button><button data-correct="false">Retryable, because wrapping removes the original error.</button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Add a pure retryability classifier beside the dependency adapter.</label><label class="check"><input type="checkbox"> Reject both <code>context.Canceled</code> and <code>context.DeadlineExceeded</code> with <code>errors.Is</code>.</label><label class="check"><input type="checkbox"> Table-test direct or wrapped stop signals separately from one selected transport error.</label>
+<p class="muted"><strong>Sources:</strong> <a href="https://pkg.go.dev/errors#Is">Go <code>errors.Is</code></a>; <a href="https://pkg.go.dev/context#Canceled">Go <code>context.Canceled</code></a>; <a href="https://pkg.go.dev/context#DeadlineExceeded">Go <code>context.DeadlineExceeded</code></a>; <a href="https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/">Amazon Builders’ Library: Timeouts, retries, and backoff with jitter</a>. Ask your teacher a follow-up when you are ready to turn this classification into a bounded retry loop.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — wrapping preserves the deadline in the error chain, and errors.Is finds it.':'Not quite — classify the underlying cause with errors.Is, not the outer text.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

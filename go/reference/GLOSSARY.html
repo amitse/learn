@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Downstream Timeout (Lesson 70) <span class="new-badge">new</span></h2>
+<h2>Dependency Retryability (Lesson 71) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>retryability classifier</td><td>pure retry-eligibility predicate</td><td>A small pure function that decides whether a dependency error is a candidate for a future retry policy. It does not sleep, loop, or make another request.</td></tr>
+  <tr><td>non-retryable stop signal</td><td>abort or timeout result</td><td>A <code>context.Canceled</code> or <code>context.DeadlineExceeded</code> cause. The caller or time budget has ended the work, so it is excluded from an immediate retry by this conservative policy.</td></tr>
+  <tr><td>retry candidate</td><td>potentially transient dependency failure</td><td>An error that is neither cancellation nor deadline exhaustion, such as a selected transport failure. It still needs explicit safety, attempt-limit, and backoff decisions before a request is actually retried.</td></tr>
+</table>
+
+<h2>Downstream Timeout (Lesson 70)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>child deadline context</td><td>request signal composed with <code>AbortSignal.timeout()</code></td><td>A context returned by <code>context.WithTimeout(parent, duration)</code>. It preserves cancellation from <code>parent</code> and independently becomes done when its own duration expires.</td></tr>
