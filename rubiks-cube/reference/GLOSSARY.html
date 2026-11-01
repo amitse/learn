@@ -560,6 +560,13 @@
   <dt>Log-classification order</dt><dd>First check the four scope fields; next check that the line is observation only; then label it valid, drifted, or unbounded. Stop at the first failure—do not repair or interpret while classifying.</dd>
 </dl>
 
-<p class="updated">Last updated: Lesson 69 — Classify One F2L Queue-Execution Log (2026-10-29)</p>
+<h2>F2L Queue-Execution Log Repair</h2>
+<dl>
+  <dt>Log repair boundary</dt><dd>The first failed part of a non-valid queue-execution log: the first changed scope field, or the first added cause, verdict, or follow-up action. Repair only that part; do not rewrite later literal observation.</dd>
+  <dt>Text repair (queue log)</dt><dd>A minimal correction to how a valid physical attempt was recorded, such as deleting an appended conclusion. It may not change the claimed pair, workspace, cue timing, checkpoint, or cube observation after the fact.</dd>
+  <dt>Replacement evidence needed</dt><dd>The honest outcome when the physical queue execution—not just its wording—drifted from a required scope field. Preserve the drifted log and collect a new matching attempt rather than relabelling history.</dd>
+</dl>
+
+<p class="updated">Last updated: Lesson 70 — Repair One Non-Valid Queue-Execution Log (2026-11-01)</p>
 </body>
 </html>
