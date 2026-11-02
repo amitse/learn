@@ -107,4 +107,5 @@
 - Lesson 102 added cue-first classification for an audit-passed pair: label each attempt `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and has one already-specified matching bounded test.
 - Lesson 103 added a single audited-pair next-instruction card: write retain-and-gather for mixed/workable/incomplete evidence, or one already-specified matching bounded test for a repeated readable break, always naming the same observable cue, exact two-minute action, and two-attempt boundary.
 - Lesson 104 added an enactment audit for the Lesson 103 instruction: compare the exact sentence with both covered attempts, label each `followed`, `not followed`, or `unclear`, and repeat it unchanged for two ordinary attempts unless both labels are `followed`.
+- Lesson 105 added cue-first outcome classification after the audit gate: label each followed attempt `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and has one already-specified matching bounded test.
 - Increase difficulty only when the basic start ritual is reliable.
