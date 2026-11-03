@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 106 — Write One Classified-Pair Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.result{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;font-weight:700;white-space:pre-wrap}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 106 · 10 minutes</div>
+  <h1>Write one classified-pair instruction</h1>
+  <p class="lede">Turn two audited, cue-first labels into one small next move—not a redesign.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use this only after Lesson 105: both covered attempts were <em>followed</em>, then classified cue-first.</p>
+    <p class="rule">For mixed, working, or unclear labels, write: <em>retain the current plan and gather two ordinary records.</em> Only when the same readable <em>cue</em> or <em>start-side</em> label appears twice may you use <strong>one already-specified matching bounded test</strong>.</p>
+    <p>In either case, the instruction must name the same observable cue, the exact two-minute action, and a two-attempt boundary.</p>
+  </div>
+
+  <div class="card"><h2>Why keep the cue visible?</h2>
+    <p>Repeated behaviour in a stable context can become more cue-driven; that is why this practice keeps the cue distinct from the action. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a> reviews this cue–response account of habit. The instruction below is a practical experiment, not a verdict about motivation.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — make the next card</h2>
+    <p>Take 5–10 minutes. Copy the two labels from Lesson 105, then write only what those facts support.</p>
+    <label for="pair">Your classified pair</label><select id="pair"><option value="">Choose…</option><option value="retain">Mixed, working, or unclear</option><option value="cue">cue + cue</option><option value="start">start-side + start-side</option></select>
+    <label for="cue">Existing observable cue</label><input id="cue" placeholder="e.g., After I put down my breakfast dish">
+    <label for="action">Exact two-minute action</label><input id="action" placeholder="e.g., Open the proposal and write its first heading">
+    <label for="test">Already-specified matching test (needed only for a repeated break)</label><input id="test" placeholder="e.g., Put the proposal on the desk before breakfast">
+    <button type="button" onclick="build()">Build my two-attempt instruction</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="result" class="result" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2><p>The pair is <strong>none + unclear</strong>. Which next move is supported?</p>
+    <label><input type="radio" name="q" value="test"> Add a new cue test and a longer action.</label>
+    <label><input type="radio" name="q" value="right"> Retain the plan and gather two ordinary readable records.</label>
+    <label><input type="radio" name="q" value="punish"> Make up the missed work tonight.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Use your one sentence for two ordinary attempts, then audit whether it was followed before interpreting outcomes. Ask your teacher if the pair, a cue, or a proposed test is ambiguous. No guilt, punishment, catch-up work, or expansion is needed.</footer>
+</main><script>
+function clean(id){return document.getElementById(id).value.trim()}
+function build(){const p=clean('pair'),c=clean('cue'),a=clean('action'),t=clean('test'),f=document.getElementById('feedback'),out=document.getElementById('result');if(!p||!c||!a){f.className='feedback bad';f.textContent='Choose the pair and name the existing cue and exact two-minute action.';out.hidden=true;return}let sentence;if(p==='retain'){sentence='For the next two ordinary attempts: after “'+c+',” “'+a+'” for two minutes. Retain the plan and gather readable records.'}else{if(!t){f.className='feedback bad';f.textContent='A repeated break permits one already-specified matching test. Name that one test, or return to your records.';out.hidden=true;return}const link=p==='cue'?'cue':'start-side';sentence='For the next two ordinary attempts: use this one '+link+' test—“'+t+'.” After “'+c+',” “'+a+'” for two minutes. Keep every other link unchanged.'}f.className='feedback good';f.textContent='One move, with a cue, action, and boundary.';out.textContent=sentence+'\n\nNext: use this exact sentence for two ordinary attempts; then audit enactment before reading cue or start outcomes.';out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. A working and an unclear record do not support a new test; retain and gather two readable records.':'Not this time. The labels are mixed/incomplete, so retain the current plan and gather two ordinary readable records.'}
+</script></body></html>
