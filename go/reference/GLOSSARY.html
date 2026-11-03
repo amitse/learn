@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Dependency Retryability (Lesson 71) <span class="new-badge">new</span></h2>
+<h2>Bounded Idempotent Read Retry (Lesson 72) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>idempotent read</td><td>safe repeated <code>GET</code>-like lookup</td><td>An application operation whose repeated execution does not create an additional intended side effect. Retry permission is an operation-owner decision; an HTTP method or a transient error alone does not grant it.</td></tr>
+  <tr><td>bounded retry</td><td>one explicit second <code>await</code></td><td>A retry policy with a visible maximum number of total attempts. The lesson wrapper makes attempt one and, at most, one conditional second attempt—never a hidden unbounded loop.</td></tr>
+  <tr><td>operation test seam</td><td>injected async function / mock</td><td>A named function type such as <code>func(context.Context, string) (Profile, error)</code> supplied to a wrapper. A test can return selected outcomes and count calls without a network or time-based wait.</td></tr>
+</table>
+
+<h2>Dependency Retryability (Lesson 71)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>retryability classifier</td><td>pure retry-eligibility predicate</td><td>A small pure function that decides whether a dependency error is a candidate for a future retry policy. It does not sleep, loop, or make another request.</td></tr>
