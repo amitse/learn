@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 73 — Inject a Retry Wait Without Sleeping</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-size:.75rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.time{display:inline-block;margin-top:7px;padding:.24rem .65rem;border-radius:99px;background:#123238;color:#a9eff1;font-size:.85rem}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.12;margin:.4rem 0 .75rem}h2{font-size:1.35rem;margin:2.2rem 0 .65rem}.lead,.muted{color:var(--muted)}.card{margin:18px 0;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;border-radius:4px;padding:.08em .3em;font-size:.9em}pre{overflow:auto;margin:0;background:#0a0c11;border:1px solid var(--border);border-radius:9px;padding:16px;font-size:.81rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{overflow:hidden;border:1px solid var(--border);border-radius:9px}.pane h3{margin:0;padding:8px 12px;background:#252938;font-size:.85rem}.ts h3{color:#9fc9ff}.go h3{color:#86e8e5}.pane pre{border:0;border-radius:0;height:100%}.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;margin:.7rem 0 0;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#75dce0}.check{display:block;margin:.7rem 0}.rule{color:#f5d600;font-weight:700}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<p class="eyebrow">Go HTTP server · dependency boundary</p><span class="time">8 minutes</span><h1>Inject a retry wait without sleeping</h1><p class="lead">Yesterday’s retry makes one extra call for an approved idempotent read. Before adding a real delay, make the wait a dependency so the policy stays observable and tests stay instant.</p>
+<div class="card goal"><strong>Tangible win:</strong> add one cancellable wait seam between retry attempts, then test its order without <code>time.Sleep</code>.</div>
+<h2>Waiting is behavior—name it</h2><p>A fixed <code>time.Sleep</code> inside a retry wrapper makes a unit test slow and creates timing guesses. Instead, the wrapper depends on a small function. Production can provide a timer-backed wait later; the unit test supplies an immediate fake.</p>
+<pre>type retryWait func(context.Context) error
+
+type getProfile func(context.Context, string) (Profile, error)
+
+func getProfileWithRetryWait(
+    ctx context.Context, id string, get getProfile, wait retryWait,
+) (Profile, error) {
+    profile, err := get(ctx, id) // attempt 1
+    if err == nil || !retryableDependencyError(err) {
+        return profile, err
+    }
+
+    if err := wait(ctx); err != nil { // only between attempts
+        return Profile{}, err
+    }
+    return get(ctx, id) // attempt 2
+}</pre>
+<div class="card"><span class="rule">Contract:</span> <code>wait</code> runs exactly once only after a retryable first failure. If it returns an error—especially <code>ctx.Err()</code>—the second request never begins. It receives the caller’s same context, so cancellation still owns the work.</div>
+<h2>TypeScript mental model</h2><div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>type Wait = (signal: AbortSignal) =&gt;
+  Promise&lt;void&gt;;
+
+await getProfile(id); // throws
+await wait(signal);    // injectable
+return getProfile(id);</pre></section><section class="pane go"><h3>Go</h3><pre>type retryWait func(context.Context) error
+
+p, err := get(ctx, id)
+if retryableDependencyError(err) {
+  if err := wait(ctx); err != nil { return Profile{}, err }
+  return get(ctx, id)
+}</pre></section></div>
+<h2>Test the sequence, not a clock</h2><p>Use an append-only event list. The fake wait does no waiting; it merely proves the retry wrapper called it in the right place.</p><pre>func TestRetryWaitsOnceBeforeSecondAttempt(t *testing.T) {
+    events := []string{}
+    get := func(context.Context, string) (Profile, error) {
+        events = append(events, "get")
+        if len(events) == 1 { return Profile{}, errors.New("reset") }
+        return Profile{ID: "42"}, nil
+    }
+    wait := func(context.Context) error {
+        events = append(events, "wait")
+        return nil
+    }
+
+    got, err := getProfileWithRetryWait(context.Background(), "42", get, wait)
+    if err != nil || got.ID != "42" { t.Fatalf("got %#v, %v", got, err) }
+    want := []string{"get", "wait", "get"}
+    if len(events) != len(want) { t.Fatalf("events = %v", events) }
+    for i := range want {
+        if events[i] != want[i] { t.Fatalf("events = %v; want %v", events, want) }
+    }
+}</pre><p>This uses only the standard library. Add a second test where <code>wait</code> returns <code>context.Canceled</code>: expect <code>["get", "wait"]</code> and <code>errors.Is(err, context.Canceled)</code>.</p>
+<h2>Do not overbuild the delay</h2><div class="card"><ul><li>This seam does <strong>not</strong> choose a duration, jitter, or number of retries.</li><li>Do not call <code>wait</code> after a successful first attempt or a non-retryable stop signal.</li><li>A production wait must observe <code>ctx.Done()</code>; otherwise cancellation can be delayed by a timer.</li></ul></div>
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>The first <code>get</code> returns a retryable error, then <code>wait(ctx)</code> returns <code>context.Canceled</code>. Which event sequence is correct?</strong></p><button data-correct="false"><code>get, wait, get</code> — the retry was already authorized.</button><button data-correct="true"><code>get, wait</code> — return the wait error and do not start a second request.</button><button data-correct="false"><code>wait, get</code> — wait before checking the first result.</button><p class="feedback" aria-live="polite"></p></div>
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Add a named <code>retryWait</code> function type beside the retry wrapper.</label><label class="check"><input type="checkbox"> Inject an immediate fake and assert <code>get, wait, get</code>.</label><label class="check"><input type="checkbox"> Test a wait error and assert the second <code>get</code> is absent.</label>
+<p class="muted"><strong>Sources:</strong> <a href="https://pkg.go.dev/context">Go <code>context</code> package</a>; <a href="https://go.dev/blog/context">Go blog: Go Concurrency Patterns: Context</a>; <a href="https://pkg.go.dev/testing">Go <code>testing</code> package</a>; <a href="https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/">Amazon Builders’ Library: Timeouts, retries, and backoff with jitter</a>. Ask your teacher a follow-up when you are ready to implement a cancellable timer-backed wait.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — the wait is a gate, not a guaranteed pause before a second request. Its error ends the retry path.':'Not quite — the wrapper must return a wait error before a second dependency call starts.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

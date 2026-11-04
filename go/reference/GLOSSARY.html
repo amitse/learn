@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Bounded Idempotent Read Retry (Lesson 72) <span class="new-badge">new</span></h2>
+<h2>Injected Retry Wait (Lesson 73) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>retryWait</code></td><td>injected <code>(signal) =&gt; Promise&lt;void&gt;</code></td><td>A named function type such as <code>func(context.Context) error</code> that represents the one wait between an approved failed attempt and a possible retry. It is injected so a test can return immediately and observe its exact position.</td></tr>
+  <tr><td>cancellable wait</td><td>abort-aware delay</td><td>A wait that receives the caller’s context and returns its error when that context is done. If it returns an error, the wrapper stops and does not start the next dependency request.</td></tr>
+  <tr><td>sequence assertion</td><td>ordered mock-call assertion</td><td>A deterministic test check on events such as <code>get, wait, get</code>. It verifies the policy’s order without using a real timer or an elapsed-time guess.</td></tr>
+</table>
+
+<h2>Bounded Idempotent Read Retry (Lesson 72)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>idempotent read</td><td>safe repeated <code>GET</code>-like lookup</td><td>An application operation whose repeated execution does not create an additional intended side effect. Retry permission is an operation-owner decision; an HTTP method or a transient error alone does not grant it.</td></tr>
