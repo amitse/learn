@@ -581,6 +581,13 @@
   <dt>Copied permission</dt><dd>The rule that a queue decision uses exactly the action authorized by its selected ACT source row. A valid checkpoint log supplies evidence; it does not independently authorize a different drill, algorithm, or follow-up action.</dd>
   <dt>Decision scope</dt><dd>The four conditions carried from a queue source row into its decision and action: target pair, empty-workspace type, retained cue/timing, and checkpoint.</dd>
 </dl>
-<p class="updated">Updated 2026-11-05 · Lesson 72</p>
+<h2>F2L Bounded-Decision Auditing</h2>
+<dl>
+  <dt>Bounded-decision audit</dt><dd>A fixed review of one queue decision against its valid checkpoint log and selected ACT row: literal evidence, copied permission, preserved four-field scope, then exactly one action. Stop at the first failure.</dd>
+  <dt>Decision-scope failure</dt><dd>A queue decision changes or omits its source target pair, empty-workspace type, retained cue/timing, or checkpoint. Repair the first drifted field without changing an otherwise literal observation or permitted action.</dd>
+  <dt>First decision failure</dt><dd>The earliest failed audit check—evidence, permission, scope, or one action. It sets the minimal repair boundary; correct wording later in the decision cannot compensate for it.</dd>
+  <dt>Decision minimal repair</dt><dd>The smallest edit that restores agreement with the valid log and ACT source row: replace an added conclusion with literal observation, copy the approved action, restore one drifted scope field, or remove one extra action.</dd>
+</dl>
+<p class="updated">Updated 2026-11-06 · Lesson 73</p>
 </body>
 </html>
