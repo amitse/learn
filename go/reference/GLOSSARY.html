@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Injected Retry Wait (Lesson 73) <span class="new-badge">new</span></h2>
+<h2>Cancellable Timer Wait (Lesson 74) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td><code>time.NewTimer</code></td><td><code>setTimeout</code> handle</td><td>Creates a timer whose <code>C</code> channel receives when the chosen duration has elapsed. In a retry wait, it supplies the successful-delay branch rather than blocking the goroutine unconditionally.</td></tr>
+  <tr><td>cancellable timer wait</td><td>abort-aware timeout promise</td><td>A <code>retryWait</code> implemented with <code>select</code> over <code>timer.C</code> and <code>ctx.Done()</code>. It returns <code>nil</code> after the delay or <code>ctx.Err()</code> promptly when the request stops.</td></tr>
+  <tr><td><code>timer.Stop()</code></td><td><code>clearTimeout</code></td><td>Stops a timer that has not fired. Deferring it in the wait function releases a pending timer when cancellation wins and the function returns; no timer-channel drain is needed after that return.</td></tr>
+</table>
+
+<h2>Injected Retry Wait (Lesson 73)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>retryWait</code></td><td>injected <code>(signal) =&gt; Promise&lt;void&gt;</code></td><td>A named function type such as <code>func(context.Context) error</code> that represents the one wait between an approved failed attempt and a possible retry. It is injected so a test can return immediately and observe its exact position.</td></tr>
