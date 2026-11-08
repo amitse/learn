@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 111 — Classify One Audited Instruction Pair</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.result{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;white-space:pre-wrap}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 111 · 10 minutes</div>
+  <h1>Classify one audited instruction pair</h1>
+  <p class="lede">Once both attempts followed the instruction, locate the earliest break with two neutral questions.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use this only after Lesson 110’s audit says <strong>followed</strong> for both covered attempts. For each attempt, read the record in the same order:</p>
+    <p class="rule">Did the cue occur? Then: did the exact two-minute action start?</p>
+    <p>Label it <strong>cue</strong> when the cue did not occur; <strong>start-side</strong> when the cue occurred but the action did not start; <strong>none</strong> when both happened; or <strong>unclear</strong> when the record cannot tell. These labels describe a record, not your character. If the same readable <em>cue</em> or <em>start-side</em> label appears twice, it may support the one already-specified matching bounded test. Otherwise, retain and gather two ordinary records.</p>
+    <p class="small">This is a practical reading rule for your own records. Stable-context repetition is relevant background for cue-based practice; see <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — classify your audited pair</h2>
+    <p>Spend 5–10 minutes with the two records that both passed the enactment audit. For each attempt, answer from the record—not from how the day felt.</p>
+    <label for="cue1">Attempt 1: did the cue occur?</label><select id="cue1"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <label for="start1">Attempt 1: did the exact two-minute action start?</label><select id="start1"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <label for="cue2">Attempt 2: did the cue occur?</label><select id="cue2"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <label for="start2">Attempt 2: did the exact two-minute action start?</label><select id="start2"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option><option value="unclear">Unclear</option></select>
+    <button type="button" onclick="classifyPair()">Classify my pair</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="result" class="result" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2>
+    <p>Both audited attempts show <em>cue occurred: yes</em> and <em>two-minute action started: no</em>. Which label and next move fit?</p>
+    <label><input type="radio" name="q" value="wrong"> <strong>cue</strong>; redesign everything.</label>
+    <label><input type="radio" name="q" value="right"> <strong>start-side</strong>; use one already-specified matching bounded test, if one exists.</label>
+    <label><input type="radio" name="q" value="wrong2"> <strong>none</strong>; add catch-up work.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>No urgency, catch-up work, or self-punishment is required. Next, turn this classified pair into one checkable instruction. Ask your teacher if a record feels ambiguous.</footer>
+</main><script>
+function label(c,s){if(c==='unclear'||s==='unclear')return'unclear';if(c==='no')return'cue';if(c==='yes'&&s==='no')return'start-side';if(c==='yes'&&s==='yes')return'none';return'unclear'}
+function classifyPair(){const vals=['cue1','start1','cue2','start2'].map(id=>document.getElementById(id).value),f=document.getElementById('feedback'),out=document.getElementById('result');if(vals.some(v=>!v)){f.className='feedback bad';f.textContent='Answer all four record questions first.';out.hidden=true;return}const a=label(vals[0],vals[1]),b=label(vals[2],vals[3]),same=(a===b&&(a==='cue'||a==='start-side'));f.className='feedback good';f.textContent='Attempt 1: '+a+' · Attempt 2: '+b+'.';out.textContent=same?'Next: this is a repeated readable '+a+' break. If you already have one matching bounded test specified, write that one test as your next two-attempt instruction. If not, retain and gather—do not invent several changes.':'Next: retain the existing plan and gather two ordinary records. Mixed, working, or unclear evidence is not a reason to overhaul the ritual.';out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. The cue occurred; the earliest break is start-side. A repeated readable label can support one already-specified matching bounded test.':'Not yet. Read cue first, then start. With cue yes and start no in both attempts, the label is start-side—not a verdict or a reason for catch-up.'}
+</script></body></html>
