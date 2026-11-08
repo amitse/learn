@@ -588,6 +588,12 @@
   <dt>First decision failure</dt><dd>The earliest failed audit check—evidence, permission, scope, or one action. It sets the minimal repair boundary; correct wording later in the decision cannot compensate for it.</dd>
   <dt>Decision minimal repair</dt><dd>The smallest edit that restores agreement with the valid log and ACT source row: replace an added conclusion with literal observation, copy the approved action, restore one drifted scope field, or remove one extra action.</dd>
 </dl>
-<p class="updated">Updated 2026-11-06 · Lesson 73</p>
+<h2>F2L Audited-Decision Classification</h2>
+<dl>
+  <dt>Action-ready decision</dt><dd>An audited bounded queue decision that passes every gate: literal checkpoint evidence, copied ACT-row permission, all four scope fields, and exactly one action. It may now direct that one cube-side action.</dd>
+  <dt>Minimal repair needed</dt><dd>The classification for an audited decision with any failed gate. Repair only its earliest failed clause, then re-audit before using the decision; do not execute it yet.</dd>
+  <dt>Decision classification gate</dt><dd>The final pass/fail boundary after an audit. All four checks pass = <strong>ACTION-READY</strong>; any failure = <strong>MINIMAL REPAIR NEEDED</strong> until the smallest repair passes a new audit.</dd>
+</dl>
+<p class="updated">Updated 2026-11-08 · Lesson 74</p>
 </body>
 </html>
