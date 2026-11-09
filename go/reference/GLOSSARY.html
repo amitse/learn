@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Cancellable Timer Wait (Lesson 74) <span class="new-badge">new</span></h2>
+<h2>Fixed Retry Delay (Lesson 75) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>fixed retry delay</td><td>one named delay before a second <code>await</code></td><td>A single explicit duration between a first approved transient failure and the one allowed second attempt. With a two-attempt policy there is only one possible gap, so no backoff sequence exists yet.</td></tr>
+  <tr><td>composition-time policy</td><td>client factory configuration</td><td>The application boundary's visible choice of an operational value, such as <code>const profileRetryDelay = 100 * time.Millisecond</code> passed to <code>timerWait</code>. Handlers and transport adapters do not hide this decision.</td></tr>
+  <tr><td>policy-order test</td><td>ordered fake-call assertion</td><td>A retry-wrapper test using an immediate injected wait and asserting <code>get, wait, get</code>, rather than waiting for the production duration. It protects control-flow order and context propagation without a clock-based test.</td></tr>
+</table>
+
+<h2>Cancellable Timer Wait (Lesson 74)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td><code>time.NewTimer</code></td><td><code>setTimeout</code> handle</td><td>Creates a timer whose <code>C</code> channel receives when the chosen duration has elapsed. In a retry wait, it supplies the successful-delay branch rather than blocking the goroutine unconditionally.</td></tr>

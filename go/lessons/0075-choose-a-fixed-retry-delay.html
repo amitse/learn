@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lesson 75 — Choose a Fixed Retry Delay</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-size:.75rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.time{display:inline-block;margin-top:7px;padding:.24rem .65rem;border-radius:99px;background:#123238;color:#a9eff1;font-size:.85rem}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.12;margin:.4rem 0 .75rem}h2{font-size:1.35rem;margin:2.2rem 0 .65rem}.lead,.muted{color:var(--muted)}.card{margin:18px 0;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;border-radius:4px;padding:.08em .3em;font-size:.9em}pre{overflow:auto;margin:0;background:#0a0c11;border:1px solid var(--border);border-radius:9px;padding:16px;font-size:.82rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{overflow:hidden;border:1px solid var(--border);border-radius:9px}.pane h3{margin:0;padding:8px 12px;background:#252938;font-size:.85rem}.ts h3{color:#9fc9ff}.go h3{color:#86e8e5}.pane pre{border:0;border-radius:0;height:100%}.rule{color:#f5d600;font-weight:700}.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;margin:.7rem 0 0;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#75dce0}.check{display:block;margin:.7rem 0}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style>
+</head>
+<body><main class="wrap">
+<p class="eyebrow">Go HTTP server · retry policy</p><span class="time">7 minutes</span>
+<h1>Choose a fixed retry delay</h1>
+<p class="lead">Your idempotent profile read may retry once, and its wait is already cancellable. Choose the missing policy: one explicit, bounded delay before that one possible second attempt.</p>
+<div class="card goal"><strong>Tangible win:</strong> make retry timing a named composition choice—<code>100 * time.Millisecond</code>—rather than a hidden sleep inside your dependency adapter.</div>
+
+<h2>Start with the smallest policy that fits</h2>
+<p>There are at most two attempts in this server path. That means there is at most <strong>one</strong> gap between them. A fixed delay is the clearest policy: after an approved transient failure, wait one small, documented duration; then make the one allowed retry.</p>
+<pre>const profileRetryDelay = 100 * time.Millisecond
+
+func newProfileClient(httpClient *http.Client) ProfileClient {
+    return ProfileClient{
+        do:   httpClient.Do,
+        wait: timerWait(profileRetryDelay),
+    }
+}</pre>
+<div class="card"><span class="rule">Policy contract:</span> this value is a delay <em>between</em> the first retryable failure and the second attempt. It is not a request timeout, a number of attempts, or permission to retry a write.</div>
+
+<h2>Why this belongs at composition</h2>
+<p>The outbound adapter owns making a request and wrapping its transport error. The retry wrapper owns whether to call that safe operation again. The application composition boundary chooses the operational value used by the already-tested <code>timerWait</code>.</p>
+<pre>// retry wrapper: control flow; it does not choose 100 ms.
+func getProfileWithRetry(ctx context.Context, get getProfile, wait retryWait, id string) (Profile, error) {
+    profile, err := get(ctx, id)
+    if err == nil || !retryableDependencyError(err) {
+        return profile, err
+    }
+    if err := wait(ctx); err != nil {
+        return Profile{}, err
+    }
+    return get(ctx, id) // the one permitted second attempt
+}</pre>
+<p>Keep the duration visible where dependencies are assembled. Do not scatter <code>time.Sleep(100 * time.Millisecond)</code> through handlers, and do not put it inside the transport adapter.</p>
+
+<h2>TypeScript mental model</h2>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>const profileRetryDelayMs = 100
+
+const client = makeProfileClient({
+  wait: signal =&gt; wait(
+    profileRetryDelayMs, signal
+  ),
+})</pre></section><section class="pane go"><h3>Go</h3><pre>const profileRetryDelay =
+  100 * time.Millisecond
+
+client := ProfileClient{
+  wait: timerWait(profileRetryDelay),
+}</pre></section></div>
+<p>In both versions, production wiring selects the value. The retry algorithm receives a waiting behavior, so its focused tests remain immediate and do not depend on clock time.</p>
+
+<h2>Test the policy boundary, not elapsed time</h2>
+<p>A duration constant does not need a test that waits 100 ms. Test what the retry wrapper promises: it invokes the injected wait exactly once only for a retryable first failure, and it passes the same request context to it.</p>
+<pre>func TestRetryWaitsOnceBeforeSecondApprovedAttempt(t *testing.T) {
+    var events []string
+    ctx := context.WithValue(context.Background(), testKey{}, "request-7")
+    calls := 0
+
+    get := func(got context.Context, id string) (Profile, error) {
+        if got != ctx { t.Fatal("context changed") }
+        calls++
+        events = append(events, "get")
+        if calls == 1 { return Profile{}, errTemporary }
+        return Profile{ID: id}, nil
+    }
+    wait := func(got context.Context) error {
+        if got != ctx { t.Fatal("context changed") }
+        events = append(events, "wait")
+        return nil
+    }
+
+    _, err := getProfileWithRetry(ctx, get, wait, "42")
+    if err != nil { t.Fatal(err) }
+    want := []string{"get", "wait", "get"}
+    if len(events) != len(want) {
+        t.Fatalf("events = %v; want %v", events, want)
+    }
+    for i := range want {
+        if events[i] != want[i] { t.Fatalf("events = %v; want %v", events, want) }
+    }
+}</pre>
+<p>The key point is unchanged: a fake wait verifies policy order without sleeping. <code>timerWait(profileRetryDelay)</code> is tested separately by the already-canceled-context test from Lesson 74.</p>
+
+<h2>What this deliberately does <em>not</em> do</h2>
+<div class="card"><ul><li>No exponential backoff: one retry has no sequence to grow.</li><li>No jitter: add it only when more than one retry or fleet-wide synchronization makes it necessary.</li><li>No retries after <code>context.Canceled</code> or <code>context.DeadlineExceeded</code>; Lesson 71 excludes them.</li><li>No hidden change to the dependency timeout. The retry delay consumes part of the caller’s existing request lifetime.</li></ul></div>
+
+<h2>Quick check</h2>
+<div class="card quiz" id="quiz"><p><strong>Where should <code>100 * time.Millisecond</code> be selected for this one-retry profile read?</strong></p><button data-correct="false">Inside every HTTP handler that calls the profile client.</button><button data-correct="false">Inside the transport adapter, immediately before <code>http.Client.Do</code>.</button><button data-correct="true">At the composition boundary, passed into <code>timerWait</code> as the retry wrapper's wait behavior.</button><p class="feedback" aria-live="polite"></p></div>
+
+<h2>Do it now (2 minutes)</h2>
+<label class="check"><input type="checkbox"> Name one duration: <code>const profileRetryDelay = 100 * time.Millisecond</code>.</label>
+<label class="check"><input type="checkbox"> Wire <code>timerWait(profileRetryDelay)</code> at the composition boundary.</label>
+<label class="check"><input type="checkbox"> Keep the retry-wrapper test on an immediate fake wait—no <code>time.Sleep</code>.</label>
+<p class="muted"><strong>Sources:</strong> <a href="https://pkg.go.dev/time#Duration">Go <code>time.Duration</code> documentation</a>; <a href="https://pkg.go.dev/context">Go <code>context</code> package</a>; <a href="https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/">Amazon Builders’ Library: Timeouts, retries, and backoff with jitter</a>. Ask your teacher a follow-up when you are ready to decide how an exhausted retry maps to the HTTP boundary.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — the composition boundary makes the operational choice visible while the retry wrapper remains testable with a fake wait.':'Not quite — handlers and transport adapters should not hide retry timing. Choose the duration once while assembling the client.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>
