@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Fixed Retry Delay (Lesson 75) <span class="new-badge">new</span></h2>
+<h2>Exhausted Dependency Retry HTTP Mapping (Lesson 76) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>exhausted dependency retry</td><td>approved retry was used and the promise still rejected</td><td>The specific branch where an explicitly safe, bounded dependency operation has made its one allowed second attempt and still returns an error. It needs an HTTP boundary mapping; it does not mean every non-nil route error is a retry exhaustion.</td></tr>
+  <tr><td><code>http.StatusBadGateway</code></td><td><code>res.status(502)</code></td><td>Go's named 502 status constant. For this gateway route it communicates that an upstream profile dependency prevented the server from fulfilling the request after its approved retry.</td></tr>
+  <tr><td>safe upstream-error contract</td><td>stable public API error body</td><td>A fixed JSON response such as <code>{"error":"profile service unavailable"}</code>, paired with a private structured event containing the wrapped cause. It avoids making <code>err.Error()</code> client API data.</td></tr>
+</table>
+
+<h2>Fixed Retry Delay (Lesson 75)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>fixed retry delay</td><td>one named delay before a second <code>await</code></td><td>A single explicit duration between a first approved transient failure and the one allowed second attempt. With a two-attempt policy there is only one possible gap, so no backoff sequence exists yet.</td></tr>
