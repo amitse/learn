@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 115 — Write One Decision-Ready Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.result{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;white-space:pre-wrap}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 115 · 8 minutes</div>
+  <h1>Write one decision-ready instruction</h1>
+  <p class="lede">Turn an audit-passed, classified pair into one small sentence you can actually follow.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use this only after both attempts passed the enactment audit and you gave each a cue-first label. Write <strong>one</strong> instruction for the next two ordinary attempts:</p>
+    <p class="rule">For <strong>mixed, working, or unclear</strong> labels: retain the existing cue and exact two-minute action; gather two records.<br>For the <strong>same readable cue or start-side</strong> label twice: use one matching bounded test only if it was already specified.</p>
+    <p>Your sentence must name the observable cue, the exact two-minute action, and the two-attempt boundary. This is a practical constraint for keeping the next attempt readable, not a verdict or a demand to do more. For background on stable-context, cue-based habits, see <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — write the next two attempts</h2>
+    <p>Spend 5–10 minutes with your classified pair. Choose its evidence state, then write one sentence. Do not add a reminder, a duration target, catch-up work, or a second test.</p>
+    <label for="state">What does your pair show?</label>
+    <select id="state"><option value="">Choose…</option><option value="retain">Mixed, working, or unclear evidence</option><option value="test">The same readable cue/start-side break twice</option></select>
+    <label for="cue">Existing observable cue</label><input id="cue" placeholder="e.g., After I put down my lunch plate">
+    <label for="action">Exact two-minute action</label><input id="action" placeholder="e.g., Open the proposal and write its first heading">
+    <label for="testname">Already-specified matching test (only if applicable)</label><input id="testname" placeholder="e.g., Put the proposal tab in the foreground before lunch">
+    <button type="button" onclick="buildInstruction()">Build my instruction</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="result" class="result" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2>
+    <p>A passed pair is <strong>cue, none</strong>. Which instruction fits the evidence?</p>
+    <label><input type="radio" name="q" value="wrong"> Change the cue, action, schedule, and tracking method tomorrow.</label>
+    <label><input type="radio" name="q" value="right"> Keep the existing cue and exact two-minute action for two ordinary attempts; gather the records.</label>
+    <label><input type="radio" name="q" value="wrong2"> Add a punishment if the cue is missed again.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>One pair, one supported move, two ordinary attempts. The point is a calm next start—not a perfect plan. Ask your teacher if the pair or test is ambiguous. Next: audit whether this exact instruction was followed.</footer>
+</main><script>
+function buildInstruction(){const s=document.getElementById('state').value,c=document.getElementById('cue').value.trim(),a=document.getElementById('action').value.trim(),t=document.getElementById('testname').value.trim(),f=document.getElementById('feedback'),out=document.getElementById('result');if(!s||!c||!a||(s==='test'&&!t)){f.className='feedback bad';f.textContent=s==='test'?'Choose the state, cue, action, and one already-specified matching test.':'Choose the state, cue, and exact action first.';out.hidden=true;return}let text=s==='retain'?'For the next two ordinary attempts, after '+c+', '+a+'. Keep this instruction unchanged and record each attempt.':'For the next two ordinary attempts, after '+c+', '+t+'; then '+a+'. Keep every other part of the ritual unchanged and record each attempt.';f.className='feedback good';f.textContent='One decision-ready instruction built.';out.textContent=text;out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. A mixed pair calls for retained conditions and two readable records, not a rescue plan.':'Not yet. The evidence is mixed, so retain the existing ritual and gather two ordinary records.'}
+</script></body></html>
