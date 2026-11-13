@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lesson 77 — Test the Exhausted-Retry Private Log Event</title><style>
+:root{--bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;--text:#e8eaf0;--muted:#98a0b8;--accent:#00adb5;--good:#3ab54a;--bad:#ff6b6b;--ts:#3178c6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:900px;margin:auto;padding:40px 20px 64px}.eyebrow{color:var(--accent);font-size:.75rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.time{display:inline-block;margin-top:7px;padding:.24rem .65rem;border-radius:99px;background:#123238;color:#a9eff1;font-size:.85rem}h1{font-size:clamp(2rem,5vw,3.15rem);line-height:1.12;margin:.4rem 0 .75rem}h2{font-size:1.35rem;margin:2.2rem 0 .65rem}.lead,.muted{color:var(--muted)}.card{margin:18px 0;padding:21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.goal{border-left:4px solid var(--accent)}code,pre{font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace}code{background:#252938;border-radius:4px;padding:.08em .3em;font-size:.9em}pre{overflow:auto;margin:0;background:#0a0c11;border:1px solid var(--border);border-radius:9px;padding:16px;font-size:.82rem;line-height:1.55}.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pane{overflow:hidden;border:1px solid var(--border);border-radius:9px}.pane h3{margin:0;padding:8px 12px;background:#252938;font-size:.85rem}.ts h3{color:#9fc9ff}.go h3{color:#86e8e5}.pane pre{border:0;border-radius:0;height:100%}.rule{color:#f5d600;font-weight:700}.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;color:var(--text);background:#222634;border:1px solid var(--border);border-radius:7px;cursor:pointer}.quiz button:hover{border-color:var(--accent)}.feedback{min-height:1.6em;margin:.7rem 0 0;font-weight:650}.ok{color:var(--good)}.no{color:var(--bad)}a{color:#75dce0}.check{display:block;margin:.7rem 0}@media(max-width:650px){.compare{grid-template-columns:1fr}.wrap{padding-top:28px}}
+</style></head><body><main class="wrap">
+<p class="eyebrow">Go HTTP server · observable private failure</p><span class="time">8 minutes</span>
+<h1>Test the exhausted-retry private log event</h1>
+<p class="lead">Lesson 76 made the client contract safe: a failed profile dependency becomes a stable 502. Now protect the operator contract too: one structured event that preserves the selected request ID and the private cause.</p>
+<div class="card goal"><strong>Tangible win:</strong> capture one JSON <code>slog</code> record, decode only the fields this handler owns, and prove that the 502 path is correlated and diagnosable.</div>
+<h2>Test data, not rendered log text</h2>
+<p>A JSON handler produces one JSON object per event. Treat that object as a narrow contract: the stable message, the selected <code>request_id</code>, and its <code>error</code> attribute. Do <em>not</em> assert timestamps, key order, or the whole rendered line; those are formatter details rather than this route’s behavior.</p>
+<div class="card"><span class="rule">Own only what the handler promises:</span> <code>msg == "profile dependency failed"</code>, the request ID selected at the inbound boundary, and a private error attribute containing the diagnostic cause.</div>
+<h2>Capture and decode one event</h2>
+<pre>type profileFailureEvent struct {
+    Msg       string `json:"msg"`
+    RequestID string `json:"request_id"`
+    Error     string `json:"error"`
+}
+
+func TestProfileHandler_ExhaustedRetryLogsPrivateEvent(t *testing.T) {
+    var logs bytes.Buffer
+    logger := slog.New(slog.NewJSONHandler(&logs, nil))
+    private := errors.New("dial profile.internal: refused")
+    get := func(context.Context, string) (Profile, error) {
+        return Profile{}, fmt.Errorf("get profile: %w", private)
+    }
+
+    rr := httptest.NewRecorder()
+    req := httptest.NewRequest(http.MethodGet, "/profiles/42", nil)
+    req = req.WithContext(context.WithValue(
+        req.Context(), requestIDKey{}, "req-test-42"))
+    profileHandler(get, logger).ServeHTTP(rr, req)
+
+    var got profileFailureEvent
+    if err := json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &got); err != nil {
+        t.Fatal(err)
+    }
+    if got.Msg != "profile dependency failed" { t.Fatalf("msg = %q", got.Msg) }
+    if got.RequestID != "req-test-42" { t.Fatalf("request ID = %q", got.RequestID) }
+    if !strings.Contains(got.Error, private.Error()) { t.Fatalf("error = %q", got.Error) }
+}</pre>
+<p>The recorder still lets you assert <code>http.StatusBadGateway</code> and the safe JSON body from Lesson 76. This test adds the complementary private output: it proves the same handler branch emitted an event that operators can correlate.</p>
+<h2>TypeScript mental model</h2>
+<div class="compare"><section class="pane ts"><h3>TypeScript / Node</h3><pre>const events: LogEvent[] = []
+const logger = { error: (data, msg) =&gt;
+  events.push({ msg, ...data }) }
+
+await handler(reqWithId('req-test-42'), res)
+expect(events[0]).toMatchObject({
+  msg: 'profile dependency failed',
+  request_id: 'req-test-42'
+})</pre></section><section class="pane go"><h3>Go</h3><pre>var logs bytes.Buffer
+logger := slog.New(
+  slog.NewJSONHandler(&amp;logs, nil))
+
+handler.ServeHTTP(rr, reqWithID)
+var event profileFailureEvent
+json.Unmarshal(bytes.TrimSpace(logs.Bytes()),
+  &amp;event)
+// assert owned fields</pre></section></div>
+<p>Both approaches capture a logger transport and inspect structured data. Go’s buffer plus JSON decoder keeps the test local—no global logger, collector, or substring check against an entire log line.</p>
+<h2>Keep public and private assertions separate</h2>
+<p>The dependency error <em>should</em> occur in the decoded private event; it <em>must not</em> occur in the HTTP response. That is not a contradiction. It verifies the deliberate boundary: the client sees a stable gateway message, while the server retains enough detail to investigate.</p>
+<pre>if rr.Code != http.StatusBadGateway { t.Fatalf("status = %d", rr.Code) }
+if strings.Contains(rr.Body.String(), private.Error()) {
+    t.Fatal("private cause leaked to client")
+}
+// But the decoded event above must contain the private cause.</pre>
+<h2>Quick check</h2><div class="card quiz" id="quiz"><p><strong>Which assertion is the best long-lived contract for this handler’s failure log?</strong></p><button data-correct="false">The exact JSON line, including timestamp and key order.</button><button data-correct="true">The stable message, selected request ID, and named error attribute after decoding one event.</button><button data-correct="false">Only that some non-empty text was logged.</button><p class="feedback" aria-live="polite"></p></div>
+<h2>Do it now (2 minutes)</h2><label class="check"><input type="checkbox"> Use a fresh <code>bytes.Buffer</code> and <code>slog.NewJSONHandler</code> inside this test.</label><label class="check"><input type="checkbox"> Put a known request ID in the request context, then decode one event.</label><label class="check"><input type="checkbox"> Assert the safe 502 response separately from the private diagnostic event.</label>
+<p class="muted"><strong>Sources:</strong> <a href="https://pkg.go.dev/log/slog#JSONHandler">Go <code>slog.JSONHandler</code></a>; <a href="https://pkg.go.dev/encoding/json#Unmarshal">Go <code>json.Unmarshal</code></a>; <a href="https://pkg.go.dev/bytes#TrimSpace">Go <code>bytes.TrimSpace</code></a>. Ask your teacher a follow-up when you are ready to decide whether a specific upstream HTTP response should qualify for the one permitted retry.</p>
+</main><script>document.querySelectorAll('#quiz button').forEach(b=>b.addEventListener('click',()=>{const f=document.querySelector('.feedback'),ok=b.dataset.correct==='true';f.textContent=ok?'Correct — decode the event and assert only the handler-owned, stable fields.':'Not quite — avoid formatter trivia and weak “something logged” checks. Assert the decoded fields the handler promises.';f.className='feedback '+(ok?'ok':'no')}));</script></body></html>

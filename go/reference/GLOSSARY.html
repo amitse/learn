@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Exhausted Dependency Retry HTTP Mapping (Lesson 76) <span class="new-badge">new</span></h2>
+<h2>Exhausted-Retry Private Log Event (Lesson 77) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>private failure-event contract</td><td>captured structured logger assertion</td><td>The small server-only observability promise for an exhausted dependency retry: a stable event message, the inbound-selected <code>request_id</code>, and a named diagnostic error attribute. It complements—not replaces—the safe public 502 JSON response.</td></tr>
+  <tr><td>decoded owned-field assertion</td><td><code>expect(event).toMatchObject(...)</code></td><td>A test that decodes one JSON <code>slog</code> record into a narrow struct and checks only fields the handler owns. Timestamp, source metadata, and JSON key order remain formatter details.</td></tr>
+  <tr><td>correlated private cause</td><td>error event carrying a request correlation ID</td><td>The diagnostic cause retained in a private log event beside the same request ID selected at ingress. The cause may be asserted in the event but must be absent from the HTTP response.</td></tr>
+</table>
+
+<h2>Exhausted Dependency Retry HTTP Mapping (Lesson 76)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>exhausted dependency retry</td><td>approved retry was used and the promise still rejected</td><td>The specific branch where an explicitly safe, bounded dependency operation has made its one allowed second attempt and still returns an error. It needs an HTTP boundary mapping; it does not mean every non-nil route error is a retry exhaustion.</td></tr>
