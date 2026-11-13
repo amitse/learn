@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 116 — Audit One Decision-Ready Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.result{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;white-space:pre-wrap}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 116 · 8 minutes</div>
+  <h1>Audit one decision-ready instruction</h1>
+  <p class="lede">Before reading outcomes, check whether the exact instruction from Lesson 115 was actually used.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Copy your exact decision-ready instruction. For each of its two covered ordinary attempts, compare the record with that sentence—not with what you meant to do.</p>
+    <p class="rule">Label each attempt <strong>followed</strong>, <strong>not followed</strong>, or <strong>unclear</strong>.<br>If either label is not <em>followed</em>, repeat the same instruction for two ordinary attempts. Do not classify cue or start outcomes yet.</p>
+    <p>This is a practical reading rule: it keeps a changed or incomplete attempt from being treated as evidence about the written plan. Stable contexts can make cue-based repetition easier to establish; this audit simply keeps the next comparison readable. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — audit the pair</h2>
+    <p>Spend 5–10 minutes with your Lesson 115 sentence and its two records. First copy the sentence. Then give each attempt one enactment label. This is data, not a grade.</p>
+    <label for="instruction">Your exact Lesson 115 instruction</label>
+    <input id="instruction" placeholder="For the next two ordinary attempts, after …">
+    <label for="one">Attempt 1: did the record show that exact instruction?</label>
+    <select id="one"><option value="">Choose…</option><option value="followed">Followed</option><option value="not followed">Not followed</option><option value="unclear">Unclear</option></select>
+    <label for="two">Attempt 2: did the record show that exact instruction?</label>
+    <select id="two"><option value="">Choose…</option><option value="followed">Followed</option><option value="not followed">Not followed</option><option value="unclear">Unclear</option></select>
+    <button type="button" onclick="audit()">Read my audit</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="result" class="result" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2>
+    <p>Your labels are <strong>followed</strong> and <strong>unclear</strong>. What comes next?</p>
+    <label><input type="radio" name="q" value="wrong"> Call the unclear attempt a start-side miss and change the action.</label>
+    <label><input type="radio" name="q" value="right"> Repeat the exact instruction for two ordinary attempts, then audit again.</label>
+    <label><input type="radio" name="q" value="wrong2"> Add a stricter deadline to make the next attempts count.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>First establish that the instruction was enacted; then, and only then, read cue and start outcomes. Ask your teacher if a record cannot show whether the instruction was followed. Next: classify an audit-passed pair cue first.</footer>
+</main><script>
+function audit(){const i=document.getElementById('instruction').value.trim(),a=document.getElementById('one').value,b=document.getElementById('two').value,f=document.getElementById('feedback'),out=document.getElementById('result');if(!i||!a||!b){f.className='feedback bad';f.textContent='Copy the instruction and choose a label for both attempts.';out.hidden=true;return}const passed=a==='followed'&&b==='followed';f.className='feedback '+(passed?'good':'bad');f.textContent=passed?'Audit passed: both attempts enacted the written instruction.':'Audit incomplete: at least one attempt does not clearly enact the instruction.';out.textContent=passed?'Next move: classify each attempt cue first, then start second. Keep the written instruction visible while you read the records.':'Next move: use this exact instruction unchanged for two ordinary attempts, record them, then audit again. Do not diagnose cue or start outcomes yet.';out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. An unclear enactment needs two readable attempts with the same instruction before outcome classification.':'Not yet. Do not interpret cue or start outcomes until both attempts clearly followed the exact instruction.'}
+</script></body></html>
