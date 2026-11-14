@@ -605,6 +605,12 @@
   <dt>Audit gate</dt><dd>One ordered pass/fail check in a fresh-decision audit. A failure at an earlier gate sets the repair boundary; later gates are not used to excuse or broaden that repair.</dd>
   <dt>Re-audit</dt><dd>Starting the entire fixed audit order again after one minimal repair. A corrected clause becomes action-ready only after all four gates pass together.</dd>
 </dl>
-<p class="updated">Updated 2026-11-12 · Lesson 76</p>
+<h2>F2L Fresh Decision Classification</h2>
+<dl>
+  <dt>Fresh decision classification</dt><dd>The narrow status call made after a fresh decision audit: <strong>ACTION-READY</strong> only when every audit gate passes, otherwise <strong>MINIMAL REPAIR NEEDED</strong>. It does not add a diagnosis, plan, or cube action.</dd>
+  <dt>Action-ready decision</dt><dd>A freshly audited queue decision with literal checkpoint evidence, copied ACT-row permission, all four scope fields, and exactly one action. It authorizes exactly that one stated action—not a follow-up insertion.</dd>
+  <dt>Minimal repair needed</dt><dd>The status of a freshly audited decision with any failed gate. Repair only the earliest failed clause, then re-audit the entire decision before giving it a new classification.</dd>
+</dl>
+<p class="updated">Updated 2026-11-14 · Lesson 77</p>
 </body>
 </html>
