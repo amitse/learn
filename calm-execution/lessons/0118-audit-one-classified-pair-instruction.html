@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 118 — Audit One Classified-Pair Instruction</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}input,select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.result{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;white-space:pre-wrap}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 118 · 8 minutes</div>
+  <h1>Audit one classified-pair instruction</h1>
+  <p class="lede">Before reading outcomes, check whether the exact next instruction was actually used.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Take the decision-ready sentence you wrote after your classified pair. Compare it with each of its two covered ordinary attempts. Give each attempt one label:</p>
+    <p class="rule"><strong>Followed</strong> = the named cue, exact two-minute action, and any named test were used.<br><strong>Not followed</strong> = a named part was not used.<br><strong>Unclear</strong> = the record cannot tell.</p>
+    <p>If both attempts are <strong>followed</strong>, their cue/start evidence is ready to classify next. If either is <strong>not followed</strong> or <strong>unclear</strong>, repeat the exact instruction for two ordinary attempts. This is a practical reading rule: do not make a new explanation or a new test from an instruction that was not yet readable. A stable context can support cue-linked repetition; see <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a> for background.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — audit the covered pair</h2>
+    <p>Spend 5–10 minutes with your written instruction and its two records. Do not inspect whether you “succeeded” yet—only whether the instruction was enacted.</p>
+    <label for="instruction">Exact instruction (copy it here)</label><input id="instruction" placeholder="For the next two ordinary attempts, after …">
+    <label for="one">Attempt 1 enactment</label><select id="one"><option value="">Choose…</option><option value="followed">Followed</option><option value="not followed">Not followed</option><option value="unclear">Unclear</option></select>
+    <label for="two">Attempt 2 enactment</label><select id="two"><option value="">Choose…</option><option value="followed">Followed</option><option value="not followed">Not followed</option><option value="unclear">Unclear</option></select>
+    <button type="button" onclick="audit()">Read the audit</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="result" class="result" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2>
+    <p>One covered attempt is <strong>followed</strong>; the other is <strong>unclear</strong>. What is the next move?</p>
+    <label><input type="radio" name="q" value="wrong"> Classify the cue/start outcomes and change the ritual now.</label>
+    <label><input type="radio" name="q" value="right"> Repeat the exact instruction for two ordinary attempts and make the records readable.</label>
+    <label><input type="radio" name="q" value="wrong2"> Add a stricter consequence for the unclear record.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Audit enactment first; interpret outcomes second. The aim is a usable next start, not a verdict. Ask your teacher if the instruction or either record is ambiguous. Next: classify cue and start evidence only after both attempts pass.</footer>
+</main><script>
+function audit(){const i=document.getElementById('instruction').value.trim(),a=document.getElementById('one').value,b=document.getElementById('two').value,f=document.getElementById('feedback'),out=document.getElementById('result');if(!i||!a||!b){f.className='feedback bad';f.textContent='Copy the instruction and label both attempts first.';out.hidden=true;return}const passed=a==='followed'&&b==='followed';f.className='feedback '+(passed?'good':'bad');f.textContent=passed?'Audit passed.':'Audit incomplete—no judgment needed.';out.textContent=passed?'Both attempts followed the exact instruction. Next, read each record cue first and two-minute action second; then classify the pair.':'At least one attempt was not followed or unclear. Keep this exact instruction unchanged for two ordinary attempts. Record enough detail to tell whether it was followed; do not add a new test, duration target, reminder, or consequence.';out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. An unclear enactment record needs a calm repeat, not an outcome interpretation.':'Not yet. When either label is unclear, repeat the exact instruction for two readable ordinary attempts.'}
+</script></body></html>
