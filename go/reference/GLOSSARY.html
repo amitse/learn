@@ -45,7 +45,15 @@
 <h1>Go Glossary</h1>
 <p class="sub">Terms introduced across lessons. Use this as a quick reference while reading Go code.</p>
 
-<h2>Exhausted-Retry Private Log Event (Lesson 77) <span class="new-badge">new</span></h2>
+<h2>Retryable Upstream Statuses (Lesson 78) <span class="new-badge">new</span></h2>
+<table>
+  <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
+  <tr><td>response-status retry classifier</td><td>pure <code>includes(response.status)</code> predicate</td><td>A small pure function that decides whether a received upstream HTTP status is a candidate for the operation’s existing bounded retry. It does not issue requests, sleep, or map the server’s own HTTP response.</td></tr>
+  <tr><td>explicit temporary-status set</td><td>named retryable response codes</td><td>The intentionally narrow policy accepting <code>429</code>, <code>502</code>, <code>503</code>, and <code>504</code>. It rejects nearby codes such as <code>500</code> and <code>501</code> unless a future policy deliberately changes the table.</td></tr>
+  <tr><td>received upstream response</td><td>resolved <code>fetch</code> response with non-2xx status</td><td>A non-nil <code>*http.Response</code> returned by <code>http.Client.Do</code> with <code>err == nil</code>, even when its status is 4xx or 5xx. The dependency adapter must close its body and interpret the status.</td></tr>
+</table>
+
+<h2>Exhausted-Retry Private Log Event (Lesson 77)</h2>
 <table>
   <tr><th>Term</th><th>TS Equivalent</th><th>Meaning</th></tr>
   <tr><td>private failure-event contract</td><td>captured structured logger assertion</td><td>The small server-only observability promise for an exhausted dependency retry: a stable event message, the inbound-selected <code>request_id</code>, and a named diagnostic error attribute. It complements—not replaces—the safe public 502 JSON response.</td></tr>
