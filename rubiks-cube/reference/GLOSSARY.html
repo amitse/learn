@@ -611,6 +611,11 @@
   <dt>Action-ready decision</dt><dd>A freshly audited queue decision with literal checkpoint evidence, copied ACT-row permission, all four scope fields, and exactly one action. It authorizes exactly that one stated action—not a follow-up insertion.</dd>
   <dt>Minimal repair needed</dt><dd>The status of a freshly audited decision with any failed gate. Repair only the earliest failed clause, then re-audit the entire decision before giving it a new classification.</dd>
 </dl>
-<p class="updated">Updated 2026-11-14 · Lesson 77</p>
+<h2>F2L Minimal Decision Repair</h2>
+<dl>
+  <dt>Repair-and-re-audit loop</dt><dd>The bounded response to a <strong>MINIMAL REPAIR NEEDED</strong> decision: identify the earliest failed audit gate, replace only that clause from the checkpoint log or selected ACT row, then restart the full audit at literal evidence. The decision is not actionable until every gate passes together.</dd>
+  <dt>Repair-preserved clause</dt><dd>A decision clause that already passed its audit gate and is deliberately left unchanged during a minimal repair. Rewriting it can introduce a new unsupported observation, scope change, or action.</dd>
+</dl>
+<p class="updated">Updated 2026-11-16 · Lesson 78</p>
 </body>
 </html>
