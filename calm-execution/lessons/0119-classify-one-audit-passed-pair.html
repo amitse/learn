@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 119 — Classify One Audit-Passed Pair</title>
+  <style>
+    :root{--ink:#202230;--muted:#606478;--paper:#fcfbff;--panel:#f2edff;--line:#ddd5f3;--violet:#6542b5;--good:#176b4a;--bad:#a63b36}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,serif}main{max-width:720px;margin:auto;padding:28px 18px 54px}.eyebrow{color:var(--violet);font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(2rem,7vw,3.25rem);line-height:1.05;margin:.35rem 0 .8rem;letter-spacing:-.035em}h2{font:700 1.25rem/1.25 system-ui,sans-serif;margin:0 0 .6rem}p{margin:.6rem 0}.lede{font-size:1.12rem;color:var(--muted)}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin:20px 0}.rule{border-left:4px solid var(--violet);padding:3px 0 3px 15px;font-weight:700}label{display:block;font:700 .92rem/1.3 system-ui,sans-serif;margin:14px 0 5px}select,button{width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:var(--ink)}button{margin-top:13px;background:var(--violet);color:#fff;border:0;font:700 .95rem system-ui,sans-serif;cursor:pointer}.feedback{min-height:1.5em;margin:.7rem 0 0;font-weight:700}.good{color:var(--good)}.bad{color:var(--bad)}.result{margin-top:14px;padding:14px;background:#fff;border:1px dashed var(--violet);border-radius:8px;white-space:pre-wrap}.small{color:var(--muted);font-size:.92rem}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:15px;color:var(--muted);font-size:.9rem}a{color:#52369b}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Calm Execution · Lesson 119 · 8 minutes</div>
+  <h1>Classify one audit-passed pair</h1>
+  <p class="lede">Once both attempts followed the instruction, read the cue first and the two-minute start second.</p>
+
+  <div class="card"><h2>The one skill</h2>
+    <p>Use this only for a pair that passed yesterday’s enactment audit. For each attempt, choose one outcome label:</p>
+    <p class="rule"><strong>Cue</strong> = the cue did not occur.<br><strong>Start-side</strong> = the cue occurred but the exact two-minute action did not start.<br><strong>None</strong> = the cue occurred and the action started.<br><strong>Unclear</strong> = the record cannot tell.</p>
+    <p>Then read the pair, not your character: retain and gather records unless the <em>same readable</em> break appears twice and you already have one matching bounded test specified. This is a practical classification rule, not a verdict. Repetition in a stable context is relevant background for cue-based practice; see <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3505409/">Gardner, Lally &amp; Wardle (2012)</a>.</p>
+  </div>
+
+  <div class="card"><h2>Applied exercise — classify the audited pair</h2>
+    <p>Spend 5–10 minutes with the two records that both earned <strong>followed</strong>. Do not design a new change here. Read cue, then start, for each record.</p>
+    <label for="one">Attempt 1: cue then two-minute start</label><select id="one"><option value="">Choose…</option><option value="cue">Cue</option><option value="start">Start-side</option><option value="none">None</option><option value="unclear">Unclear</option></select>
+    <label for="two">Attempt 2: cue then two-minute start</label><select id="two"><option value="">Choose…</option><option value="cue">Cue</option><option value="start">Start-side</option><option value="none">None</option><option value="unclear">Unclear</option></select>
+    <button type="button" onclick="classifyPair()">Read the pair</button>
+    <p id="feedback" class="feedback" aria-live="polite"></p><div id="result" class="result" hidden></div>
+  </div>
+
+  <div class="card"><h2>Instant check</h2>
+    <p>Both audit-passed records are labeled <strong>start-side</strong>. What does the pair support?</p>
+    <label><input type="radio" name="q" value="wrong"> Change the cue, the action, and the schedule at once.</label>
+    <label><input type="radio" name="q" value="right"> Use only an already-specified matching bounded test; otherwise retain and gather.</label>
+    <label><input type="radio" name="q" value="wrong2"> Add a consequence so the action happens next time.</label>
+    <button type="button" onclick="checkQuiz()">Check answer</button><p id="quiz" class="feedback" aria-live="polite"></p>
+  </div>
+
+  <footer>Classify a readable pair before changing it. The aim is one calm, observable next start—not urgency or punishment. Ask your teacher if a cue or start record is ambiguous. Next: write one instruction from this classification.</footer>
+</main><script>
+function classifyPair(){const a=document.getElementById('one').value,b=document.getElementById('two').value,f=document.getElementById('feedback'),out=document.getElementById('result');if(!a||!b){f.className='feedback bad';f.textContent='Label both audit-passed attempts first.';out.hidden=true;return}const repeated=(a===b&&(a==='cue'||a==='start'));f.className='feedback '+(repeated?'good':'good');f.textContent=repeated?'One readable break repeats.':'No readable break repeats.';out.textContent=repeated?(a==='cue'?'Both records show a cue break. If you already specified one matching bounded cue-side test, that one test is eligible for the next instruction. If not, retain the plan and gather records—do not invent several changes.':'Both records show a start-side break: the cue occurred, but the two-minute action did not start. If you already specified one matching bounded start-side test, that one test is eligible. If not, retain and gather records; do not add urgency or a consequence.'):'Retain the current plan and gather two ordinary records. Mixed, working, or unclear evidence does not support a new test. Keep the cue, exact two-minute action, and two-attempt boundary stable.';out.hidden=false}
+function checkQuiz(){const x=document.querySelector('input[name=q]:checked'),r=document.getElementById('quiz');if(!x){r.className='feedback bad';r.textContent='Choose an answer first.';return}r.className='feedback '+(x.value==='right'?'good':'bad');r.textContent=x.value==='right'?'Correct. A repeated readable break makes one already-specified matching test eligible; it does not justify piling on changes.':'Not yet. Keep the system bounded: one already-specified matching test, or retain and gather records.'}
+</script></body></html>

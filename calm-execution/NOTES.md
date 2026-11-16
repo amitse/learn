@@ -121,4 +121,5 @@
 - Lesson 116 added an enactment audit for the decision-ready instruction: label both covered attempts `followed`, `not followed`, or `unclear`; if either is not `followed`, repeat the exact instruction unchanged for two ordinary attempts before classifying cue or start outcomes.
 - Lesson 117 added cue-first classification for an audit-passed pair: label each followed attempt `cue`, `start-side`, `none`, or `unclear`; retain and gather records unless the same readable break appears twice and has one already-specified matching bounded test.
 - Lesson 118 added an enactment audit for the classified-pair instruction: compare the exact sentence with both covered attempts, label each `followed`, `not followed`, or `unclear`, and repeat it unchanged for two ordinary attempts unless both labels are `followed`.
+- Lesson 119 added cue-first classification for an audit-passed pair: label each followed attempt `cue`, `start-side`, `none`, or `unclear`; retain and gather unless the same readable break appears twice and has one already-specified matching bounded test.
 - Increase difficulty only when the basic start ritual is reliable.
